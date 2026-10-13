@@ -1,9 +1,11 @@
+import type { DayEvent } from './data/events';
 import type { HassLocale } from './ha-types';
 
 export const TIME_FORMATS = ['12', '24', 'auto'] as const;
 export type TimeFormat = (typeof TIME_FORMATS)[number];
 export type HourCycle = 'h12' | 'h23';
-export type TitleMode = 'month' | 'range';
+export const TITLE_MODES = ['month', 'range'] as const;
+export type TitleMode = (typeof TITLE_MODES)[number];
 
 // Constructing an Intl.DateTimeFormat costs far more than formatting with one; old tablets feel it.
 const cache = new Map<string, Intl.DateTimeFormat>();
@@ -30,6 +32,15 @@ export function resolveHourCycle(timeFormat: TimeFormat, locale: HassLocale): Ho
 
 export function formatTime(date: Date, language: string, hourCycle: HourCycle): string {
   return formatter(language, { hour: 'numeric', minute: '2-digit', hourCycle }).format(date);
+}
+
+export function formatEventTime(item: DayEvent, language: string, hourCycle: HourCycle, showEnd: boolean): string {
+  const { event, continued, endsLater } = item;
+  const time = formatter(language, { hour: 'numeric', minute: '2-digit', hourCycle });
+  if (!showEnd || endsLater) return continued ? 'continues' : time.format(event.start);
+  if (continued) return `until ${time.format(event.end)}`;
+  if (event.end.getTime() <= event.start.getTime()) return time.format(event.start);
+  return time.formatRange(event.start, event.end);
 }
 
 export function formatWeekday(date: Date, language: string): string {

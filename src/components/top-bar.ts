@@ -6,6 +6,7 @@ import { chevronLeft, chevronRight, icon, warningIcon } from './icons';
 export interface TopBarProps {
   header: HeaderConfig;
   title: string | null;
+  subtitle: string | null;
   isCurrentWeek: boolean;
   warning: string | null;
   onPrev(): void;
@@ -15,7 +16,10 @@ export interface TopBarProps {
 
 export function renderTopBar(p: TopBarProps): TemplateResult | typeof nothing {
   if (!p.header.show) return nothing;
-  const title = p.title === null ? nothing : html`<h1 class="bar__title">${p.title}</h1>`;
+  const titleEl = p.title === null ? nothing : html`<h1 class="bar__title">${p.title}</h1>`;
+  const subtitleEl = p.subtitle === null ? nothing : html`<span class="bar__subtitle">${p.subtitle}</span>`;
+  const title =
+    p.title === null && p.subtitle === null ? nothing : html`<div class="bar__heading">${titleEl}${subtitleEl}</div>`;
   const centered = p.header.align === 'center';
   const todayClasses = { nav: true, 'nav--today': true, 'nav--current': p.isCurrentWeek };
 

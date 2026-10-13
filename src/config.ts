@@ -1,6 +1,6 @@
 import { parseLocalDate, type Weekday } from './date';
 import type { Hemisphere } from './astro/moon';
-import { TIME_FORMATS, type TimeFormat, type TitleMode } from './format';
+import { TIME_FORMATS, TITLE_MODES, type TimeFormat } from './format';
 import type { DayCount } from './week';
 import { THEME_NAMES, TOKENS, type ThemeName, type Token } from './theme/presets';
 
@@ -10,9 +10,13 @@ export interface EntityConfig {
   name?: string;
 }
 
+const TITLE_SETTINGS = [...TITLE_MODES, 'none'] as const;
+export type HeaderTitle = (typeof TITLE_SETTINGS)[number] | { text: string };
+
 export interface HeaderConfig {
   show: boolean;
-  title: TitleMode | 'none';
+  title: HeaderTitle;
+  subtitle: HeaderTitle;
   align: 'left' | 'center';
   navigation: boolean;
   idle_return: number;
@@ -33,11 +37,16 @@ export interface PeriodConfig {
   show_ovulation: boolean;
 }
 
+export const PAST_DAYS = ['normal', 'dim', 'grey'] as const;
+export type PastDays = (typeof PAST_DAYS)[number];
+
 export interface WallCalConfig {
   entities: EntityConfig[];
   days: DayCount;
   first_day: Weekday;
   time_format: TimeFormat;
+  show_end_time: boolean;
+  past_days: PastDays;
   refresh_interval: number;
   header: HeaderConfig;
   moon: MoonConfig;
@@ -77,10 +86,13 @@ export function normalizeConfig(input: unknown): WallCalConfig {
     days: choice(raw.days, [5, 7] as const, 7, 'days'),
     first_day: WEEKDAYS.indexOf(oneOf(raw.first_day, WEEKDAYS, 'monday', 'first_day')) as Weekday,
     time_format: oneOf(raw.time_format, TIME_FORMATS, 'auto', 'time_format'),
+    show_end_time: bool(raw.show_end_time, false, 'show_end_time'),
+    past_days: oneOf(raw.past_days, PAST_DAYS, 'normal', 'past_days'),
     refresh_interval: int(raw.refresh_interval, 300, 60, 86_400, 'refresh_interval'),
     header: {
       show: bool(header.show, true, 'header.show'),
-      title: oneOf(header.title, ['month', 'range', 'none'] as const, 'month', 'header.title'),
+      title: headerTitle(header.title, 'month'),
+      subtitle: headerTitle(header.subtitle, 'none'),
       align: oneOf(header.align, ['left', 'center'] as const, 'left', 'header.align'),
       navigation: bool(header.navigation, true, 'header.navigation'),
       idle_return: int(header.idle_return, 60, 0, 86_400, 'header.idle_return'),
@@ -102,6 +114,15 @@ export function normalizeConfig(input: unknown): WallCalConfig {
     style,
     font_url: fontUrl,
   };
+}
+
+// Keywords pick a generated title; any other text is shown as is.
+function headerTitle(value: unknown, fallback: HeaderTitle): HeaderTitle {
+  if (value === undefined || value === null) return fallback;
+  const text = String(value).trim();
+  if (!text) return 'none';
+  const keyword = TITLE_SETTINGS.find((setting) => setting === text.toLowerCase());
+  return keyword ?? { text };
 }
 
 function section(value: unknown, path: string): Raw {

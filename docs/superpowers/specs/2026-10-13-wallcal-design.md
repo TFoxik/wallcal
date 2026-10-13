@@ -176,7 +176,8 @@ Tokens (config key → CSS property):
 | `divider` | `--divider-color` | separators |
 | `radius` | `--ha-card-border-radius`, fallback 16px | card / column radius |
 | `chip_radius` | 10px | event chip radius |
-| `gap` | 12px | gap between columns |
+| `gap` | 4px | gap between columns |
+| `padding` | 8px | space between the card edge and its content |
 | `font_family` | `inherit` | everything |
 | `title_font` | `font_family` | top bar title |
 | `title_size` | 28px | top bar title |
@@ -211,10 +212,13 @@ entities:                         # required, ≥ 1
 days: 7                           # 5 | 7, default 7
 first_day: monday                 # monday … sunday, default monday; ignored when days: 5
 time_format: auto                 # 12 | 24 | auto, default auto
+show_end_time: false              # timed events show "8:30 – 9:15"
+past_days: normal                 # normal | dim | grey: days before today
 refresh_interval: 300             # seconds, default 300, min 60
 header:
   show: true
-  title: month                    # month | range | none
+  title: month                    # month | range | none | any other text, shown as is
+  subtitle: none                  # same values as title, smaller and muted beside it
   align: left                     # left | center
   navigation: true
   idle_return: 60                 # seconds, 0 = never

@@ -2,7 +2,7 @@ import { LitElement, html, nothing } from 'lit';
 import { styleMap } from 'lit/directives/style-map.js';
 import { renderDayColumn } from './components/day-column';
 import { renderTopBar } from './components/top-bar';
-import { isCalendarEntityId, normalizeConfig, type WallCalConfig } from './config';
+import { isCalendarEntityId, normalizeConfig, type HeaderTitle, type WallCalConfig } from './config';
 import { cycleInfo, type CycleInput } from './cycle/predict';
 import { cachedEvents, eventsForDay, fetchEvents, mergeResults, type EventCache } from './data/events';
 import { addDays, isSameDay, msUntilNextMidnight, startOfDay } from './date';
@@ -115,14 +115,15 @@ export class WallCalCard extends LitElement {
     return html`<ha-card style=${styleMap(tokens)} @pointerdown=${() => this._touch()}>
       ${renderTopBar({
         header: config.header,
-        title: config.header.title === 'none' ? null : formatTitle(days, config.header.title, language),
+        title: headerText(config.header.title, days, language),
+        subtitle: headerText(config.header.subtitle, days, language),
         isCurrentWeek: this._isCurrentWeek(),
         warning: this._warning,
         onPrev: () => this._show(addDays(this._anchor, -7)),
         onToday: () => this._show(this._today),
         onNext: () => this._show(addDays(this._anchor, 7)),
       })}
-      <div class="grid">
+      <div class="grid grid--past-${config.past_days}">
         ${days.map((date) =>
           renderDayColumn({
             date,
@@ -134,6 +135,8 @@ export class WallCalCard extends LitElement {
             cycle: cycleInput ? cycleInfo(date, cycleInput) : null,
             showFertile: period.show_fertile,
             showOvulation: period.show_ovulation,
+            showEndTime: config.show_end_time,
+            isPast: date.getTime() < this._today.getTime(),
           }),
         )}
       </div>
@@ -219,6 +222,11 @@ export class WallCalCard extends LitElement {
   private _onVisibilityChange = (): void => {
     if (!document.hidden) this._tick();
   };
+}
+
+function headerText(setting: HeaderTitle, days: Date[], language: string): string | null {
+  if (setting === 'none') return null;
+  return typeof setting === 'string' ? formatTitle(days, setting, language) : setting.text;
 }
 
 const loadedFonts = new Set<string>();

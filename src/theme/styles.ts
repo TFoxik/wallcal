@@ -3,6 +3,7 @@ import { css } from 'lit';
 export const cardStyles = css`
   :host {
     display: block;
+    height: 100%;
   }
   ha-card {
     display: flex;
@@ -10,7 +11,7 @@ export const cardStyles = css`
     gap: var(--wallcal-gap);
     height: 100%;
     box-sizing: border-box;
-    padding: 20px;
+    padding: var(--wallcal-padding);
     overflow: hidden;
     background: var(--wallcal-background);
     color: var(--wallcal-text);
@@ -31,6 +32,21 @@ export const cardStyles = css`
     justify-content: flex-end;
     align-items: center;
     gap: 8px;
+  }
+  .bar__heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 14px;
+    min-width: 0;
+  }
+  .bar__center .bar__heading {
+    justify-content: center;
+  }
+  .bar__subtitle {
+    font-size: calc(var(--wallcal-title-size) * 0.64);
+    color: var(--wallcal-muted);
+    font-variant-numeric: tabular-nums;
   }
   .bar__title {
     margin: 0;
@@ -82,12 +98,18 @@ export const cardStyles = css`
     isolation: isolate;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
     min-width: 0;
     min-height: 240px;
-    padding: 12px;
+    padding: 8px;
     border-radius: var(--wallcal-radius);
     background: var(--wallcal-surface);
+  }
+  .grid--past-dim .day--past {
+    opacity: 0.5;
+  }
+  .grid--past-grey .day--past {
+    filter: grayscale(1) opacity(0.5);
   }
   .day--today {
     box-shadow: inset 0 0 0 2px var(--wallcal-accent);

@@ -52,6 +52,20 @@ describe('wallcal-card', () => {
     expect(() => el.setConfig({})).toThrow(/at least one calendar/);
   });
 
+  it('shows a custom title with the week range as subtitle', async () => {
+    const { hass } = makeHass(async () => []);
+    const el = await mount({ ...config, header: { title: 'Family calendar', subtitle: 'range' } }, hass);
+    expect(root(el).querySelector('.bar__title')?.textContent).toBe('Family calendar');
+    expect(root(el).querySelector('.bar__subtitle')?.textContent?.replace(/\s+/g, ' ')).toBe('Oct 12 – 18');
+  });
+
+  it('marks the days before today and the past_days mode on the grid', async () => {
+    const { hass } = makeHass(async () => []);
+    const el = await mount({ ...config, past_days: 'dim' }, hass);
+    expect(root(el).querySelector('.grid')?.classList.contains('grid--past-dim')).toBe(true);
+    expect([...root(el).querySelectorAll('.day--past .day__date')].map((n) => n.textContent)).toEqual(['12']);
+  });
+
   it('renders 7 or 5 day columns', async () => {
     const { hass } = makeHass(async () => []);
     const seven = await mount(config, hass);

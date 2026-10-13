@@ -20,6 +20,7 @@ export interface WallCalEvent {
 export interface DayEvent {
   event: WallCalEvent;
   continued: boolean;
+  endsLater: boolean;
 }
 
 export interface FetchResult {
@@ -63,7 +64,11 @@ export function eventsForDay(events: WallCalEvent[], day: Date): DayEvent[] {
       const end = e.end.getTime();
       return start < dayEnd && (end > dayStart || start >= dayStart);
     })
-    .map((event) => ({ event, continued: !event.allDay && event.start.getTime() < dayStart }))
+    .map((event) => ({
+      event,
+      continued: !event.allDay && event.start.getTime() < dayStart,
+      endsLater: !event.allDay && event.end.getTime() > dayEnd,
+    }))
     .sort(compareDayEvents);
 }
 

@@ -20,6 +20,8 @@ export interface DayColumnProps {
   cycle: CycleDay | null;
   showFertile: boolean;
   showOvulation: boolean;
+  showEndTime: boolean;
+  isPast: boolean;
 }
 
 export function renderDayColumn(p: DayColumnProps): TemplateResult {
@@ -28,7 +30,12 @@ export function renderDayColumn(p: DayColumnProps): TemplateResult {
   const ovulation = !!cycle && p.showOvulation && cycle.isOvulation;
   const dateNumber = html`<span class="day__date">${p.date.getDate()}</span>`;
 
-  return html`<section class=${classMap({ day: true, 'day--today': p.isToday, 'day--fertile': fertile })}>
+  return html`<section class=${classMap({
+    day: true,
+    'day--today': p.isToday,
+    'day--fertile': fertile,
+    'day--past': p.isPast,
+  })}>
     <header class="day__header">
       ${cycle ? renderCycleRing(cycle, dateNumber) : dateNumber}
       <div class="day__meta">
@@ -40,6 +47,6 @@ export function renderDayColumn(p: DayColumnProps): TemplateResult {
         </span>
       </div>
     </header>
-    <div class="day__events">${p.events.map((e) => renderEventChip(e, p.language, p.hourCycle))}</div>
+    <div class="day__events">${p.events.map((e) => renderEventChip(e, p.language, p.hourCycle, p.showEndTime))}</div>
   </section>`;
 }

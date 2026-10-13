@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { formatTime, formatTitle, formatWeekday, formatter, resolveHourCycle } from '../src/format';
+import { formatEventTime, formatTime, formatTitle, formatWeekday, formatter, resolveHourCycle } from '../src/format';
+import { wallEvent } from './fixtures';
 
 const norm = (s: string) => s.replace(/\s+/g, ' ');
 const d = (y: number, m: number, day: number) => new Date(y, m - 1, day);
@@ -36,6 +37,14 @@ describe('formatter', () => {
 
 describe('formatWeekday', () => {
   it('short localised weekday', () => expect(formatWeekday(d(2026, 10, 13), 'en-US')).toBe('Tue'));
+});
+
+describe('formatEventTime', () => {
+  it('shares the day period across a 12-hour range', () => {
+    const dentist = wallEvent('Dentist', new Date(2026, 9, 13, 8, 30), new Date(2026, 9, 13, 9, 15));
+    const item = { event: dentist, continued: false, endsLater: false };
+    expect(norm(formatEventTime(item, 'en-US', 'h12', true))).toBe('8:30 – 9:15 AM');
+  });
 });
 
 describe('formatTitle', () => {

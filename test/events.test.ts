@@ -58,6 +58,14 @@ describe('eventsForDay', () => {
     expect(eventsForDay([deploy], new Date(2026, 9, 13))[0].continued).toBe(true);
   });
 
+  it('marks timed events that end after this day', () => {
+    const deploy = ev('Deploy', new Date(2026, 9, 12, 23), new Date(2026, 9, 13, 1));
+    expect(eventsForDay([deploy], new Date(2026, 9, 12))[0].endsLater).toBe(true);
+    expect(eventsForDay([deploy], new Date(2026, 9, 13))[0].endsLater).toBe(false);
+    const late = ev('Late', new Date(2026, 9, 12, 22), new Date(2026, 9, 13, 0));
+    expect(eventsForDay([late], new Date(2026, 9, 12))[0].endsLater).toBe(false);
+  });
+
   it('does not show an event ending exactly at midnight on the next day', () => {
     const late = ev('Late', new Date(2026, 9, 12, 22), new Date(2026, 9, 13, 0));
     expect(titles(new Date(2026, 9, 13), [late])).toEqual([]);

@@ -10,8 +10,10 @@ describe('normalizeConfig', () => {
       days: 7,
       first_day: 1,
       time_format: 'auto',
+      show_end_time: false,
+      past_days: 'normal',
       refresh_interval: 300,
-      header: { show: true, title: 'month', align: 'left', navigation: true, idle_return: 60 },
+      header: { show: true, title: 'month', subtitle: 'none', align: 'left', navigation: true, idle_return: 60 },
       moon: { enabled: false, show_name: false, hemisphere: 'north' },
       period: {
         enabled: false,
@@ -33,6 +35,30 @@ describe('normalizeConfig', () => {
       { entity: 'calendar.a', color: '#000', name: 'A' },
       { entity: 'calendar.b', color: ENTITY_PALETTE[1] },
     ]);
+  });
+
+  it('reads header.title keywords case-insensitively and keeps any other text verbatim', () => {
+    const title = (value: unknown) => normalizeConfig({ ...minimal, header: { title: value } }).header.title;
+    expect(title('Range')).toBe('range');
+    expect(title('NONE')).toBe('none');
+    expect(title('Family calendar')).toEqual({ text: 'Family calendar' });
+    expect(title(2026)).toEqual({ text: '2026' });
+    expect(title('')).toBe('none');
+  });
+
+  it('reads header.subtitle like the title, defaulting to none', () => {
+    const subtitle = (value: unknown) => normalizeConfig({ ...minimal, header: { subtitle: value } }).header.subtitle;
+    expect(subtitle(undefined)).toBe('none');
+    expect(subtitle('Range')).toBe('range');
+    expect(subtitle('Kitchen')).toEqual({ text: 'Kitchen' });
+  });
+
+  it('validates past_days and show_end_time', () => {
+    expect(normalizeConfig({ ...minimal, past_days: 'grey', show_end_time: true })).toMatchObject({
+      past_days: 'grey',
+      show_end_time: true,
+    });
+    expect(() => normalizeConfig({ ...minimal, past_days: 'hide' })).toThrow(/past_days/);
   });
 
   it('rejects a non-mapping config', () => {
