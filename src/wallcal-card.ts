@@ -35,6 +35,7 @@ export class WallCalCard extends LitElement {
   private _refreshTimer?: ReturnType<typeof setInterval>;
   private _midnightTimer?: ReturnType<typeof setTimeout>;
   private _idleTimer?: ReturnType<typeof setTimeout>;
+  private _lastTouch = 0;
 
   constructor() {
     super();
@@ -81,8 +82,11 @@ export class WallCalCard extends LitElement {
 
   connectedCallback(): void {
     super.connectedCallback();
+    this._syncToday();
     this._restartRefresh();
     this._armMidnight();
+    this._armIdleReturn();
+    document.addEventListener('visibilitychange', this._onVisibilityChange);
     void this._fetch();
   }
 
@@ -91,6 +95,7 @@ export class WallCalCard extends LitElement {
     clearInterval(this._refreshTimer);
     clearTimeout(this._midnightTimer);
     clearTimeout(this._idleTimer);
+    document.removeEventListener('visibilitychange', this._onVisibilityChange);
   }
 
   protected render() {
@@ -179,21 +184,47 @@ export class WallCalCard extends LitElement {
   }
 
   private _touch(): void {
+    this._lastTouch = Date.now();
+    this._armIdleReturn();
+  }
+
+  private _armIdleReturn(): void {
     clearTimeout(this._idleTimer);
     const seconds = this._config?.header.idle_return ?? 0;
-    if (seconds <= 0) return;
+    if (seconds <= 0 || this._isCurrentWeek()) return;
+    const remaining = Math.max(0, this._lastTouch + seconds * 1000 - Date.now());
     this._idleTimer = setTimeout(() => {
       if (this._isCurrentWeek()) return;
       this._anchor = this._today;
       void this._fetch();
-    }, seconds * 1000);
+    }, remaining);
   }
 
   private _restartRefresh(): void {
     clearInterval(this._refreshTimer);
     if (!this._config) return;
-    this._refreshTimer = setInterval(() => void this._fetch(), this._config.refresh_interval * 1000);
+    this._refreshTimer = setInterval(() => {
+      this._syncToday();
+      void this._fetch();
+    }, this._config.refresh_interval * 1000);
   }
+
+  // Timers do not run while the card is detached or the device sleeps, so the date is
+  // re-checked whenever the card could have missed midnight.
+  private _syncToday(): boolean {
+    const today = startOfDay(new Date());
+    if (today.getTime() === this._today.getTime()) return false;
+    const followToday = this._isCurrentWeek();
+    this._today = today;
+    if (followToday) this._anchor = today;
+    return true;
+  }
+
+  private _onVisibilityChange = (): void => {
+    if (document.visibilityState !== 'visible') return;
+    this._armMidnight();
+    if (this._syncToday()) void this._fetch();
+  };
 
   private _armMidnight(): void {
     clearTimeout(this._midnightTimer);
@@ -201,9 +232,7 @@ export class WallCalCard extends LitElement {
   }
 
   private _onMidnight(): void {
-    const followToday = this._isCurrentWeek();
-    this._today = startOfDay(new Date());
-    if (followToday) this._anchor = this._today;
+    this._syncToday();
     this._armMidnight();
     void this._fetch();
   }

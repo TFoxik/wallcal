@@ -177,6 +177,65 @@ describe('wallcal-card', () => {
     expect(root(el).querySelector('.day--today .day__date')?.textContent).toBe('19');
   });
 
+  it('catches up on the date when reattached after a view change or sleep', async () => {
+    vi.setSystemTime(new Date(2026, 9, 18, 22, 0));
+    const { hass } = makeHass(async () => []);
+    const el = await mount(config, hass);
+    el.remove();
+    vi.setSystemTime(new Date(2026, 9, 19, 7, 0));
+    document.body.append(el);
+    await flush(el);
+    expect(firstDate(el)).toBe('19');
+    expect(root(el).querySelector('.day--today .day__date')?.textContent).toBe('19');
+  });
+
+  it('catches up on the date when the page becomes visible again', async () => {
+    vi.setSystemTime(new Date(2026, 9, 18, 22, 0));
+    const { hass } = makeHass(async () => []);
+    const el = await mount(config, hass);
+    vi.setSystemTime(new Date(2026, 9, 19, 7, 0));
+    document.dispatchEvent(new Event('visibilitychange'));
+    await flush(el);
+    expect(firstDate(el)).toBe('19');
+  });
+
+  it('catches up on the date on the refresh tick when the midnight timer slept', async () => {
+    vi.setSystemTime(new Date(2026, 9, 18, 22, 0));
+    const { hass } = makeHass(async () => []);
+    const el = await mount({ ...config, refresh_interval: 60 }, hass);
+    vi.setSystemTime(new Date(2026, 9, 19, 7, 0));
+    await vi.advanceTimersByTimeAsync(60_000);
+    await el.updateComplete;
+    expect(firstDate(el)).toBe('19');
+  });
+
+  it('returns to the current week right away when reattached after the idle timeout passed', async () => {
+    const { hass } = makeHass(async () => []);
+    const el = await mount({ ...config, header: { idle_return: 60 } }, hass);
+    click(el, 'button[aria-label="Next week"]');
+    await flush(el);
+    el.remove();
+    await vi.advanceTimersByTimeAsync(120_000);
+    document.body.append(el);
+    await flush(el);
+    expect(firstDate(el)).toBe('12');
+  });
+
+  it('keeps the remaining idle time when reattached before the timeout', async () => {
+    const { hass } = makeHass(async () => []);
+    const el = await mount({ ...config, header: { idle_return: 60 } }, hass);
+    click(el, 'button[aria-label="Next week"]');
+    await flush(el);
+    el.remove();
+    await vi.advanceTimersByTimeAsync(30_000);
+    document.body.append(el);
+    await flush(el);
+    expect(firstDate(el)).toBe('19');
+    await vi.advanceTimersByTimeAsync(30_000);
+    await el.updateComplete;
+    expect(firstDate(el)).toBe('12');
+  });
+
   it('keeps the last events and shows a warning when a refetch fails', async () => {
     let fail = false;
     const handler = async () => {
