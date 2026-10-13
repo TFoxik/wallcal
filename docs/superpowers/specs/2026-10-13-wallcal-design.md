@@ -76,7 +76,8 @@ that input is produced.
 
 ### 4.1 Week range
 - `days: 7` — 7 consecutive days starting on the most recent `first_day` on or before the anchor.
-- `days: 5` — Monday to Friday of the anchor's week. `first_day` is ignored.
+- `days: 5` — Monday to Friday of the anchor's week. `first_day` is ignored. On Saturday and
+  Sunday the coming Monday–Friday is shown: on a wall, the weekend looks ahead.
 - Anchor defaults to today. Prev / next shift the anchor by 7 days; today resets it.
 - Day arithmetic is done on local calendar dates (year, month, day), never by adding 86 400 000 ms,
   so DST transitions cannot skip or duplicate a day.
@@ -167,29 +168,33 @@ Tokens (config key → CSS property):
 | Key | Default source | Purpose |
 |-----|----------------|---------|
 | `background` | `--ha-card-background` / `--card-background-color` | card background |
-| `surface` | primary text at 5% | day column / chip background |
+| `surface` | `rgba(127, 127, 127, 0.1)` | day column / button background |
 | `text` | `--primary-text-color` | main text |
 | `muted` | `--secondary-text-color` | weekday, times |
 | `accent` | `--primary-color` | today highlight, buttons |
-| `today_background` | accent at 12% | today column |
+| `today_background` | `accent` (drawn at 12% opacity) | today column tint |
 | `divider` | `--divider-color` | separators |
 | `radius` | `--ha-card-border-radius`, fallback 16px | card / column radius |
 | `chip_radius` | 10px | event chip radius |
 | `gap` | 12px | gap between columns |
 | `font_family` | `inherit` | everything |
+| `title_font` | `font_family` | top bar title |
 | `title_size` | 28px | top bar title |
 | `date_size` | 32px | day number |
 | `weekday_size` | 15px | weekday name |
 | `event_size` | 15px | event title |
 | `time_size` | 13px | event time |
 | `period_color` | `#E24B4A` | drop, period ring |
-| `fertile_color` | `#5DCAA5` at 25% | fertile tint |
+| `fertile_color` | `#5DCAA5` (drawn at 25% opacity) | fertile tint |
 | `ovulation_color` | `#1D9E75` | ovulation icon |
 | `ring_color` | `#D4537E` | cycle ring outside period |
 | `moon_color` | `muted` | moon lit part |
 
 `style.font_url` (optional) injects a `<link rel="stylesheet">` once per page. Otherwise WallCal
 relies on fonts already available to the browser.
+
+Icons (drop, ovulation, navigation, warning) are inline SVG rather than `ha-icon`, so they take
+theme colours directly and render identically in the dev harness.
 
 Presets: `default` (HA theme as-is), `paper` (warm off-white, serif title, soft greys),
 `midnight` (near-black, low-glare for night, dimmed accents).
@@ -256,8 +261,29 @@ The card makes no network requests other than to the HA instance it runs in, plu
 - **Real HA:** load `dist/wallcal-card.js` as a dashboard resource on the tablet; confirm refresh,
   idle return and the midnight rollover.
 
-## 9. Build and distribution
+## 9. Performance and device support
 
-- TypeScript + Lit, bundled with Rollup into `dist/wallcal-card.js` (single ES module).
+Wall tablets are typically old, low-end devices left on permanently (older Fire HD, iPads several
+iOS versions behind, cheap Android tablets in kiosk browsers). Performance and compatibility are
+first-class requirements, not polish.
+
+- **Browser floor:** Chrome / Android WebView 87 and Safari / iOS 14. The bundle is compiled down
+  to that target; CSS avoids features newer than it (no `color-mix()`, no container queries,
+  no `:has()`). Translucent tints are drawn as an opacity layer instead of colour mixing.
+- **No work on unrelated `hass` updates:** HA pushes a new `hass` object for every state change in
+  the house. The card does an O(entities) comparison and nothing else unless a configured calendar
+  changed or the locale changed: no re-render, no fetch.
+- **Bounded work per render:** 5–7 columns; `Intl.DateTimeFormat` instances are cached per
+  language and options because constructing them is far more expensive than formatting.
+- **No continuous activity:** no animations, transitions, blur, backdrop filters or large shadows;
+  no per-second timers. The only timers are the refresh interval, the idle return and the midnight
+  rollover.
+- **Small bundle:** target under 30 KB gzipped (Lit included).
+
+## 10. Build and distribution
+
+- TypeScript + Lit (no decorators), bundled with Vite library mode into `dist/wallcal-card.js`
+  (single ES module, Lit included, compiled for the §9 browser floor). `tsc --noEmit` type-checks;
+  Vite only strips types.
 - `hacs.json` for HACS custom repository install.
 - Card registers itself in `window.customCards` so it shows up in the card picker.
