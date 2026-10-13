@@ -267,7 +267,8 @@ Wall tablets are typically old, low-end devices left on permanently (older Fire 
 iOS versions behind, cheap Android tablets in kiosk browsers). Performance and compatibility are
 first-class requirements, not polish.
 
-- **Browser floor:** Chrome / Android WebView 87 and Safari / iOS 14. The bundle is compiled down
+- **Browser floor:** Chrome / Android WebView 87 and Safari 14.1 / iOS 14.5 (`Intl` `formatRange`
+  and flexbox `gap` need 14.1; every iOS 14 device can update to it). The bundle is compiled down
   to that target; CSS avoids features newer than it (no `color-mix()`, no container queries,
   no `:has()`). Translucent tints are drawn as an opacity layer instead of colour mixing.
 - **No work on unrelated `hass` updates:** HA pushes a new `hass` object for every state change in

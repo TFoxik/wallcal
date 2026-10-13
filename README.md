@@ -5,11 +5,12 @@ Clean by default, restylable from YAML, with optional moon phase and cycle overl
 
 ## Install
 
-**HACS (custom repository):** HACS → Frontend → ⋮ → Custom repositories → add this repo as
-*Dashboard*, install WallCal, reload the browser.
+**Manual (for now):** `npm install && npm run build`, copy `dist/wallcal-card.js` to
+`/config/www/`, then add `/local/wallcal-card.js` as a JavaScript module under Settings →
+Dashboards → Resources.
 
-**Manual:** `npm install && npm run build`, copy `dist/wallcal-card.js` to `/config/www/`, then add
-`/local/wallcal-card.js` as a JavaScript module under Settings → Dashboards → Resources.
+**HACS:** available once the first GitHub release with a built `wallcal-card.js` is published
+(HACS → Frontend → ⋮ → Custom repositories → add this repo as *Dashboard*).
 
 ## Configure
 
@@ -50,7 +51,7 @@ Every option and style token is listed in
   cycle length and the standard 14-day luteal phase. They are a calendar hint, not medical advice
   and not a contraception method.
 - Moon phase uses the mean lunar cycle and can be off by up to about half a day.
-- Built for old wall tablets: works on Chrome / Android WebView 87+ and Safari / iOS 14+, with no
+- Built for old wall tablets: works on Chrome / Android WebView 87+ and Safari / iOS 14.5+, with no
   animations or background work beyond a refresh every few minutes.
 
 ## Develop
