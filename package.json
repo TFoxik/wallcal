@@ -1,0 +1,24 @@
+{
+  "name": "wallcal-card",
+  "version": "0.1.0",
+  "description": "Home Assistant week wall calendar card with moon phase and cycle overlays",
+  "type": "module",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
+    "test": "TZ=Europe/Prague vitest run",
+    "test:watch": "TZ=Europe/Prague vitest"
+  },
+  "dependencies": {
+    "lit": "^3.3.3"
+  },
+  "devDependencies": {
+    "happy-dom": "^21.0.1",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.4"
+  }
+}
