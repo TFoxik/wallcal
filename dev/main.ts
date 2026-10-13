@@ -36,16 +36,12 @@ const FIXTURES: Record<string, HaCalendarEvent[]> = {
   ],
 };
 
-const entity = (id: string) => ({
-  entity_id: id,
-  state: 'off',
-  last_changed: today.toISOString(),
-  last_updated: today.toISOString(),
-  attributes: {},
-});
 
 const hass = {
-  states: { 'calendar.family': entity('calendar.family'), 'calendar.work': entity('calendar.work') },
+  states: {
+    'calendar.family': { last_changed: today.toISOString() },
+    'calendar.work': { last_changed: today.toISOString() },
+  },
   locale: { language: navigator.language, time_format: 'language' },
   callApi: async <T>(_method: string, path: string): Promise<T> => {
     const id = path.slice('calendars/'.length).split('?')[0];

@@ -1,13 +1,13 @@
 import { html, nothing, type TemplateResult } from 'lit';
 import { classMap } from 'lit/directives/class-map.js';
 import { moonPhase } from '../astro/moon';
-import type { MoonConfig, PeriodConfig } from '../config';
+import type { MoonConfig } from '../config';
 import type { CycleDay } from '../cycle/predict';
 import type { DayEvent } from '../data/events';
 import { formatWeekday, type HourCycle } from '../format';
 import { renderCycleRing } from './cycle-ring';
 import { renderEventChip } from './event-chip';
-import { dropIcon, eggIcon } from './icons';
+import { dropIcon, eggIcon, icon } from './icons';
 import { renderMoonIcon } from './moon-icon';
 
 export interface DayColumnProps {
@@ -17,14 +17,15 @@ export interface DayColumnProps {
   language: string;
   hourCycle: HourCycle;
   moon: MoonConfig;
-  period: PeriodConfig;
   cycle: CycleDay | null;
+  showFertile: boolean;
+  showOvulation: boolean;
 }
 
 export function renderDayColumn(p: DayColumnProps): TemplateResult {
-  const cycle = p.period.enabled ? p.cycle : null;
-  const fertile = !!cycle && p.period.show_fertile && cycle.isFertile;
-  const ovulation = !!cycle && p.period.show_ovulation && cycle.isOvulation;
+  const { cycle } = p;
+  const fertile = !!cycle && p.showFertile && cycle.isFertile;
+  const ovulation = !!cycle && p.showOvulation && cycle.isOvulation;
   const dateNumber = html`<span class="day__date">${p.date.getDate()}</span>`;
 
   return html`<section class=${classMap({ day: true, 'day--today': p.isToday, 'day--fertile': fertile })}>
@@ -33,12 +34,8 @@ export function renderDayColumn(p: DayColumnProps): TemplateResult {
       <div class="day__meta">
         <span class="day__weekday">${formatWeekday(p.date, p.language)}</span>
         <span class="day__markers">
-          ${cycle?.isPeriod
-            ? html`<svg class="marker marker--period" viewBox="0 0 24 24" role="img" aria-label="Expected period">${dropIcon}</svg>`
-            : nothing}
-          ${ovulation
-            ? html`<svg class="marker marker--ovulation" viewBox="0 0 24 24" role="img" aria-label="Expected ovulation">${eggIcon}</svg>`
-            : nothing}
+          ${cycle?.isPeriod ? icon(dropIcon, 'marker marker--period', 'Expected period') : nothing}
+          ${ovulation ? icon(eggIcon, 'marker marker--ovulation', 'Expected ovulation') : nothing}
           ${p.moon.enabled ? renderMoonIcon(moonPhase(p.date), p.moon.hemisphere, p.moon.show_name) : nothing}
         </span>
       </div>

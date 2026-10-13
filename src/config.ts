@@ -1,6 +1,7 @@
 import { parseLocalDate, type Weekday } from './date';
+import type { Hemisphere } from './astro/moon';
+import { TIME_FORMATS, type TimeFormat, type TitleMode } from './format';
 import type { DayCount } from './week';
-import type { TimeFormat } from './format';
 import { THEME_NAMES, TOKENS, type ThemeName, type Token } from './theme/presets';
 
 export interface EntityConfig {
@@ -11,7 +12,7 @@ export interface EntityConfig {
 
 export interface HeaderConfig {
   show: boolean;
-  title: 'month' | 'range' | 'none';
+  title: TitleMode | 'none';
   align: 'left' | 'center';
   navigation: boolean;
   idle_return: number;
@@ -20,7 +21,7 @@ export interface HeaderConfig {
 export interface MoonConfig {
   enabled: boolean;
   show_name: boolean;
-  hemisphere: 'north' | 'south';
+  hemisphere: Hemisphere;
 }
 
 export interface PeriodConfig {
@@ -49,7 +50,6 @@ export interface WallCalConfig {
 export const ENTITY_PALETTE = ['#7F77DD', '#1D9E75', '#D85A30', '#378ADD', '#D4537E', '#BA7517'];
 
 const WEEKDAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
-const TIME_FORMATS = ['12', '24', 'auto'] as const;
 const ENTITY_ID = /^calendar\.[a-z0-9_]+$/;
 const FONT_URL = /^(https:\/\/|\/(?!\/))/;
 
@@ -64,10 +64,6 @@ export function normalizeConfig(input: unknown): WallCalConfig {
   const moon = section(raw.moon, 'moon');
   const period = section(raw.period, 'period');
 
-  const daysValue = int(raw.days, 7, 5, 7, 'days');
-  if (daysValue === 6) throw new Error('days must be 5 or 7');
-  const days: DayCount = daysValue === 5 ? 5 : 7;
-
   const periodEnabled = bool(period.enabled, false, 'period.enabled');
   const lastPeriod = toLocalDate(period.last_period, 'period.last_period');
   if (periodEnabled && !lastPeriod) {
@@ -78,7 +74,7 @@ export function normalizeConfig(input: unknown): WallCalConfig {
 
   return {
     entities: parseEntities(raw.entities),
-    days,
+    days: choice(raw.days, [5, 7] as const, 7, 'days'),
     first_day: WEEKDAYS.indexOf(oneOf(raw.first_day, WEEKDAYS, 'monday', 'first_day')) as Weekday,
     time_format: oneOf(raw.time_format, TIME_FORMATS, 'auto', 'time_format'),
     refresh_interval: int(raw.refresh_interval, 300, 60, 86_400, 'refresh_interval'),
@@ -129,6 +125,13 @@ function int(value: unknown, fallback: number, min: number, max: number, path: s
   return n;
 }
 
+function choice<T extends number>(value: unknown, options: readonly T[], fallback: T, path: string): T {
+  if (value === undefined || value === null || value === '') return fallback;
+  const n = Number(value);
+  if ((options as readonly number[]).includes(n)) return n as T;
+  throw new Error(`${path} must be ${options.join(' or ')}`);
+}
+
 function oneOf<T extends string>(value: unknown, options: readonly T[], fallback: T, path: string): T {
   if (value === undefined || value === null) return fallback;
   const s = String(value).toLowerCase();
@@ -166,18 +169,20 @@ function parseEntities(value: unknown): EntityConfig[] {
 }
 
 function parseStyle(raw: Raw): { style: Partial<Record<Token, string>>; fontUrl: string | null } {
+  const { font_url, ...tokens } = raw;
+  const fontUrl = font_url === undefined || font_url === null ? null : String(font_url);
+  if (fontUrl !== null && !FONT_URL.test(fontUrl)) throw new Error('style.font_url must start with https:// or /');
+
   const style: Partial<Record<Token, string>> = {};
-  let fontUrl: string | null = null;
-  for (const [key, value] of Object.entries(raw)) {
-    if (key === 'font_url') {
-      const url = String(value);
-      if (!FONT_URL.test(url)) throw new Error('style.font_url must start with https:// or /');
-      fontUrl = url;
-    } else if ((TOKENS as readonly string[]).includes(key)) {
-      style[key as Token] = typeof value === 'number' ? `${value}px` : String(value);
-    } else {
+  for (const [key, value] of Object.entries(tokens)) {
+    if (!(TOKENS as readonly string[]).includes(key)) {
       throw new Error(`style.${key} is not a known style option. Known: ${[...TOKENS, 'font_url'].join(', ')}`);
     }
+    style[key as Token] = typeof value === 'number' ? `${value}px` : String(value);
   }
   return { style, fontUrl };
+}
+
+export function isCalendarEntityId(id: string): boolean {
+  return ENTITY_ID.test(id);
 }

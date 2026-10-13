@@ -1,6 +1,7 @@
 import type { HassLocale } from './ha-types';
 
-export type TimeFormat = '12' | '24' | 'auto';
+export const TIME_FORMATS = ['12', '24', 'auto'] as const;
+export type TimeFormat = (typeof TIME_FORMATS)[number];
 export type HourCycle = 'h12' | 'h23';
 export type TitleMode = 'month' | 'range';
 

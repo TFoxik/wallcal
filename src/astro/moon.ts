@@ -1,12 +1,17 @@
-export type MoonPhaseName =
-  | 'new'
-  | 'waxing_crescent'
-  | 'first_quarter'
-  | 'waxing_gibbous'
-  | 'full'
-  | 'waning_gibbous'
-  | 'last_quarter'
-  | 'waning_crescent';
+import { MS_PER_DAY } from '../date';
+
+const PHASES = [
+  'new',
+  'waxing_crescent',
+  'first_quarter',
+  'waxing_gibbous',
+  'full',
+  'waning_gibbous',
+  'last_quarter',
+  'waning_crescent',
+] as const;
+export type MoonPhaseName = (typeof PHASES)[number];
+export type Hemisphere = 'north' | 'south';
 
 export interface MoonPhase {
   age: number;
@@ -16,20 +21,8 @@ export interface MoonPhase {
   phase: MoonPhaseName;
 }
 
-export const SYNODIC_MONTH = 29.530588853;
+const SYNODIC_MONTH = 29.530588853;
 const REFERENCE_NEW_MOON = Date.UTC(2000, 0, 6, 18, 14);
-const MS_PER_DAY = 86_400_000;
-
-const PHASES: MoonPhaseName[] = [
-  'new',
-  'waxing_crescent',
-  'first_quarter',
-  'waxing_gibbous',
-  'full',
-  'waning_gibbous',
-  'last_quarter',
-  'waning_crescent',
-];
 
 export const PHASE_LABELS: Record<MoonPhaseName, string> = {
   new: 'New moon',
@@ -56,7 +49,7 @@ export function moonPhase(date: Date): MoonPhase {
   };
 }
 
-export function litOnRight(phase: MoonPhase, hemisphere: 'north' | 'south'): boolean {
+export function litOnRight(phase: MoonPhase, hemisphere: Hemisphere): boolean {
   return phase.waxing !== (hemisphere === 'south');
 }
 

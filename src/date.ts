@@ -1,6 +1,6 @@
 export type Weekday = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
-const MS_PER_DAY = 86_400_000;
+export const MS_PER_DAY = 86_400_000;
 
 export function startOfDay(d: Date): Date {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());

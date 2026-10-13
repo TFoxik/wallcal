@@ -39,15 +39,6 @@ export const cardStyles = css`
     font-weight: 500;
     line-height: 1.2;
   }
-  .bar__warning svg {
-    width: 22px;
-    height: 22px;
-    fill: none;
-    stroke: var(--wallcal-period-color);
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
   .nav {
     all: unset;
     cursor: pointer;
@@ -63,7 +54,8 @@ export const cardStyles = css`
     color: var(--wallcal-text);
     font-size: 15px;
   }
-  .nav svg {
+  .nav svg,
+  .bar__warning svg {
     width: 22px;
     height: 22px;
     fill: none;
@@ -71,6 +63,9 @@ export const cardStyles = css`
     stroke-width: 2;
     stroke-linecap: round;
     stroke-linejoin: round;
+  }
+  .bar__warning svg {
+    stroke: var(--wallcal-period-color);
   }
   .nav--current {
     color: var(--wallcal-muted);
@@ -84,6 +79,7 @@ export const cardStyles = css`
   }
   .day {
     position: relative;
+    isolation: isolate;
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -93,11 +89,6 @@ export const cardStyles = css`
     border-radius: var(--wallcal-radius);
     background: var(--wallcal-surface);
   }
-  .day > *,
-  .day__header > *,
-  .chip > * {
-    position: relative;
-  }
   .day--today {
     box-shadow: inset 0 0 0 2px var(--wallcal-accent);
   }
@@ -106,10 +97,8 @@ export const cardStyles = css`
   .chip--allday::before {
     content: '';
     position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
+    inset: 0;
+    z-index: -1;
     border-radius: inherit;
     pointer-events: none;
   }
@@ -119,6 +108,7 @@ export const cardStyles = css`
   }
   .day__header {
     position: relative;
+    isolation: isolate;
     display: flex;
     align-items: center;
     gap: 10px;
@@ -226,6 +216,7 @@ export const cardStyles = css`
   }
   .chip {
     position: relative;
+    isolation: isolate;
     display: flex;
     flex-direction: column;
     gap: 2px;

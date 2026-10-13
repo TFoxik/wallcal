@@ -4,6 +4,7 @@ import '../src/wallcal-card';
 import type { WallCalCard } from '../src/wallcal-card';
 import type { HaCalendarEvent } from '../src/data/events';
 import type { HomeAssistant } from '../src/ha-types';
+import { makeHass, timed } from './fixtures';
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -14,33 +15,6 @@ function deferred<T>() {
   });
   return { promise, resolve, reject };
 }
-
-function makeHass(handler: (path: string) => Promise<HaCalendarEvent[]>, lastChanged = '2026-10-13T08:00:00Z') {
-  const calls: string[] = [];
-  const hass = {
-    states: {
-      'calendar.family': {
-        entity_id: 'calendar.family',
-        state: 'off',
-        last_changed: lastChanged,
-        last_updated: lastChanged,
-        attributes: {},
-      },
-    },
-    locale: { language: 'en-US', time_format: '24' },
-    callApi: <T>(_method: string, path: string) => {
-      calls.push(path);
-      return handler(path) as Promise<T>;
-    },
-  } as HomeAssistant;
-  return { hass, calls };
-}
-
-const timed = (summary: string, startIso: string, endIso: string): HaCalendarEvent => ({
-  summary,
-  start: { dateTime: startIso },
-  end: { dateTime: endIso },
-});
 
 async function mount(config: Record<string, unknown>, hass: HomeAssistant): Promise<WallCalCard> {
   const el = document.createElement('wallcal-card') as WallCalCard;
@@ -234,6 +208,27 @@ describe('wallcal-card', () => {
     await vi.advanceTimersByTimeAsync(30_000);
     await el.updateComplete;
     expect(firstDate(el)).toBe('12');
+  });
+
+  it('does not refetch while the page is hidden and catches up when it is shown', async () => {
+    const hidden = vi.spyOn(document, 'hidden', 'get').mockReturnValue(true);
+    const { hass, calls } = makeHass(async () => []);
+    hidden.mockReturnValue(false);
+    await mount({ ...config, refresh_interval: 60 }, hass);
+    hidden.mockReturnValue(true);
+    await vi.advanceTimersByTimeAsync(180_000);
+    expect(calls).toHaveLength(1);
+    hidden.mockReturnValue(false);
+    document.dispatchEvent(new Event('visibilitychange'));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(calls).toHaveLength(2);
+    hidden.mockRestore();
+  });
+
+  it('shows no cycle overlay while period is disabled, even with a last_period set', async () => {
+    const { hass } = makeHass(async () => []);
+    const el = await mount({ ...config, period: { enabled: false, last_period: '2026-10-12' } }, hass);
+    expect(root(el).querySelector('.ring, .marker')).toBeNull();
   });
 
   it('keeps the last events and shows a warning when a refetch fails', async () => {

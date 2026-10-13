@@ -7,17 +7,9 @@ import {
   normalizeEvent,
   type WallCalEvent,
 } from '../src/data/events';
-import type { HomeAssistant } from '../src/ha-types';
+import { makeHass, wallEvent as ev } from './fixtures';
 
 const family = { entity: 'calendar.family', color: '#7F77DD' };
-const ev = (title: string, start: Date, end: Date, allDay = false): WallCalEvent => ({
-  entity: 'calendar.family',
-  title,
-  start,
-  end,
-  allDay,
-  color: '#7F77DD',
-});
 const titles = (day: Date, events: WallCalEvent[]) => eventsForDay(events, day).map((d) => d.event.title);
 
 describe('normalizeEvent', () => {
@@ -112,16 +104,10 @@ describe('mergeResults', () => {
 
 describe('fetchEvents', () => {
   it('queries each entity for the range and reports failures per entity', async () => {
-    const paths: string[] = [];
-    const hass = {
-      states: {},
-      locale: { language: 'en', time_format: 'language' },
-      callApi: async <T>(_method: string, path: string): Promise<T> => {
-        paths.push(path);
-        if (path.startsWith('calendars/calendar.broken')) throw new Error('not found');
-        return [{ summary: 'X', start: { date: '2026-10-13' }, end: { date: '2026-10-14' } }] as T;
-      },
-    } as HomeAssistant;
+    const { hass, calls: paths } = makeHass(async (path) => {
+      if (path.startsWith('calendars/calendar.broken')) throw new Error('not found');
+      return [{ summary: 'X', start: { date: '2026-10-13' }, end: { date: '2026-10-14' } }];
+    });
     const start = new Date(Date.UTC(2026, 9, 12));
     const end = new Date(Date.UTC(2026, 9, 19));
 

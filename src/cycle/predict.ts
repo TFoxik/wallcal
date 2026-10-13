@@ -14,8 +14,8 @@ export interface CycleDay {
   isOvulation: boolean;
 }
 
-export const LUTEAL_LENGTH = 14;
-export const FERTILE_DAYS_BEFORE_OVULATION = 5;
+const LUTEAL_LENGTH = 14;
+const FERTILE_DAYS_BEFORE_OVULATION = 5;
 
 export function cycleInfo(date: Date, input: CycleInput): CycleDay | null {
   let anchor: Date | null = null;

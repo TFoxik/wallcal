@@ -5,7 +5,8 @@ import { ringDash } from '../src/components/cycle-ring';
 import { renderDayColumn, type DayColumnProps } from '../src/components/day-column';
 import { renderEventChip } from '../src/components/event-chip';
 import { renderTopBar, type TopBarProps } from '../src/components/top-bar';
-import type { WallCalEvent } from '../src/data/events';
+import { normalizeConfig } from '../src/config';
+import { wallEvent } from './fixtures';
 
 let host: HTMLElement;
 beforeEach(() => {
@@ -13,14 +14,9 @@ beforeEach(() => {
   document.body.replaceChildren(host);
 });
 
-const event = (title: string, allDay = false): WallCalEvent => ({
-  entity: 'calendar.family',
-  title,
-  start: new Date(2026, 9, 13, 14, 5),
-  end: new Date(2026, 9, 13, 15),
-  allDay,
-  color: '#7F77DD',
-});
+const defaults = normalizeConfig({ entities: ['calendar.family'] });
+const event = (title: string, allDay = false) =>
+  wallEvent(title, new Date(2026, 9, 13, 14, 5), new Date(2026, 9, 13, 15), allDay);
 
 describe('ringDash', () => {
   it('fills the arc proportionally to the cycle day', () => {
@@ -59,16 +55,10 @@ describe('renderDayColumn', () => {
     events: [],
     language: 'en-US',
     hourCycle: 'h23',
-    moon: { enabled: false, show_name: false, hemisphere: 'north' },
-    period: {
-      enabled: false,
-      last_period: null,
-      cycle_length: 28,
-      period_length: 5,
-      show_fertile: true,
-      show_ovulation: true,
-    },
+    moon: defaults.moon,
     cycle: null,
+    showFertile: true,
+    showOvulation: true,
   };
   const ovulating = { day: 14, length: 28, isPeriod: false, isFertile: true, isOvulation: true };
   const bleeding = { day: 2, length: 28, isPeriod: true, isFertile: false, isOvulation: false };
@@ -93,26 +83,20 @@ describe('renderDayColumn', () => {
     expect(host.querySelector('.moon__name')?.textContent).toBe('Waxing crescent');
   });
 
-  it('ignores cycle data while the period overlay is disabled', () => {
-    render(renderDayColumn({ ...base, cycle: bleeding }), host);
-    expect(host.querySelector('.ring, .marker')).toBeNull();
-  });
-
   it('shows ring and drop on expected period days', () => {
-    render(renderDayColumn({ ...base, period: { ...base.period, enabled: true }, cycle: bleeding }), host);
+    render(renderDayColumn({ ...base, cycle: bleeding }), host);
     expect(host.querySelector('.ring--period')).not.toBeNull();
     expect(host.querySelector('.marker--period')).not.toBeNull();
   });
 
   it('shows fertile tint and ovulation marker when enabled', () => {
-    render(renderDayColumn({ ...base, period: { ...base.period, enabled: true }, cycle: ovulating }), host);
+    render(renderDayColumn({ ...base, cycle: ovulating }), host);
     expect(host.querySelector('.day--fertile')).not.toBeNull();
     expect(host.querySelector('.marker--ovulation')).not.toBeNull();
   });
 
   it('hides fertile tint and ovulation marker when switched off', () => {
-    const period = { ...base.period, enabled: true, show_fertile: false, show_ovulation: false };
-    render(renderDayColumn({ ...base, period, cycle: ovulating }), host);
+    render(renderDayColumn({ ...base, cycle: ovulating, showFertile: false, showOvulation: false }), host);
     expect(host.querySelector('.ring')).not.toBeNull();
     expect(host.querySelector('.day--fertile, .marker--ovulation')).toBeNull();
   });
@@ -126,7 +110,7 @@ describe('renderDayColumn', () => {
 
 describe('renderTopBar', () => {
   const props = (): TopBarProps => ({
-    header: { show: true, title: 'month', align: 'left', navigation: true, idle_return: 60 },
+    header: defaults.header,
     title: 'October 2026',
     isCurrentWeek: true,
     warning: null,
@@ -149,9 +133,8 @@ describe('renderTopBar', () => {
     expect(host.querySelector('.bar__center .bar__title')).not.toBeNull();
   });
 
-  it('omits the title when title is none', () => {
-    const p = props();
-    render(renderTopBar({ ...p, header: { ...p.header, title: 'none' } }), host);
+  it('omits the title when there is none', () => {
+    render(renderTopBar({ ...props(), title: null }), host);
     expect(host.querySelector('.bar__title')).toBeNull();
   });
 

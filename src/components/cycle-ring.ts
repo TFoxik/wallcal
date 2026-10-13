@@ -1,4 +1,5 @@
 import { html, type TemplateResult } from 'lit';
+import { classMap } from 'lit/directives/class-map.js';
 import type { CycleDay } from '../cycle/predict';
 
 const RADIUS = 22;
@@ -10,7 +11,7 @@ export function ringDash(cycle: CycleDay): string {
 }
 
 export function renderCycleRing(cycle: CycleDay, content: TemplateResult): TemplateResult {
-  return html`<div class="ring ${cycle.isPeriod ? 'ring--period' : ''}" title="Cycle day ${cycle.day} of ${cycle.length}">
+  return html`<div class=${classMap({ ring: true, 'ring--period': cycle.isPeriod })} title="Cycle day ${cycle.day} of ${cycle.length}">
     <svg viewBox="0 0 52 52" aria-hidden="true">
       <circle class="ring__track" cx="26" cy="26" r=${RADIUS}></circle>
       <circle

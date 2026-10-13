@@ -1,7 +1,7 @@
 import { html, nothing, type TemplateResult } from 'lit';
-import { PHASE_LABELS, litOnRight, moonPath, type MoonPhase } from '../astro/moon';
+import { PHASE_LABELS, litOnRight, moonPath, type Hemisphere, type MoonPhase } from '../astro/moon';
 
-export function renderMoonIcon(phase: MoonPhase, hemisphere: 'north' | 'south', showName: boolean): TemplateResult {
+export function renderMoonIcon(phase: MoonPhase, hemisphere: Hemisphere, showName: boolean): TemplateResult {
   const label = PHASE_LABELS[phase.phase];
   return html`<span class="moon" title=${label}>
     <svg viewBox="0 0 24 24" aria-hidden="true">
