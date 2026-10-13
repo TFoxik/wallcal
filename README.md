@@ -6,8 +6,12 @@ Clean by default, restylable from YAML, with optional moon phase and cycle overl
 ## Install
 
 **Manual (for now):** `npm install && npm run build`, copy `dist/wallcal-card.js` to
-`/config/www/`, then add `/local/wallcal-card.js` as a JavaScript module under Settings →
-Dashboards → Resources.
+`/config/www/`, then add `/local/wallcal-card.js?v=0.1.0` as a JavaScript module under Settings →
+Dashboards → Resources. Bump the `?v=` value after copying a new build, otherwise browsers (and
+wall tablets especially) keep running the cached old one.
+
+For a wall display, put the card in a **panel** view so it fills the screen. In a sections view,
+give its section a wide `column_span`: seven day columns need roughly 900 px.
 
 **HACS:** available once the first GitHub release with a built `wallcal-card.js` is published
 (HACS → Frontend → ⋮ → Custom repositories → add this repo as *Dashboard*).
@@ -62,3 +66,18 @@ npm test
 npm run dev   # open http://localhost:5173/dev/index.html
 npm run build
 ```
+
+### Local Home Assistant
+
+`dev/ha/` holds a throwaway Home Assistant setup: two fixture calendars (`calendar.family`,
+`calendar.work`) whose events come from `dev/ha/config/wallcal_fixture.json` relative to today,
+and a YAML dashboard with three WallCal variants. It needs any installed `hass` binary:
+
+```bash
+HASS_BIN=/path/to/venv/bin/hass ./dev/ha/start.sh
+```
+
+It builds the card, serves it on http://localhost:8124 and starts HA with `--skip-pip`.
+Browsers on this machine skip the login (trusted networks); first-run onboarding can be finished
+in the browser. Edit the fixture JSON while it runs to see the card pick up changes. After a
+rebuild, hard-refresh the page: HA's browser cache keeps the old card otherwise.

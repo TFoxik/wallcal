@@ -1,0 +1,41 @@
+title: WallCal dev
+views:
+  - title: Wall
+    path: wall
+    panel: true
+    cards:
+      - type: custom:wallcal-card
+        entities:
+          - entity: calendar.family
+            color: "#7F77DD"
+          - calendar.work
+        refresh_interval: 60
+        moon:
+          enabled: true
+        period:
+          enabled: true
+          last_period: 2026-10-04
+  - title: Paper 5 days
+    path: paper
+    panel: true
+    cards:
+      - type: custom:wallcal-card
+        entities:
+          - calendar.family
+          - calendar.work
+        days: 5
+        theme: paper
+        time_format: 12
+        header:
+          title: range
+        moon:
+          enabled: true
+          show_name: true
+  - title: Sections
+    type: sections
+    sections:
+      - cards:
+          - type: custom:wallcal-card
+            entities:
+              - calendar.family
+            theme: midnight

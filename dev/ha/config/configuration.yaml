@@ -1,0 +1,29 @@
+homeassistant:
+  name: WallCal dev
+  time_zone: Europe/Prague
+  auth_providers:
+    # Local-only dev instance: browsers on this machine skip the login screen.
+    - type: trusted_networks
+      trusted_networks:
+        - 127.0.0.1
+        - ::1
+      allow_bypass_login: true
+    - type: homeassistant
+
+http:
+  server_port: 8124
+
+frontend:
+api:
+config:
+logger:
+  default: warning
+
+lovelace:
+  mode: yaml
+  resources:
+    - url: /local/wallcal-card.js
+      type: module
+
+calendar:
+  - platform: wallcal_fixture

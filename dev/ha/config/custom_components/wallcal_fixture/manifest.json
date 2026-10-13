@@ -1,0 +1,10 @@
+{
+  "domain": "wallcal_fixture",
+  "name": "WallCal fixture calendar",
+  "version": "0.1.0",
+  "documentation": "https://github.com/TFoxik/wallcal",
+  "codeowners": [],
+  "requirements": [],
+  "dependencies": [],
+  "iot_class": "local_polling"
+}

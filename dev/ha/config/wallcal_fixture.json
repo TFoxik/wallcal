@@ -1,0 +1,129 @@
+{
+  "family": [
+    {
+      "summary": "School trip",
+      "day": -1,
+      "days": 3
+    },
+    {
+      "summary": "Bin day",
+      "day": 0,
+      "days": 1
+    },
+    {
+      "summary": "Dentist",
+      "day": 0,
+      "start": "08:30",
+      "end": "09:15"
+    },
+    {
+      "summary": "Swimming lessons with a rather long title that wraps",
+      "day": 1,
+      "start": "17:00",
+      "end": "18:00"
+    },
+    {
+      "summary": "Gym",
+      "day": 2,
+      "start": "07:15",
+      "end": "08:00"
+    },
+    {
+      "summary": "School run",
+      "day": 2,
+      "start": "08:00",
+      "end": "08:30"
+    },
+    {
+      "summary": "Pick up parcel",
+      "day": 2,
+      "start": "10:00",
+      "end": "10:00"
+    },
+    {
+      "summary": "Lunch with Jana",
+      "day": 2,
+      "start": "12:30",
+      "end": "13:30"
+    },
+    {
+      "summary": "Piano",
+      "day": 2,
+      "start": "16:00",
+      "end": "16:45"
+    },
+    {
+      "summary": "Football practice",
+      "day": 2,
+      "start": "18:00",
+      "end": "19:30"
+    },
+    {
+      "summary": "Book club",
+      "day": 2,
+      "start": "19:30",
+      "end": "21:30"
+    },
+    {
+      "summary": "Dinner at grandma",
+      "day": 3,
+      "start": "18:30",
+      "end": "21:00"
+    },
+    {
+      "summary": "Grandparents visiting",
+      "day": 3,
+      "days": 4
+    },
+    {
+      "summary": "<b>Should render as text</b>",
+      "day": 4,
+      "start": "12:00",
+      "end": "13:00"
+    },
+    {
+      "summary": "Weekend hike",
+      "day": 5,
+      "start": "08:00",
+      "end": "16:00"
+    }
+  ],
+  "work": [
+    {
+      "summary": "Sprint review",
+      "day": -1,
+      "start": "15:00",
+      "end": "16:00"
+    },
+    {
+      "summary": "Night deploy",
+      "day": -1,
+      "start": "23:00",
+      "end": "25:00"
+    },
+    {
+      "summary": "Standup",
+      "day": 0,
+      "start": "09:30",
+      "end": "09:45"
+    },
+    {
+      "summary": "Conference",
+      "day": 1,
+      "start": "09:00",
+      "end": "17:00",
+      "end_day": 3
+    },
+    {
+      "summary": "Release",
+      "day": 2,
+      "start": "14:00",
+      "end": "15:00"
+    },
+    {
+      "summary": "Quarter end",
+      "day": 4,
+      "days": 1
+    }
+  ]
+}

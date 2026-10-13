@@ -1,3 +1,9 @@
 node_modules/
 dist/
 .DS_Store
+dev/ha/config/*
+!dev/ha/config/configuration.yaml
+!dev/ha/config/ui-lovelace.yaml
+!dev/ha/config/wallcal_fixture.json
+!dev/ha/config/custom_components/
+dev/ha/config/custom_components/**/__pycache__/
