@@ -32,6 +32,20 @@ views:
         period:
           enabled: true
           last_period: 2026-10-04
+        overlays:
+          - position: bottom-right
+            icon: mdi:format-list-checks
+            visible: true
+            card:
+              type: todo-list
+              entity: todo.shopping
+          - position: bottom-left
+            span: 1
+            icon: mdi:weather-partly-cloudy
+            visible: true
+            card:
+              type: tile
+              entity: weather.home
   - title: Paper 5 days
     path: paper
     panel: true
@@ -48,6 +62,14 @@ views:
         moon:
           enabled: true
           show_name: true
+        overlays:
+          - position: bottom-center
+            span: 3
+            visible: true
+            icon: mdi:format-list-checks
+            card:
+              type: todo-list
+              entity: todo.shopping
   - title: Sections
     type: sections
     sections:

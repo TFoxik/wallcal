@@ -63,6 +63,8 @@ const GLYPHS: Record<string, string> = {
   'mdi:weather-fog': '🌫️',
   'mdi:weather-windy': '💨',
   'mdi:briefcase': '💼',
+  'mdi:format-list-checks': '☑️',
+  'mdi:card-outline': '▢',
 };
 customElements.define(
   'ha-icon',
@@ -73,6 +75,27 @@ customElements.define(
     }
   },
 );
+
+// Stand-in for HA's card factory so overlay placement and theming can be checked outside HA.
+window.loadCardHelpers = async () => ({
+  createCardElement: (config: Record<string, unknown>) => {
+    const card = document.createElement('div');
+    card.style.cssText = 'padding:12px 16px;color:var(--primary-text-color)';
+    const title = document.createElement('div');
+    title.style.fontWeight = '600';
+    title.textContent = String(config.title ?? config.entity ?? config.type);
+    const rows = ['Milk', 'Bread', 'Call grandma', 'Water the plants', 'Return library books'].map((text) => {
+      const row = document.createElement('label');
+      row.style.cssText = 'display:flex;gap:8px;align-items:center;padding:6px 0;border-top:1px solid var(--divider-color)';
+      const box = document.createElement('input');
+      box.type = 'checkbox';
+      row.append(box, text);
+      return row;
+    });
+    card.append(title, ...rows);
+    return card;
+  },
+});
 
 const hass = {
   states: {
@@ -109,6 +132,17 @@ const chips = {
 };
 
 const VARIANTS: Array<[string, Record<string, unknown>]> = [
+  [
+    'Overlays: todo over the weekend, entity bottom-left',
+    {
+      ...chips,
+      weather: { entity: 'weather.home' },
+      overlays: [
+        { position: 'bottom-right', visible: true, icon: 'mdi:format-list-checks', card: { type: 'todo-list', entity: 'todo.shopping' } },
+        { position: 'bottom-left', span: 1, visible: true, icon: 'mdi:weather-partly-cloudy', card: { type: 'tile', entity: 'weather.home' } },
+      ],
+    },
+  ],
   ['Toggle chips, weather, dimmed past events, auto-scroll', { ...chips, past_events: 'dim', weather: { entity: 'weather.home' } }],
   ['Hidden past events, high temperature only', { ...chips, past_events: 'hide', weather: { entity: 'weather.home', show_low: false } }],
   ['No overlays', base],

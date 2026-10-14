@@ -28,6 +28,9 @@ lovelace:
 calendar:
   - platform: wallcal_fixture
 
+todo:
+  - platform: wallcal_fixture
+
 template:
   - weather:
       - name: Home
