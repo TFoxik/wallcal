@@ -6,14 +6,17 @@ const minimal = { entities: ['calendar.family'] };
 describe('normalizeConfig', () => {
   it('fills every default', () => {
     expect(normalizeConfig(minimal)).toEqual({
-      entities: [{ entity: 'calendar.family', color: ENTITY_PALETTE[0] }],
+      entities: [{ entity: 'calendar.family', color: ENTITY_PALETTE[0], toggle: false }],
       days: 7,
       first_day: 1,
       time_format: 'auto',
       show_end_time: false,
       past_days: 'normal',
+      past_events: 'show',
+      auto_scroll: true,
       refresh_interval: 300,
       header: { show: true, title: 'month', subtitle: 'none', align: 'left', navigation: true, idle_return: 60 },
+      weather: null,
       moon: { enabled: false, show_name: false, hemisphere: 'north' },
       period: {
         enabled: false,
@@ -32,9 +35,33 @@ describe('normalizeConfig', () => {
   it('accepts shorthand and object entities, assigning palette colours by position', () => {
     const c = normalizeConfig({ entities: [{ entity: 'calendar.a', color: '#000', name: 'A' }, 'calendar.b'] });
     expect(c.entities).toEqual([
-      { entity: 'calendar.a', color: '#000', name: 'A' },
-      { entity: 'calendar.b', color: ENTITY_PALETTE[1] },
+      { entity: 'calendar.a', color: '#000', name: 'A', toggle: false },
+      { entity: 'calendar.b', color: ENTITY_PALETTE[1], toggle: false },
     ]);
+  });
+
+  it('reads toggle and icon on entities', () => {
+    const c = normalizeConfig({ entities: [{ entity: 'calendar.a', toggle: true, icon: 'mdi:flag' }] });
+    expect(c.entities[0]).toMatchObject({ toggle: true, icon: 'mdi:flag' });
+    expect(() => normalizeConfig({ entities: [{ entity: 'calendar.a', icon: 'flag' }] })).toThrow(/icon/);
+    expect(() => normalizeConfig({ entities: [{ entity: 'calendar.a', toggle: 'yes' }] })).toThrow(/toggle/);
+  });
+
+  it('validates past_events and auto_scroll', () => {
+    expect(normalizeConfig({ ...minimal, past_events: 'Hide', auto_scroll: false })).toMatchObject({
+      past_events: 'hide',
+      auto_scroll: false,
+    });
+    expect(() => normalizeConfig({ ...minimal, past_events: 'grey' })).toThrow(/past_events/);
+  });
+
+  it('reads the weather section and requires a weather entity', () => {
+    expect(normalizeConfig({ ...minimal, weather: { entity: 'weather.home' } }).weather).toEqual({
+      entity: 'weather.home',
+      show_low: true,
+    });
+    expect(() => normalizeConfig({ ...minimal, weather: { entity: 'sensor.temp' } })).toThrow(/weather entity/);
+    expect(() => normalizeConfig({ ...minimal, weather: 'weather.home' })).toThrow(/weather must be a mapping/);
   });
 
   it('reads header.title keywords case-insensitively and keeps any other text verbatim', () => {

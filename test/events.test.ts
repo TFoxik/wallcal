@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   cachedEvents,
   eventsForDay,
+  isEnded,
+  nextEventEnd,
   fetchEvents,
   mergeResults,
   normalizeEvent,
@@ -9,7 +11,7 @@ import {
 } from '../src/data/events';
 import { makeHass, wallEvent as ev } from './fixtures';
 
-const family = { entity: 'calendar.family', color: '#7F77DD' };
+const family = { entity: 'calendar.family', color: '#7F77DD', toggle: false };
 const titles = (day: Date, events: WallCalEvent[]) => eventsForDay(events, day).map((d) => d.event.title);
 
 describe('normalizeEvent', () => {
@@ -119,12 +121,47 @@ describe('fetchEvents', () => {
     const start = new Date(Date.UTC(2026, 9, 12));
     const end = new Date(Date.UTC(2026, 9, 19));
 
-    const results = await fetchEvents(hass, [family, { entity: 'calendar.broken', color: '#000' }], start, end);
+    const results = await fetchEvents(hass, [family, { entity: 'calendar.broken', color: '#000', toggle: false }], start, end);
 
     expect(paths[0]).toBe(
       'calendars/calendar.family?start=2026-10-12T00%3A00%3A00.000Z&end=2026-10-19T00%3A00%3A00.000Z',
     );
     expect(results[0].events?.map((e) => e.title)).toEqual(['X']);
     expect(results[1]).toEqual({ entity: 'calendar.broken', error: 'calendar.broken: not found' });
+  });
+});
+
+describe('isEnded', () => {
+  const now = new Date(2026, 9, 13, 12, 0);
+  const at = (h: number, m = 0) => new Date(2026, 9, 13, h, m);
+  const item = (e: WallCalEvent, continued = false) => ({ event: e, continued, endsLater: false });
+
+  it('is true once a timed event has ended, including at its exact end', () => {
+    expect(isEnded(item(ev('Standup', at(9), at(9, 15))), now)).toBe(true);
+    expect(isEnded(item(ev('Lunch', at(11), at(12))), now)).toBe(true);
+    expect(isEnded(item(ev('Review', at(11), at(13))), now)).toBe(false);
+  });
+
+  it('never ends an all-day event during its day', () => {
+    expect(isEnded(item(ev('Holiday', new Date(2026, 9, 12), new Date(2026, 9, 13), true)), now)).toBe(false);
+  });
+
+  it('ends an event carried over from yesterday when it finishes today', () => {
+    expect(isEnded(item(ev('Night shift', new Date(2026, 9, 12, 22), at(6)), true), now)).toBe(true);
+  });
+});
+
+describe('nextEventEnd', () => {
+  const now = new Date(2026, 9, 13, 12, 0);
+  const at = (h: number, m = 0) => new Date(2026, 9, 13, h, m);
+
+  it('finds the earliest end still ahead today', () => {
+    const events = [ev('A', at(9), at(10)), ev('B', at(11), at(14)), ev('C', at(12, 30), at(13))];
+    expect(nextEventEnd(events, now)).toEqual(at(13));
+  });
+
+  it('ignores all-day events and ends after today', () => {
+    const events = [ev('Trip', at(0), new Date(2026, 9, 14), true), ev('Late', at(23), new Date(2026, 9, 14, 1))];
+    expect(nextEventEnd(events, now)).toBeNull();
   });
 });

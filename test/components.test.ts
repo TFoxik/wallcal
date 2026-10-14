@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 import { render } from 'lit';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { renderCalendarToggles, type CalendarToggle } from '../src/components/calendar-toggles';
 import { ringDash } from '../src/components/cycle-ring';
 import { renderDayColumn, type DayColumnProps } from '../src/components/day-column';
 import { renderEventChip } from '../src/components/event-chip';
@@ -86,6 +87,9 @@ describe('renderDayColumn', () => {
     showOvulation: true,
     showEndTime: false,
     isPast: false,
+    now: null,
+    weather: null,
+    showLow: true,
   };
   const ovulating = { day: 14, length: 28, isPeriod: false, isFertile: true, isOvulation: true };
   const bleeding = { day: 2, length: 28, isPeriod: true, isFertile: false, isOvulation: false };
@@ -140,6 +144,76 @@ describe('renderDayColumn', () => {
     render(renderDayColumn({ ...base, events }), host);
     expect([...host.querySelectorAll('.chip__title')].map((n) => n.textContent)).toEqual(['First', 'Second']);
   });
+
+  it('pins all-day events above the scrolling list of timed events', () => {
+    render(renderDayColumn({ ...base, events: [item(event('Name day', true)), item(event('Dentist'))] }), host);
+    expect(host.querySelector('.day__allday .chip__title')?.textContent).toBe('Name day');
+    expect([...host.querySelectorAll('.day__events .chip__title')].map((n) => n.textContent)).toEqual(['Dentist']);
+  });
+
+  describe('past events on today', () => {
+    const at = (h: number) => new Date(2026, 9, 13, h);
+    const events = [
+      item(wallEvent('Holiday', new Date(2026, 9, 13), new Date(2026, 9, 14), true)),
+      item(wallEvent('Standup', at(9), at(10))),
+      item(wallEvent('Review', at(15), at(16))),
+    ];
+    const titles = () => [...host.querySelectorAll('.chip__title')].map((n) => n.textContent);
+    const endedTitles = () => [...host.querySelectorAll('.chip--ended .chip__title')].map((n) => n.textContent);
+
+    it('marks ended timed events, never all-day ones', () => {
+      render(renderDayColumn({ ...base, isToday: true, events, now: at(12) }), host);
+      expect(titles()).toEqual(['Holiday', 'Standup', 'Review']);
+      expect(endedTitles()).toEqual(['Standup']);
+    });
+
+    it('leaves other days alone', () => {
+      render(renderDayColumn({ ...base, events }), host);
+      expect(titles()).toEqual(['Holiday', 'Standup', 'Review']);
+      expect(endedTitles()).toEqual([]);
+    });
+  });
+
+  it('shows the weather icon with rounded high and low temperatures', () => {
+    const weather = { condition: 'rainy', high: 17.6, low: 8.4 };
+    render(renderDayColumn({ ...base, weather }), host);
+    expect(host.querySelector('.day__weather ha-icon')?.getAttribute('icon')).toBe('mdi:weather-rainy');
+    expect(host.querySelector('.day__temp')?.textContent?.replace(/\s+/g, '')).toBe('18°/8°');
+    render(renderDayColumn({ ...base, weather, showLow: false }), host);
+    expect(host.querySelector('.day__temp')?.textContent?.trim()).toBe('18°');
+    render(renderDayColumn(base), host);
+    expect(host.querySelector('.day__weather')).toBeNull();
+  });
+});
+
+describe('renderCalendarToggles', () => {
+  const toggles: CalendarToggle[] = [
+    { entity: 'calendar.svatky', label: 'Čeští svátci', color: '#F4A27A', hidden: false },
+    { entity: 'calendar.namedays', label: 'Namedays', color: '#5DCAA5', icon: 'mdi:flag', hidden: true },
+  ];
+
+  it('renders nothing without toggles', () => {
+    render(renderCalendarToggles([], vi.fn()), host);
+    expect(host.querySelector('.toggles')).toBeNull();
+  });
+
+  it('shows the first letter or the icon, with the pressed state and an action label', () => {
+    render(renderCalendarToggles(toggles, vi.fn()), host);
+    const [first, second] = host.querySelectorAll('button');
+    expect(first.textContent?.trim()).toBe('Č');
+    expect(first.getAttribute('aria-pressed')).toBe('true');
+    expect(first.getAttribute('aria-label')).toBe('Hide Čeští svátci');
+    expect(second.querySelector('ha-icon')?.getAttribute('icon')).toBe('mdi:flag');
+    expect(second.classList.contains('toggle--hidden')).toBe(true);
+    expect(second.getAttribute('aria-label')).toBe('Show Namedays');
+  });
+
+  it('reports the tapped calendar', () => {
+    const onToggle = vi.fn();
+    render(renderCalendarToggles(toggles, onToggle), host);
+    host.querySelectorAll('button')[1].click();
+    expect(onToggle).toHaveBeenCalledWith('calendar.namedays');
+  });
 });
 
 describe('renderTopBar', () => {
@@ -149,6 +223,8 @@ describe('renderTopBar', () => {
     subtitle: null,
     isCurrentWeek: true,
     warning: null,
+    toggles: [],
+    onToggle: vi.fn(),
     onPrev: vi.fn(),
     onToday: vi.fn(),
     onNext: vi.fn(),

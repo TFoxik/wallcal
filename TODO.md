@@ -16,7 +16,7 @@ period). Log it from the HA phone app, an automation, or a "Period started" butt
 GUI editor (`getConfigElement`) for everything currently YAML-only.
 
 ## Top bar slots
-Clock, weather, or other widgets in the `start | center | end` slots.
+Clock or other widgets in the `start | center | end` slots.
 
 ## Release workflow
 GitHub Action that builds `dist/wallcal-card.js` and attaches it to a GitHub release, so HACS

@@ -72,6 +72,22 @@ export function eventsForDay(events: WallCalEvent[], day: Date): DayEvent[] {
     .sort(compareDayEvents);
 }
 
+export function isEnded(item: DayEvent, now: Date): boolean {
+  return !item.event.allDay && item.event.end.getTime() <= now.getTime();
+}
+
+// The earliest moment after now, still today, at which a timed event ends.
+export function nextEventEnd(events: WallCalEvent[], now: Date): Date | null {
+  const from = now.getTime();
+  const until = addDays(now, 1).getTime();
+  let next: number | null = null;
+  for (const e of events) {
+    const end = e.end.getTime();
+    if (!e.allDay && end > from && end < until && (next === null || end < next)) next = end;
+  }
+  return next === null ? null : new Date(next);
+}
+
 function compareDayEvents(a: DayEvent, b: DayEvent): number {
   if (a.event.allDay !== b.event.allDay) return a.event.allDay ? -1 : 1;
   if (a.continued !== b.continued) return a.continued ? -1 : 1;
@@ -115,7 +131,7 @@ export function cachedEvents(cache: EventCache | null): WallCalEvent[] {
   return cache ? Object.values(cache.byEntity).flat() : [];
 }
 
-function errorMessage(error: unknown): string {
+export function errorMessage(error: unknown): string {
   if (error instanceof Error) return error.message;
   if (error && typeof error === 'object' && 'message' in error) return String(error.message);
   return String(error);

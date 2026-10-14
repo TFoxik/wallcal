@@ -43,6 +43,7 @@ beforeEach(() => {
 
 afterEach(() => {
   document.body.replaceChildren();
+  localStorage.clear();
   vi.useRealTimers();
 });
 
@@ -277,6 +278,126 @@ describe('wallcal-card', () => {
     const card = root(el).querySelector('ha-card') as HTMLElement;
     expect(card.style.getPropertyValue('--wallcal-background')).toBe('#F7F3EC');
     expect(card.style.getPropertyValue('--wallcal-date-size')).toBe('40px');
+  });
+
+  describe('calendar toggles', () => {
+    const twoCalendars = {
+      entities: [{ entity: 'calendar.family', name: 'Family' }, { entity: 'calendar.work', toggle: true, name: 'Work' }],
+    };
+    const byCalendar = async (path: string) =>
+      path.startsWith('calendars/calendar.work')
+        ? [timed('Standup', '2026-10-13T09:00:00+02:00', '2026-10-13T09:15:00+02:00')]
+        : [timed('Dentist', '2026-10-13T08:30:00+02:00', '2026-10-13T09:00:00+02:00')];
+
+    it('shows a chip only for toggleable calendars and hides their events when tapped', async () => {
+      const el = await mount(twoCalendars, makeHass(byCalendar).hass);
+      expect(root(el).querySelectorAll('.toggle')).toHaveLength(1);
+      expect(chipTitles(el)).toEqual(['Dentist', 'Standup']);
+
+      click(el, '.toggle');
+      await flush(el);
+      expect(chipTitles(el)).toEqual(['Dentist']);
+      expect(root(el).querySelector('.toggle')?.getAttribute('aria-pressed')).toBe('false');
+
+      click(el, '.toggle');
+      await flush(el);
+      expect(chipTitles(el)).toEqual(['Dentist', 'Standup']);
+    });
+
+    it('remembers hidden calendars on this device', async () => {
+      const first = await mount(twoCalendars, makeHass(byCalendar).hass);
+      click(first, '.toggle');
+      const second = await mount(twoCalendars, makeHass(byCalendar).hass);
+      expect(chipTitles(second)).toEqual(['Dentist']);
+    });
+
+    it('ignores the stored choice for a calendar this card has no chip for', async () => {
+      localStorage.setItem('wallcal:hidden-calendars', JSON.stringify(['calendar.work']));
+      const el = await mount({ entities: ['calendar.family', 'calendar.work'] }, makeHass(byCalendar).hass);
+      expect(chipTitles(el)).toEqual(['Dentist', 'Standup']);
+    });
+
+    it('survives unreadable storage', async () => {
+      localStorage.setItem('wallcal:hidden-calendars', '{broken');
+      const el = await mount(twoCalendars, makeHass(byCalendar).hass);
+      expect(chipTitles(el)).toEqual(['Dentist', 'Standup']);
+    });
+  });
+
+  describe('weather', () => {
+    function weatherHass(supported_features = 1) {
+      const { hass } = makeHass(async () => []);
+      const stop = vi.fn(async () => undefined);
+      const subscribe = vi.fn(async (callback: (message: unknown) => void, _message: Record<string, unknown>) => {
+        callback({
+          type: 'daily',
+          forecast: [{ datetime: '2026-10-14T00:00:00+02:00', condition: 'sunny', temperature: 18, templow: 9 }],
+        });
+        return stop;
+      });
+      hass.states['weather.home'] = { last_changed: '', attributes: { supported_features } };
+      hass.connection = { subscribeMessage: subscribe as HomeAssistant['connection']['subscribeMessage'] };
+      return { hass, subscribe, stop };
+    }
+    const weatherConfig = { ...config, weather: { entity: 'weather.home' } };
+
+    it('subscribes once to the daily forecast and shows it on its day', async () => {
+      const { hass, subscribe } = weatherHass();
+      const el = await mount(weatherConfig, hass);
+      el.hass = { ...hass };
+      await flush(el);
+      expect(subscribe).toHaveBeenCalledTimes(1);
+      expect(subscribe.mock.calls[0][1]).toEqual({
+        type: 'weather/subscribe_forecast',
+        forecast_type: 'daily',
+        entity_id: 'weather.home',
+      });
+      expect(root(el).querySelectorAll('.day__weather')).toHaveLength(1);
+      expect(root(el).querySelectorAll('.day')[2].querySelector('.day__temp')?.textContent?.replace(/\s+/g, '')).toBe(
+        '18°/9°',
+      );
+    });
+
+    it('unsubscribes when detached', async () => {
+      const { hass, stop } = weatherHass();
+      const el = await mount(weatherConfig, hass);
+      el.remove();
+      await flush(el);
+      expect(stop).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not retry a failed subscription on every hass update', async () => {
+      const { hass, subscribe } = weatherHass();
+      subscribe.mockRejectedValue(new Error('unknown entity'));
+      const el = await mount(weatherConfig, hass);
+      el.hass = { ...hass };
+      el.hass = { ...hass };
+      await flush(el);
+      expect(subscribe).toHaveBeenCalledTimes(1);
+      expect(root(el).querySelector('.bar__warning')?.getAttribute('title')).toBe('weather.home: unknown entity');
+    });
+
+    it('warns when the entity offers no daily forecast', async () => {
+      const { hass, subscribe } = weatherHass(2);
+      const el = await mount(weatherConfig, hass);
+      expect(subscribe).not.toHaveBeenCalled();
+      expect(root(el).querySelector('.bar__warning')?.getAttribute('title')).toBe(
+        'weather.home: no daily forecast available',
+      );
+    });
+  });
+
+  it('wakes when an event ends so it can be dimmed on time, without refetching', async () => {
+    const { hass, calls } = makeHass(async () => [
+      timed('Standup', '2026-10-13T10:00:00+02:00', '2026-10-13T10:30:00+02:00'),
+    ]);
+    const el = await mount({ ...config, past_events: 'dim', refresh_interval: 86_400 }, hass);
+    expect(root(el).querySelector('.grid')?.classList.contains('grid--events-dim')).toBe(true);
+    expect(root(el).querySelector('.chip--ended')).toBeNull();
+    await vi.advanceTimersByTimeAsync(30 * 60_000 + 1000);
+    await el.updateComplete;
+    expect(calls).toHaveLength(1);
+    expect(root(el).querySelector('.chip--ended .chip__title')?.textContent).toBe('Standup');
   });
 
   it('provides a stub config using the first calendar', () => {

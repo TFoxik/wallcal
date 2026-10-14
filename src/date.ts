@@ -33,3 +33,7 @@ export function parseLocalDate(value: string): Date | null {
 export function msUntilNextMidnight(now: Date): number {
   return addDays(now, 1).getTime() - now.getTime();
 }
+
+export function dayKey(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}

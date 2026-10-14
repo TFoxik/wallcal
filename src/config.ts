@@ -8,6 +8,8 @@ export interface EntityConfig {
   entity: string;
   color: string;
   name?: string;
+  icon?: string;
+  toggle: boolean;
 }
 
 const TITLE_SETTINGS = [...TITLE_MODES, 'none'] as const;
@@ -37,8 +39,16 @@ export interface PeriodConfig {
   show_ovulation: boolean;
 }
 
+export interface WeatherConfig {
+  entity: string;
+  show_low: boolean;
+}
+
 export const PAST_DAYS = ['normal', 'dim', 'grey'] as const;
 export type PastDays = (typeof PAST_DAYS)[number];
+
+export const PAST_EVENTS = ['show', 'dim', 'hide'] as const;
+export type PastEvents = (typeof PAST_EVENTS)[number];
 
 export interface WallCalConfig {
   entities: EntityConfig[];
@@ -47,8 +57,11 @@ export interface WallCalConfig {
   time_format: TimeFormat;
   show_end_time: boolean;
   past_days: PastDays;
+  past_events: PastEvents;
+  auto_scroll: boolean;
   refresh_interval: number;
   header: HeaderConfig;
+  weather: WeatherConfig | null;
   moon: MoonConfig;
   period: PeriodConfig;
   theme: ThemeName;
@@ -60,6 +73,8 @@ export const ENTITY_PALETTE = ['#7F77DD', '#1D9E75', '#D85A30', '#378ADD', '#D45
 
 const WEEKDAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
 const ENTITY_ID = /^calendar\.[a-z0-9_]+$/;
+const WEATHER_ID = /^weather\.[a-z0-9_]+$/;
+const ICON = /^[a-z0-9-]+:[a-z0-9-]+$/;
 const FONT_URL = /^(https:\/\/|\/(?!\/))/;
 
 type Raw = Record<string, unknown>;
@@ -88,6 +103,8 @@ export function normalizeConfig(input: unknown): WallCalConfig {
     time_format: oneOf(raw.time_format, TIME_FORMATS, 'auto', 'time_format'),
     show_end_time: bool(raw.show_end_time, false, 'show_end_time'),
     past_days: oneOf(raw.past_days, PAST_DAYS, 'normal', 'past_days'),
+    past_events: oneOf(raw.past_events, PAST_EVENTS, 'show', 'past_events'),
+    auto_scroll: bool(raw.auto_scroll, true, 'auto_scroll'),
     refresh_interval: int(raw.refresh_interval, 300, 60, 86_400, 'refresh_interval'),
     header: {
       show: bool(header.show, true, 'header.show'),
@@ -97,6 +114,7 @@ export function normalizeConfig(input: unknown): WallCalConfig {
       navigation: bool(header.navigation, true, 'header.navigation'),
       idle_return: int(header.idle_return, 60, 0, 86_400, 'header.idle_return'),
     },
+    weather: raw.weather === undefined || raw.weather === null ? null : parseWeather(section(raw.weather, 'weather')),
     moon: {
       enabled: bool(moon.enabled, false, 'moon.enabled'),
       show_name: bool(moon.show_name, false, 'moon.show_name'),
@@ -185,8 +203,23 @@ function parseEntities(value: unknown): EntityConfig[] {
       throw new Error(`entities[${i}]: "${entity}" is not a calendar entity id (expected calendar.something)`);
     }
     const color = obj.color === undefined ? ENTITY_PALETTE[i % ENTITY_PALETTE.length] : String(obj.color);
-    return obj.name === undefined ? { entity, color } : { entity, color, name: String(obj.name) };
+    const result: EntityConfig = { entity, color, toggle: bool(obj.toggle, false, `entities[${i}].toggle`) };
+    if (obj.name !== undefined) result.name = String(obj.name);
+    if (obj.icon !== undefined) {
+      const icon = String(obj.icon);
+      if (!ICON.test(icon)) throw new Error(`entities[${i}].icon must look like mdi:flag`);
+      result.icon = icon;
+    }
+    return result;
   });
+}
+
+function parseWeather(raw: Raw): WeatherConfig {
+  const entity = String(raw.entity ?? '');
+  if (!WEATHER_ID.test(entity)) {
+    throw new Error(`weather.entity: "${entity}" is not a weather entity id (expected weather.something)`);
+  }
+  return { entity, show_low: bool(raw.show_low, true, 'weather.show_low') };
 }
 
 function parseStyle(raw: Raw): { style: Partial<Record<Token, string>>; fontUrl: string | null } {

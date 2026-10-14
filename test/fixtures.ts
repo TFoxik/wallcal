@@ -17,6 +17,7 @@ export function makeHass(
   const hass: HomeAssistant = {
     states: { 'calendar.family': { last_changed: lastChanged } },
     locale: { language: 'en-US', time_format: '24' },
+    connection: { subscribeMessage: () => Promise.resolve(async () => undefined) },
     callApi: <T>(_method: string, path: string) => {
       calls.push(path);
       return handler(path) as Promise<T>;

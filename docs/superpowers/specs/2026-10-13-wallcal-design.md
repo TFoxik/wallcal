@@ -95,6 +95,34 @@ that input is produced.
   The `hass` setter alone never triggers a fetch: HA sets it many times per second.
 - On failure: keep the last good data, show a warning icon in the top bar (title attribute holds
   the error message), retry on the next trigger.
+- Layout: all-day events are pinned under the day header; timed events scroll in their own list
+  when they overflow. That needs a bounded card height (panel view or sections grid); in masonry
+  the card grows with its content.
+- `past_events: show | dim | hide` applies to today's timed events that have ended (all-day events
+  never count as ended; earlier days are covered by `past_days`). A separate timer wakes at the
+  next event end today and re-renders without refetching, so the change happens on time.
+- `auto_scroll` (default true) scrolls today's list so the first event that has not ended is at the
+  top: on load, every refresh, and on returning to the current week, but only once the day lists
+  have not been touched or wheel-scrolled for `header.idle_return` seconds (60 when that is 0).
+
+### 4.2a Calendar toggles
+- An entity with `toggle: true` gets a round chip in the top bar's end slot, filled with the
+  entity colour and showing `icon` (via HA's `ha-icon`) or the first letter of `name`, falling
+  back to the entity's `friendly_name`. Tapping it hides or shows that calendar's events.
+- Hidden calendars are stored per device in `localStorage` (`wallcal:hidden-calendars`, a list of
+  entity ids shared by every card). A card only applies the list to calendars it has a chip for.
+- Hidden calendars are still fetched, so showing them again is instant.
+- Chips live in the top bar and are not shown with `header.show: false`.
+
+### 4.2b Weather
+- `weather.entity` subscribes to `weather/subscribe_forecast` over the HA websocket, `daily` when
+  the entity supports it, else `twice_daily` (day and night halves merged per date). Entities with
+  only an hourly forecast show a warning instead.
+- Each day with a forecast shows the condition icon (`mdi:weather-*` via `ha-icon`) and the rounded
+  high, plus `/low` unless `weather.show_low: false`, on the right of the day header.
+- The subscription is dropped when the card is detached or reconfigured; HA's websocket library
+  resubscribes it after a reconnect. A failed subscription shows a warning and is retried only when
+  the card is reattached or reconfigured, not on every `hass` update.
 
 ### 4.3 Time format
 `time_format: 12 | 24 | auto`. `auto` uses `hass.locale.time_format` (`12`, `24`, `language`,
@@ -147,7 +175,7 @@ contraception.
   but still enabled when already on the current week.
 - `header.idle_return: <seconds>` (default 60, `0` = never) returns to the current week after no
   interaction.
-- The bar is laid out as `start | center | end` slots, so later additions (clock, weather) plug in.
+- The bar is laid out as `start | center | end` slots; calendar toggle chips sit first in `end`.
 
 ### 4.7 Day after midnight
 The card re-renders at local midnight (timer computed to the next midnight, re-armed each time) so
@@ -208,12 +236,16 @@ entities:                         # required, ≥ 1
   - entity: calendar.family
     color: "#7F77DD"              # optional; default from a built-in palette
     name: Family                  # optional
+    toggle: false                 # true adds a show/hide chip in the top bar
+    icon: mdi:account-group       # optional chip icon; default is the first letter of the name
   - calendar.work                 # shorthand
 days: 7                           # 5 | 7, default 7
 first_day: monday                 # monday … sunday, default monday; ignored when days: 5
 time_format: auto                 # 12 | 24 | auto, default auto
 show_end_time: false              # timed events show "8:30 – 9:15"
 past_days: normal                 # normal | dim | grey: days before today
+past_events: show                 # show | dim | hide: today's events that have ended
+auto_scroll: true                 # today's list scrolls to the next upcoming event
 refresh_interval: 300             # seconds, default 300, min 60
 header:
   show: true
@@ -222,6 +254,9 @@ header:
   align: left                     # left | center
   navigation: true
   idle_return: 60                 # seconds, 0 = never
+weather:                          # optional; off when omitted
+  entity: weather.home
+  show_low: true
 moon:
   enabled: false
   show_name: false

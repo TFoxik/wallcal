@@ -11,7 +11,9 @@ Dashboards → Resources. Bump the `?v=` value after copying a new build, otherw
 wall tablets especially) keep running the cached old one.
 
 For a wall display, put the card in a **panel** view so it fills the screen. In a sections view,
-give its section a wide `column_span`: seven day columns need roughly 900 px.
+give its section a wide `column_span`: seven day columns need roughly 900 px. Busy days scroll
+inside their column only when the card has a fixed height (panel or sections); in a masonry view
+the card grows to fit every event.
 
 **HACS:** available once the first GitHub release with a built `wallcal-card.js` is published
 (HACS → Frontend → ⋮ → Custom repositories → add this repo as *Dashboard*).
@@ -24,9 +26,16 @@ entities:
   - entity: calendar.family
     color: "#7F77DD"
   - calendar.work
+  - entity: calendar.namedays
+    color: "#F4A27A"
+    toggle: true     # round chip in the header shows/hides this calendar
+    icon: mdi:flag   # optional; otherwise the chip shows the first letter
 days: 7              # or 5 for Mon–Fri
 first_day: monday
 time_format: auto    # 12 | 24 | auto
+past_events: dim     # show | dim | hide today's finished events
+weather:
+  entity: weather.home
 header:
   title: month       # month | range | none
   navigation: true
@@ -54,6 +63,8 @@ Every option and style token is listed in
 - **Predictions are estimates.** Expected period, fertile window and ovulation come from a fixed
   cycle length and the standard 14-day luteal phase. They are a calendar hint, not medical advice
   and not a contraception method.
+- Calendars hidden with a header chip stay hidden on that device (browser storage) until tapped
+  again; other tablets keep their own choice.
 - Moon phase uses the mean lunar cycle and can be off by up to about half a day.
 - Built for old wall tablets: works on Chrome / Android WebView 87+ and Safari / iOS 14.5+, with no
   animations or background work beyond a refresh every few minutes.

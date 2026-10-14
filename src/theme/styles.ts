@@ -86,10 +86,36 @@ export const cardStyles = css`
   .nav--current {
     color: var(--wallcal-muted);
   }
+  .toggles {
+    display: flex;
+    gap: 8px;
+  }
+  .toggle {
+    all: unset;
+    cursor: pointer;
+    display: inline-grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    box-sizing: border-box;
+    border-radius: 50%;
+    background: var(--toggle-color);
+    color: #fff;
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1;
+    --mdc-icon-size: 22px;
+  }
+  .toggle--hidden {
+    background: var(--wallcal-surface);
+    color: var(--toggle-color);
+    opacity: 0.6;
+  }
   .grid {
     flex: 1;
     display: grid;
     grid-template-columns: repeat(var(--wallcal-days, 7), minmax(0, 1fr));
+    grid-template-rows: minmax(0, 1fr);
     gap: var(--wallcal-gap);
     min-height: 0;
   }
@@ -132,8 +158,9 @@ export const cardStyles = css`
     position: relative;
     isolation: isolate;
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 10px;
+    gap: 4px 10px;
     padding: 4px;
     border-radius: calc(var(--wallcal-radius) - 4px);
   }
@@ -230,15 +257,48 @@ export const cardStyles = css`
   .moon__lit {
     fill: var(--wallcal-moon-color);
   }
+  .day__weather {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    margin-left: auto;
+    font-size: var(--wallcal-time-size);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    --mdc-icon-size: 18px;
+  }
+  .day__low {
+    color: var(--wallcal-muted);
+  }
+  .day__allday,
   .day__events {
     display: flex;
     flex-direction: column;
     gap: 6px;
-    overflow: hidden;
+  }
+  .day__allday {
+    flex: none;
+    max-height: 40%;
+    overflow-y: auto;
+  }
+  .day__events {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
+  .grid--events-dim .chip--ended {
+    opacity: 0.5;
+  }
+  .grid--events-hide .chip--ended {
+    display: none;
   }
   .chip {
     position: relative;
     isolation: isolate;
+    flex: none;
     display: flex;
     flex-direction: column;
     gap: 2px;
