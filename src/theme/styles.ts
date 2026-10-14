@@ -5,6 +5,16 @@ export const cardStyles = css`
     display: block;
     height: 100%;
   }
+  /* The panel view wraps the card in an auto-height element, so 100% would grow with the events
+     instead of fitting the screen and letting busy days scroll. */
+  :host([layout='panel']) {
+    height: calc(100vh - var(--header-height, 56px));
+  }
+  /* The panel view squares every card's corners but keeps the theme's radius here; the default
+     radius token reads --ha-card-border-radius, so restoring it rounds the card, days and headers. */
+  :host([layout='panel']) ha-card {
+    --ha-card-border-radius: var(--restore-card-border-radius, 16px);
+  }
   ha-card {
     display: flex;
     flex-direction: column;

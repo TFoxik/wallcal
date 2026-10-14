@@ -96,8 +96,10 @@ that input is produced.
 - On failure: keep the last good data, show a warning icon in the top bar (title attribute holds
   the error message), retry on the next trigger.
 - Layout: all-day events are pinned under the day header; timed events scroll in their own list
-  when they overflow. That needs a bounded card height (panel view or sections grid); in masonry
-  the card grows with its content.
+  when they overflow. In a panel view the card sizes itself to
+  `100vh − --header-height` (HA sets `layout = 'panel'` on the card; it is reflected to an
+  attribute), because the panel wrapper has auto height and `100%` would grow with the events. In
+  sections the grid row height bounds it; in masonry the card grows with its content.
 - `past_events: show | dim | hide` applies to today's timed events that have ended (all-day events
   never count as ended; earlier days are covered by `past_days`). A separate timer wakes at the
   next event end today and re-renders without refetching, so the change happens on time.
@@ -202,7 +204,7 @@ Tokens (config key → CSS property):
 | `accent` | `--primary-color` | today highlight, buttons |
 | `today_background` | `accent` (drawn at 12% opacity) | today column tint |
 | `divider` | `--divider-color` | separators |
-| `radius` | `--ha-card-border-radius`, fallback 16px | card / column radius |
+| `radius` | `--ha-card-border-radius` (panel view: the theme radius it squares away), fallback 16px | card / column radius; day headers use radius − 4px |
 | `chip_radius` | 10px | event chip radius |
 | `gap` | 4px | gap between columns |
 | `padding` | 8px | space between the card edge and its content |

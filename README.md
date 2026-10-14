@@ -11,9 +11,9 @@ Dashboards → Resources. Bump the `?v=` value after copying a new build, otherw
 wall tablets especially) keep running the cached old one.
 
 For a wall display, put the card in a **panel** view so it fills the screen. In a sections view,
-give its section a wide `column_span`: seven day columns need roughly 900 px. Busy days scroll
-inside their column only when the card has a fixed height (panel or sections); in a masonry view
-the card grows to fit every event.
+give its section a wide `column_span`: seven day columns need roughly 900 px. In a panel view the
+card fills the screen below the HA header and busy days scroll inside their column; in sections it
+uses its grid height. In a masonry view the card grows to fit every event instead.
 
 **HACS:** available once the first GitHub release with a built `wallcal-card.js` is published
 (HACS → Frontend → ⋮ → Custom repositories → add this repo as *Dashboard*).

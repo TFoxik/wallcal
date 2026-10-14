@@ -27,6 +27,7 @@ export class WallCalCard extends LitElement {
   static styles = cardStyles;
 
   static properties = {
+    layout: { reflect: true },
     _config: { state: true },
     _anchor: { state: true },
     _today: { state: true },
@@ -38,6 +39,8 @@ export class WallCalCard extends LitElement {
     _weatherWarning: { state: true },
   };
 
+  /** Set by HA: 'panel', 'grid' (sections) or 'masonry'. */
+  declare layout?: string;
   declare _config?: WallCalConfig;
   declare _anchor: Date;
   declare _today: Date;

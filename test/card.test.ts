@@ -400,6 +400,13 @@ describe('wallcal-card', () => {
     expect(root(el).querySelector('.chip--ended .chip__title')?.textContent).toBe('Standup');
   });
 
+  it('reflects the layout HA assigns so the panel view can fit it to the screen', async () => {
+    const el = await mount(config, makeHass(async () => []).hass);
+    el.layout = 'panel';
+    await flush(el);
+    expect(el.getAttribute('layout')).toBe('panel');
+  });
+
   it('provides a stub config using the first calendar', () => {
     const Card = customElements.get('wallcal-card') as unknown as { getStubConfig(h: HomeAssistant): unknown };
     expect(Card.getStubConfig(makeHass(async () => []).hass)).toEqual({ entities: ['calendar.family'] });
