@@ -326,7 +326,7 @@ function maxHeight(value: unknown, path: string): string {
   if (value === undefined || value === null || value === '') return '40%';
   const text = String(value).trim();
   if (text.endsWith('%')) return `${percent(text, 40, path)}%`;
-  return `${int(text.replace(/px$/, ''), 0, 40, 2000, `${path} (pixels)`)}px`;
+  return `${int(text.replace(/px$/, ''), 0, 1, 2000, `${path} (pixels)`)}px`;
 }
 
 function icon(value: unknown, path: string): string {

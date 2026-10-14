@@ -58,7 +58,7 @@ Validation (`config.ts`, throws like the rest of `normalizeConfig`):
 - `overlays` must be a list; each item a mapping with a `card` mapping that has a string `type`.
 - `position` must be one of the three values and must not repeat.
 - `span` integer in `1..days`; `width` a percentage `10%..100%`; `max_height` a percentage
-  `10%..100%` or a positive integer number of px; `offset` integer `0..400`.
+  `10%..100%` or a whole number of px `1..2000` (with or without `px`); `offset` integer `0..400`.
 - `icon` must match the existing `ICON` pattern.
 - The contents of `card` are not validated; that is the card factory's job (4.4).
 

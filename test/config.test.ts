@@ -219,6 +219,10 @@ describe('normalizeConfig', () => {
       expect(o).toMatchObject({ span: 1, width: 0.6, max_height: '320px', offset: 72, toggle: 'none', visible: true, name: 'Shop', icon: 'mdi:cart' });
       expect(parse(overlay({ max_height: '25%' }))[0].max_height).toBe('25%');
       expect(parse(overlay({ max_height: '300px' }))[0].max_height).toBe('300px');
+      expect(parse(overlay({ max_height: 20 }))[0].max_height).toBe('20px');
+      expect(parse(overlay({ max_height: '1px' }))[0].max_height).toBe('1px');
+      expect(() => parse(overlay({ max_height: 0 }))).toThrow(/max_height \(pixels\) must be a whole number from 1 to 2000/);
+      expect(() => parse(overlay({ max_height: 2001 }))).toThrow(/max_height/);
     });
 
     it('reads toggle as header, pill or none, with true and false as header and none', () => {
