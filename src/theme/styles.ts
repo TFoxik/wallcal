@@ -98,28 +98,40 @@ export const cardStyles = css`
   }
   .toggles {
     display: flex;
-    gap: 8px;
+    gap: 4px;
   }
+  /* The 44px box is the touch target; ::before draws the smaller visible disc. */
   .toggle {
     all: unset;
     cursor: pointer;
+    position: relative;
+    isolation: isolate;
     display: inline-grid;
     place-items: center;
     width: 44px;
     height: 44px;
     box-sizing: border-box;
     border-radius: 50%;
-    background: var(--toggle-color);
-    color: #fff;
-    font-size: 18px;
+    color: var(--toggle-color);
+    font-size: 14px;
     font-weight: 600;
     line-height: 1;
-    --mdc-icon-size: 22px;
+    --mdc-icon-size: 18px;
+  }
+  .toggle::before {
+    content: '';
+    position: absolute;
+    inset: 6px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--toggle-color) 18%, var(--wallcal-surface));
+    z-index: -1;
   }
   .toggle--hidden {
-    background: var(--wallcal-surface);
-    color: var(--toggle-color);
-    opacity: 0.6;
+    color: var(--wallcal-muted);
+  }
+  .toggle--hidden::before {
+    background: none;
+    box-shadow: inset 0 0 0 1.5px var(--wallcal-muted);
   }
   .grid {
     --ring-size: calc(var(--wallcal-date-size) * 1.75);
