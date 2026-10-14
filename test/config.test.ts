@@ -30,6 +30,7 @@ describe('normalizeConfig', () => {
       theme: 'default',
       style: {},
       font_url: null,
+      overlays: [],
     });
   });
 
@@ -186,5 +187,64 @@ describe('normalizeConfig', () => {
 
   it('rejects unknown themes', () => {
     expect(() => normalizeConfig({ ...minimal, theme: 'neon' })).toThrow(/theme must be one of/);
+  });
+
+  describe('overlays', () => {
+    const todo = { type: 'todo-list', entity: 'todo.shopping' };
+    const overlay = (extra: Record<string, unknown> = {}) => ({ position: 'bottom-right', card: todo, ...extra });
+    const parse = (...overlays: unknown[]) => normalizeConfig({ ...minimal, overlays }).overlays;
+
+    it('fills overlay defaults', () => {
+      expect(parse(overlay())).toEqual([
+        {
+          position: 'bottom-right',
+          span: 2,
+          width: 0.9,
+          max_height: '40%',
+          offset: 8,
+          toggle: true,
+          visible: false,
+          icon: 'mdi:card-outline',
+          card: todo,
+        },
+      ]);
+    });
+
+    it('reads sizes, name and toggle options', () => {
+      const [o] = parse(
+        overlay({ span: 1, width: '60%', max_height: 320, offset: 72, toggle: false, visible: true, name: 'Shop', icon: 'mdi:cart' }),
+      );
+      expect(o).toMatchObject({ span: 1, width: 0.6, max_height: '320px', offset: 72, toggle: false, visible: true, name: 'Shop', icon: 'mdi:cart' });
+      expect(parse(overlay({ max_height: '25%' }))[0].max_height).toBe('25%');
+      expect(parse(overlay({ max_height: '300px' }))[0].max_height).toBe('300px');
+    });
+
+    it('allows one overlay per position', () => {
+      expect(parse(overlay(), overlay({ position: 'bottom-left' }))).toHaveLength(2);
+      expect(() => parse(overlay(), overlay())).toThrow(/only one overlay can use bottom-right/);
+    });
+
+    it('rejects invalid overlays', () => {
+      expect(() => normalizeConfig({ ...minimal, overlays: {} })).toThrow(/overlays must be a list/);
+      expect(() => parse({ card: todo })).toThrow(/overlays\[0\]\.position is required/);
+      expect(() => parse(overlay({ position: 'top-left' }))).toThrow(/position must be one of/);
+      expect(() => parse(overlay({ span: 8 }))).toThrow(/span/);
+      expect(() => parse(overlay({ span: 0 }))).toThrow(/span/);
+      expect(() => parse(overlay({ width: 0.8 }))).toThrow(/width/);
+      expect(() => parse(overlay({ width: '5%' }))).toThrow(/width/);
+      expect(() => parse(overlay({ max_height: '120%' }))).toThrow(/max_height/);
+      expect(() => parse(overlay({ max_height: 'tall' }))).toThrow(/max_height/);
+      expect(() => parse(overlay({ offset: 500 }))).toThrow(/offset/);
+      expect(() => parse({ position: 'bottom-left' })).toThrow(/card/);
+      expect(() => parse({ position: 'bottom-left', card: { entity: 'todo.shopping' } })).toThrow(/card needs a type/);
+      expect(() => parse(overlay({ icon: 'list' }))).toThrow(/icon/);
+      expect(() => parse(overlay({ visible: 'yes' }))).toThrow(/visible/);
+    });
+
+    it('limits span to the number of days', () => {
+      expect(() => normalizeConfig({ ...minimal, days: 5, overlays: [overlay({ span: 6 })] })).toThrow(
+        /overlays\[0\]\.span must be a whole number from 1 to 5/,
+      );
+    });
   });
 });

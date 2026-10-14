@@ -56,6 +56,24 @@ export type PastDays = (typeof PAST_DAYS)[number];
 export const PAST_EVENTS = ['show', 'dim', 'hide'] as const;
 export type PastEvents = (typeof PAST_EVENTS)[number];
 
+export const OVERLAY_POSITIONS = ['bottom-left', 'bottom-center', 'bottom-right'] as const;
+export type OverlayPosition = (typeof OVERLAY_POSITIONS)[number];
+
+export interface OverlayConfig {
+  position: OverlayPosition;
+  span: number;
+  /** Share of the spanned columns, 0.1–1. */
+  width: number;
+  /** CSS length: a percentage of the grid height or pixels. */
+  max_height: string;
+  offset: number;
+  toggle: boolean;
+  visible: boolean;
+  icon: string;
+  name?: string;
+  card: Record<string, unknown>;
+}
+
 export interface WallCalConfig {
   entities: EntityConfig[];
   days: DayCount;
@@ -71,6 +89,7 @@ export interface WallCalConfig {
   weather: WeatherConfig | null;
   moon: MoonConfig;
   period: PeriodConfig;
+  overlays: OverlayConfig[];
   theme: ThemeName;
   style: Partial<Record<Token, string>>;
   font_url: string | null;
@@ -85,6 +104,7 @@ const ICON = /^[a-z0-9-]+:[a-z0-9-]+$/;
 // Each label calendar gets its own header line; more than two would crowd out the events.
 const MAX_LABEL_CALENDARS = 2;
 const FONT_URL = /^(https:\/\/|\/(?!\/))/;
+const PERCENT = /^\d+(\.\d+)?%$/;
 
 type Raw = Record<string, unknown>;
 
@@ -104,10 +124,11 @@ export function normalizeConfig(input: unknown): WallCalConfig {
   }
 
   const { style, fontUrl } = parseStyle(section(raw.style, 'style'));
+  const days = choice(raw.days, [5, 7] as const, 7, 'days');
 
   return {
     entities: parseEntities(raw.entities),
-    days: choice(raw.days, [5, 7] as const, 7, 'days'),
+    days,
     first_day: WEEKDAYS.indexOf(oneOf(raw.first_day, WEEKDAYS, 'monday', 'first_day')) as Weekday,
     time_format: oneOf(raw.time_format, TIME_FORMATS, 'auto', 'time_format'),
     weekday_format: oneOf(raw.weekday_format, WEEKDAY_FORMATS, 'short', 'weekday_format'),
@@ -138,6 +159,7 @@ export function normalizeConfig(input: unknown): WallCalConfig {
       show_fertile: bool(period.show_fertile, true, 'period.show_fertile'),
       show_ovulation: bool(period.show_ovulation, true, 'period.show_ovulation'),
     },
+    overlays: parseOverlays(raw.overlays, days),
     theme: oneOf(raw.theme, THEME_NAMES, 'default', 'theme'),
     style,
     font_url: fontUrl,
@@ -241,6 +263,62 @@ function parseWeather(raw: Raw): WeatherConfig {
     throw new Error(`weather.entity: "${entity}" is not a weather entity id (expected weather.something)`);
   }
   return { entity, show_low: bool(raw.show_low, true, 'weather.show_low') };
+}
+
+function parseOverlays(value: unknown, days: number): OverlayConfig[] {
+  if (value === undefined || value === null) return [];
+  if (!Array.isArray(value)) throw new Error('overlays must be a list');
+  const used = new Set<OverlayPosition>();
+  return value.map((item, i) => {
+    const path = `overlays[${i}]`;
+    const obj = section(item, path);
+    if (obj.position === undefined || obj.position === null) {
+      throw new Error(`${path}.position is required (${OVERLAY_POSITIONS.join(', ')})`);
+    }
+    const position = oneOf(obj.position, OVERLAY_POSITIONS, 'bottom-right', `${path}.position`);
+    if (used.has(position)) throw new Error(`${path}.position: only one overlay can use ${position}`);
+    used.add(position);
+
+    const card = section(obj.card, `${path}.card`);
+    if (typeof card.type !== 'string' || !card.type) {
+      throw new Error(`${path}.card needs a type, for example type: todo-list`);
+    }
+    const icon = obj.icon === undefined ? 'mdi:card-outline' : String(obj.icon);
+    if (!ICON.test(icon)) throw new Error(`${path}.icon must look like mdi:flag`);
+
+    const result: OverlayConfig = {
+      position,
+      span: int(obj.span, 2, 1, days, `${path}.span`),
+      width: percent(obj.width, 90, `${path}.width`) / 100,
+      max_height: maxHeight(obj.max_height, `${path}.max_height`),
+      offset: int(obj.offset, 8, 0, 400, `${path}.offset`),
+      toggle: bool(obj.toggle, true, `${path}.toggle`),
+      visible: bool(obj.visible, false, `${path}.visible`),
+      icon,
+      card,
+    };
+    if (obj.name !== undefined) result.name = String(obj.name);
+    return result;
+  });
+}
+
+function percent(value: unknown, fallback: number, path: string): number {
+  if (value === undefined || value === null || value === '') return fallback;
+  const text = String(value).trim();
+  const n = PERCENT.test(text) ? parseFloat(text) : NaN;
+  if (!(n >= 10 && n <= 100)) throw new Error(`${path} must be a percentage from 10% to 100%`);
+  return n;
+}
+
+function maxHeight(value: unknown, path: string): string {
+  if (value === undefined || value === null || value === '') return '40%';
+  const text = String(value).trim();
+  if (text.endsWith('%')) return `${percent(text, 40, path)}%`;
+  const px = Number(text.replace(/px$/, ''));
+  if (!Number.isInteger(px) || px < 40 || px > 2000) {
+    throw new Error(`${path} must be a percentage from 10% to 100% or pixels from 40 to 2000`);
+  }
+  return `${px}px`;
 }
 
 function parseStyle(raw: Raw): { style: Partial<Record<Token, string>>; fontUrl: string | null } {
