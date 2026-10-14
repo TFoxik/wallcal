@@ -17,7 +17,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.util import dt as dt_util
 
 SCAN_INTERVAL = timedelta(seconds=15)
-CALENDARS = ("family", "work", "namedays")
+CALENDARS = ("family", "work", "namedays", "namedays_sk")
 
 
 async def async_setup_platform(hass: HomeAssistant, config, async_add_entities, discovery_info=None) -> None:

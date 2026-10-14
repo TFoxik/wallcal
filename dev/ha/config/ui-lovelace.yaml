@@ -14,8 +14,17 @@ views:
           - entity: calendar.namedays
             color: "#F4A27A"
             toggle: true
+            display: label
+            strip_prefix: "Svátek:"
+            suffix: CZ
+          - entity: calendar.namedays_sk
+            color: "#8FB8E8"
+            toggle: true
+            display: label
+            suffix: SK
         refresh_interval: 60
         past_events: dim
+        weekday_format: long
         weather:
           entity: weather.home
         moon:

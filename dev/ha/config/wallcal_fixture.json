@@ -201,5 +201,39 @@
       "summary": "Svátek: Nataša",
       "day": 5
     }
+  ],
+  "namedays_sk": [
+    {
+      "summary": "Horst",
+      "day": -2
+    },
+    {
+      "summary": "Koloman",
+      "day": -1
+    },
+    {
+      "summary": "Boris",
+      "day": 0
+    },
+    {
+      "summary": "Terézia",
+      "day": 1
+    },
+    {
+      "summary": "Vladimíra",
+      "day": 2
+    },
+    {
+      "summary": "Hedviga",
+      "day": 3
+    },
+    {
+      "summary": "Lukáš",
+      "day": 4
+    },
+    {
+      "summary": "Kristián",
+      "day": 5
+    }
   ]
 }

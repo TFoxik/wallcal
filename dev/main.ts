@@ -79,6 +79,7 @@ const hass = {
     'calendar.family': { last_changed: today.toISOString() },
     'calendar.work': { last_changed: today.toISOString(), attributes: { friendly_name: 'Work' } },
     'calendar.namedays': { last_changed: today.toISOString(), attributes: { friendly_name: 'Svátky' } },
+    'calendar.namedays_sk': { last_changed: today.toISOString(), attributes: { friendly_name: 'Meniny' } },
     'weather.home': { last_changed: today.toISOString(), attributes: { supported_features: 1 } },
   },
   connection: {
@@ -102,7 +103,8 @@ const chips = {
   entities: [
     { entity: 'calendar.family', color: '#7F77DD' },
     { entity: 'calendar.work', color: '#378ADD', toggle: true, icon: 'mdi:briefcase' },
-    { entity: 'calendar.namedays', color: '#F4A27A', toggle: true },
+    { entity: 'calendar.namedays', color: '#F4A27A', toggle: true, display: 'label', strip_prefix: 'Svátek:', suffix: 'CZ' },
+    { entity: 'calendar.namedays_sk', color: '#8FB8E8', toggle: true, display: 'label', suffix: 'SK' },
   ],
 };
 
