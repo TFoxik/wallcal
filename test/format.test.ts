@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { formatEventTime, formatTime, formatTitle, formatWeekday, formatter, resolveHourCycle } from '../src/format';
 import { wallEvent } from './fixtures';
 
@@ -45,6 +45,16 @@ describe('formatEventTime', () => {
     const dentist = wallEvent('Dentist', new Date(2026, 9, 13, 8, 30), new Date(2026, 9, 13, 9, 15));
     const item = { event: dentist, continued: false, endsLater: false };
     expect(norm(formatEventTime(item, 'en-US', 'h12', true))).toBe('8:30 – 9:15 AM');
+  });
+
+  it('formats a repeated range only once', () => {
+    const range = vi.spyOn(Intl.DateTimeFormat.prototype, 'formatRange');
+    const call = wallEvent('Call', new Date(2026, 9, 14, 11, 0), new Date(2026, 9, 14, 11, 45));
+    const item = { event: call, continued: false, endsLater: false };
+    const first = formatEventTime(item, 'en-US', 'h23', true);
+    expect(formatEventTime({ ...item, event: { ...call } }, 'en-US', 'h23', true)).toBe(first);
+    expect(range).toHaveBeenCalledTimes(1);
+    range.mockRestore();
   });
 });
 
