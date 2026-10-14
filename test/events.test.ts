@@ -111,6 +111,21 @@ describe('mergeResults', () => {
     expect(next.byEntity).toEqual({ 'calendar.a': a, 'calendar.b': [] });
   });
 
+  it('keeps the previous cache when a refetch brings the same events', () => {
+    const prev = { rangeKey: 'r1', byEntity: { 'calendar.a': a, 'calendar.b': b } };
+    const same = [
+      { entity: 'calendar.a', events: a.map((e) => ({ ...e, start: new Date(e.start), end: new Date(e.end) })) },
+      { entity: 'calendar.b', error: 'boom' },
+    ];
+    expect(mergeResults(prev, 'r1', same)).toBe(prev);
+  });
+
+  it('makes a new cache when an event moved', () => {
+    const prev = { rangeKey: 'r1', byEntity: { 'calendar.a': a } };
+    const moved = [{ ...a[0], end: new Date(2026, 9, 13, 11) }];
+    expect(mergeResults(prev, 'r1', [{ entity: 'calendar.a', events: moved }]).byEntity['calendar.a']).toBe(moved);
+  });
+
   it('drops a failed entity when the range changed', () => {
     const prev = { rangeKey: 'r1', byEntity: { 'calendar.a': a } };
     expect(mergeResults(prev, 'r2', [{ entity: 'calendar.a', error: 'boom' }]).byEntity).toEqual({});

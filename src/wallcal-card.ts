@@ -18,7 +18,7 @@ import {
 } from './data/events';
 import { loadHidden, toggleHidden } from './data/hidden';
 import { isOverlayShown, loadOverlayState, pillCount, toggleOverlay, type OverlayState } from './data/overlays';
-import { forecastType, subscribeForecast, type DayForecast } from './data/weather';
+import { forecastType, sameForecast, subscribeForecast, type DayForecast } from './data/weather';
 import { addDays, dayKey, isSameDay, msUntilNextMidnight, startOfDay } from './date';
 import { formatTitle, resolveHourCycle } from './format';
 import type { HomeAssistant } from './ha-types';
@@ -299,8 +299,9 @@ export class WallCalCard extends LitElement {
       return;
     }
     this._weatherWarning = null;
+    // HA pushes on every weather update, mostly with the same days; an equal forecast keeps the old map.
     const unsub = subscribeForecast(hass, weather.entity, type, (days) => {
-      this._forecast = days;
+      if (!sameForecast(this._forecast, days)) this._forecast = days;
     });
     this._weatherUnsub = unsub;
     // A failed subscription stays in _weatherUnsub so the frequent hass updates do not retry it;

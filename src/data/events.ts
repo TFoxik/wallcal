@@ -129,6 +129,7 @@ export async function fetchEvents(
   });
 }
 
+// Returns prev itself when a refetch changed nothing, so the card skips the render.
 export function mergeResults(prev: EventCache | null, rangeKey: string, results: FetchResult[]): EventCache {
   const kept = prev && prev.rangeKey === rangeKey ? prev.byEntity : {};
   const byEntity: Record<string, WallCalEvent[]> = {};
@@ -136,7 +137,8 @@ export function mergeResults(prev: EventCache | null, rangeKey: string, results:
     if (result.events) byEntity[result.entity] = result.events;
     else if (kept[result.entity]) byEntity[result.entity] = kept[result.entity];
   }
-  return { rangeKey, byEntity };
+  const unchanged = prev !== null && kept === prev.byEntity && JSON.stringify(byEntity) === JSON.stringify(kept);
+  return unchanged ? prev : { rangeKey, byEntity };
 }
 
 export function cachedEvents(cache: EventCache | null): WallCalEvent[] {

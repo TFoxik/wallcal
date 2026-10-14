@@ -59,6 +59,10 @@ export function forecastByDay(entries: HaForecast[]): Map<string, DayForecast> {
   return days;
 }
 
+export function sameForecast(a: Map<string, DayForecast> | null, b: Map<string, DayForecast>): boolean {
+  return a !== null && JSON.stringify([...a]) === JSON.stringify([...b]);
+}
+
 const CONDITION_ICONS: Record<string, string> = {
   'clear-night': 'mdi:weather-night',
   cloudy: 'mdi:weather-cloudy',

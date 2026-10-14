@@ -105,6 +105,16 @@ describe('wallcal-card', () => {
     expect(renders).not.toHaveBeenCalled();
   });
 
+  it('does not re-render when a refetch brings the same events', async () => {
+    const { hass, calls } = makeHass(async () => [timed('Dentist', '2026-10-13T08:30:00+02:00', '2026-10-13T09:00:00+02:00')]);
+    const el = await mount(config, hass);
+    const renders = vi.spyOn(el as unknown as { render(): unknown }, 'render');
+    el.hass = { ...hass, states: { 'calendar.family': { last_changed: '2026-10-13T09:00:00Z' } } };
+    await flush(el);
+    expect(calls).toHaveLength(2);
+    expect(renders).not.toHaveBeenCalled();
+  });
+
   it('refetches on the refresh interval', async () => {
     const { hass, calls } = makeHass(async () => []);
     await mount({ ...config, refresh_interval: 60 }, hass);
@@ -438,6 +448,19 @@ describe('wallcal-card', () => {
       expect(root(el).querySelectorAll('.day')[2].querySelector('.day__temp')?.textContent?.replace(/\s+/g, '')).toBe(
         '18°/9°',
       );
+    });
+
+    it('does not re-render when the forecast repeats', async () => {
+      const { hass, subscribe } = weatherHass();
+      const el = await mount(weatherConfig, hass);
+      const [push] = subscribe.mock.calls[0];
+      const render = vi.spyOn(el as unknown as { render(): unknown }, 'render');
+      push({ type: 'daily', forecast: [{ datetime: '2026-10-14T00:00:00+02:00', condition: 'sunny', temperature: 18, templow: 9 }] });
+      await flush(el);
+      expect(render).not.toHaveBeenCalled();
+      push({ type: 'daily', forecast: [{ datetime: '2026-10-14T00:00:00+02:00', condition: 'rainy', temperature: 18, templow: 9 }] });
+      await flush(el);
+      expect(render).toHaveBeenCalledTimes(1);
     });
 
     it('unsubscribes when detached', async () => {
