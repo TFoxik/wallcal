@@ -95,12 +95,17 @@ that input is produced.
   The `hass` setter alone never triggers a fetch: HA sets it many times per second.
 - On failure: keep the last good data, show a warning icon in the top bar (title attribute holds
   the error message), retry on the next trigger.
-- Day header: a top row (date or cycle ring, weekday, markers) and, when weather or any label
-  calendar is configured, an info block: one 18px line per visible label calendar (config order),
-  with the weather on the right of the first line. Lines are kept on days without an entry, and days
-  without a ring keep the ring's height, so every header in the week has the same height and each
-  calendar keeps its line. Old WebViews (Chrome 87) lack subgrid, so equal height
-  comes from this fixed structure rather than from aligning rows across columns.
+- Day header: a top row (date or cycle ring; weekday with the weather under it, or the moon and
+  period markers when weather is not configured) and an info block: one 18px line per visible label
+  calendar (config order), with the markers on the right of the first line when weather took their
+  place. The forecast slot, label lines and marker slot are kept on days without content, and a
+  bare date takes the ring's footprint on days before the first period, so every header in the week
+  has the same height and each calendar keeps its line. Beside the labels the moon shows its icon
+  only (no `show_name` text). Old WebViews (Chrome 87) lack subgrid, so equal height comes from this
+  fixed structure rather than from aligning rows across columns.
+- With weather, the weekday block has a flex basis of five weekday-font widths (75px at 15px) and the
+  top row may wrap: below about 1130px card width (7 days) weekday and forecast sit under the ring.
+  The fixed basis makes every column wrap at the same width; Chrome 87 has no container queries.
 - Calendars with `display: label` (e.g. Czech and Slovak name days) render their event titles on
   their own coloured header line instead of as chips, `·`-separated, truncated with an ellipsis. At
   most two entities may use it. `strip_prefix` drops a leading text such as `Svátek:` from that
@@ -133,7 +138,7 @@ that input is produced.
   the entity supports it, else `twice_daily` (day and night halves merged per date). Entities with
   only an hourly forecast show a warning instead.
 - Each day with a forecast shows the condition icon (`mdi:weather-*` via `ha-icon`) and the rounded
-  high, plus `/low` unless `weather.show_low: false`, on the right of the header's info row.
+  high, plus `/low` unless `weather.show_low: false`, under the weekday at weekday size (22px icon).
 - The subscription is dropped when the card is detached or reconfigured; HA's websocket library
   resubscribes it after a reconnect. A failed subscription shows a warning and is retried only when
   the card is reattached or reconfigured, not on every `hass` update.

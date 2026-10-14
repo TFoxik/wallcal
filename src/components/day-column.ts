@@ -32,8 +32,11 @@ export interface DayColumnProps {
   /** Visible label calendars in config order: one header line each, kept on days without an entry
    *  so every header in the week has the same height and each calendar keeps its line. */
   labelCalendars: string[];
-  /** Weather is configured: keep its line even on days without a forecast. */
+  /** Weather is configured: it takes the slot under the weekday, kept on days without a forecast. */
   weatherRow: boolean;
+  /** Weather took the markers' place: moon and period markers sit on the first info line, and that
+   *  line is kept on days without a marker. */
+  markersInInfo: boolean;
 }
 
 export function renderDayColumn(p: DayColumnProps): TemplateResult {
@@ -47,26 +50,33 @@ export function renderDayColumn(p: DayColumnProps): TemplateResult {
   const chips = p.events.filter((e) => !p.labelCalendars.includes(e.event.entity));
   const allDay = chips.filter((e) => e.event.allDay);
   const timed = chips.filter((e) => !e.event.allDay);
+  const { markersInInfo } = p;
+  // Beside the name-day labels there is no room for the moon's name, only its icon.
+  const moonName = p.moon.show_name && !markersInInfo;
+  const markers = html`<span class="day__markers">
+    ${cycle?.isPeriod ? icon(dropIcon, 'marker marker--period', 'Expected period') : nothing}
+    ${ovulation ? icon(eggIcon, 'marker marker--ovulation', 'Expected ovulation') : nothing}
+    ${p.moon.enabled ? renderMoonIcon(moonPhase(p.date), p.moon.hemisphere, moonName) : nothing}
+  </span>`;
 
   return html`<section class=${classMap({
     day: true,
     'day--today': p.isToday,
     'day--fertile': fertile,
     'day--past': p.isPast,
+    'day--weather': p.weatherRow,
   })}>
     <header class="day__header">
       <div class="day__top">
         ${cycle ? renderCycleRing(cycle, dateNumber) : dateNumber}
         <div class="day__meta">
           <span class="day__weekday">${formatWeekday(p.date, p.language, p.weekdayFormat)}</span>
-          <span class="day__markers">
-            ${cycle?.isPeriod ? icon(dropIcon, 'marker marker--period', 'Expected period') : nothing}
-            ${ovulation ? icon(eggIcon, 'marker marker--ovulation', 'Expected ovulation') : nothing}
-            ${p.moon.enabled ? renderMoonIcon(moonPhase(p.date), p.moon.hemisphere, p.moon.show_name) : nothing}
-          </span>
+          ${p.weatherRow
+            ? html`<span class="day__forecast">${p.weather ? renderWeather(p.weather, p.showLow) : nothing}</span>`
+            : markers}
         </div>
       </div>
-      ${labelLines.length || p.weatherRow
+      ${labelLines.length || markersInInfo
         ? html`<div class="day__info">
             <div class="day__labels">
               ${labelLines.map(
@@ -75,7 +85,7 @@ export function renderDayColumn(p: DayColumnProps): TemplateResult {
                 </div>`,
               )}
             </div>
-            ${p.weather ? renderWeather(p.weather, p.showLow) : nothing}
+            ${markersInInfo ? markers : nothing}
           </div>`
         : nothing}
     </header>

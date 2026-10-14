@@ -192,6 +192,7 @@ export class WallCalCard extends LitElement {
             weekdayFormat: config.weekday_format,
             labelCalendars,
             weatherRow: config.weather !== null,
+            markersInInfo: config.weather !== null && (config.moon.enabled || cycleInput !== null),
           });
         })}
       </div>

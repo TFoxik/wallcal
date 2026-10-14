@@ -93,6 +93,7 @@ describe('renderDayColumn', () => {
     weekdayFormat: 'short',
     labelCalendars: [],
     weatherRow: false,
+    markersInInfo: false,
   };
   const ovulating = { day: 14, length: 28, isPeriod: false, isFertile: true, isOvulation: true };
   const bleeding = { day: 2, length: 28, isPeriod: true, isFertile: false, isOvulation: false };
@@ -127,11 +128,29 @@ describe('renderDayColumn', () => {
     expect(lines()).toEqual(['Vendelín · Valentýn']);
   });
 
-  it('keeps the info row on days without labels or weather only when weather is configured', () => {
-    render(renderDayColumn(base), host);
+  it('puts the weather under the weekday and moves the markers to the info line', () => {
+    const moon = { ...defaults.moon, enabled: true };
+    const weather = { condition: 'rainy', high: 17.6, low: 8.4 };
+    render(renderDayColumn({ ...base, moon }), host);
+    expect(host.querySelector('.day__meta .moon')).not.toBeNull();
     expect(host.querySelector('.day__info')).toBeNull();
-    render(renderDayColumn({ ...base, weatherRow: true }), host);
-    expect(host.querySelector('.day__info')).not.toBeNull();
+    render(renderDayColumn({ ...base, moon, weatherRow: true, markersInInfo: true, weather }), host);
+    expect(host.querySelector('.day__meta .day__weather')).not.toBeNull();
+    expect(host.querySelector('.day__info .moon')).not.toBeNull();
+  });
+
+  it('drops the moon name beside the labels, where there is no room for it', () => {
+    const moon = { ...defaults.moon, enabled: true, show_name: true };
+    render(renderDayColumn({ ...base, moon }), host);
+    expect(host.querySelector('.moon')?.textContent?.trim()).not.toBe('');
+    render(renderDayColumn({ ...base, moon, weatherRow: true, markersInInfo: true }), host);
+    expect(host.querySelector('.moon')?.textContent?.trim()).toBe('');
+  });
+
+  it('keeps the forecast slot and the marker line on days without a forecast or a marker', () => {
+    render(renderDayColumn({ ...base, weatherRow: true, markersInInfo: true }), host);
+    expect(host.querySelector('.day__forecast')).not.toBeNull();
+    expect(host.querySelector('.day__info .day__markers')).not.toBeNull();
   });
 
   it('shows the long weekday name when asked', () => {

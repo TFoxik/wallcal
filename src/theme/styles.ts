@@ -184,11 +184,27 @@ export const cardStyles = css`
     gap: 10px;
     min-width: 0;
   }
-  /* Days before the first configured period have no ring; keep their header as tall as the rest. */
-  .grid--cycle .day__top {
-    min-height: var(--ring-size);
+  /* The weekday and forecast need about five weekday-font widths beside the ring. The fixed basis
+     makes every column wrap at the same card width, so narrow cards put them under the ring without
+     uneven heights. */
+  .day--weather .day__top {
+    flex-wrap: wrap;
+    row-gap: 4px;
   }
-  /* Every info line, and the weather icon on the first one, share this height so headers match. */
+  .day--weather .day__meta {
+    flex: 1 0 calc(var(--wallcal-weekday-size) * 5);
+  }
+  /* Days before the first configured period have no ring; give the bare date the ring's footprint
+     so their header matches, beside or above the weekday. */
+  .grid--cycle .day__top > .day__date {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: var(--ring-size);
+    height: var(--ring-size);
+  }
+  /* Every info line, and the markers on the first one, share this height so headers match. */
   .day__info {
     --line: 18px;
     display: flex;
@@ -306,19 +322,30 @@ export const cardStyles = css`
   .moon__lit {
     fill: var(--wallcal-moon-color);
   }
+  /* Slot and content share one height so days with and without a forecast match. */
+  .day__forecast {
+    --forecast-line: 22px;
+    display: flex;
+    height: var(--forecast-line);
+  }
   .day__weather {
     display: inline-flex;
     align-items: center;
-    gap: 2px;
-    font-size: var(--wallcal-time-size);
+    gap: 4px;
+    font-size: var(--wallcal-weekday-size);
+    line-height: var(--forecast-line);
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
-    --mdc-icon-size: var(--line);
+    --mdc-icon-size: var(--forecast-line);
   }
   .day__weather ha-icon {
     display: flex;
   }
+  .day__info .day__markers {
+    flex: none;
+  }
   .day__low {
+    font-size: 0.85em;
     color: var(--wallcal-muted);
   }
   .day__allday,
