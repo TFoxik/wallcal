@@ -128,6 +128,22 @@ describe('wallcal-card', () => {
     expect(chipTitles(el)).toEqual(['Next week']);
   });
 
+  it('drops a response for the previous config that lands after setConfig', async () => {
+    const first = deferred<HaCalendarEvent[]>();
+    let calls = 0;
+    const { hass } = makeHass(() => (++calls === 1 ? first.promise : new Promise<HaCalendarEvent[]>(() => undefined)));
+    const el = await mount(config, hass);
+
+    el.remove();
+    el.setConfig({ ...config, days: 5 });
+    first.resolve([timed('Old config', '2026-10-13T08:30:00+02:00', '2026-10-13T09:00:00+02:00')]);
+    await flush(el);
+    document.body.append(el);
+    await flush(el);
+
+    expect(chipTitles(el)).toEqual([]);
+  });
+
   it('navigates weeks and returns to today', async () => {
     const { hass } = makeHass(async () => []);
     const el = await mount({ ...config, header: { idle_return: 0 } }, hass);

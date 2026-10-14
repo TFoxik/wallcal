@@ -94,6 +94,8 @@ export class WallCalCard extends LitElement {
     this._config = normalizeConfig(config);
     this._overlayCards.retain(new Set(this._config.overlays.map((o) => o.key)));
     this._cache = null;
+    // A request still in flight was made for the old config; its response must not fill the new cache.
+    this._fetchSeq++;
     this._requestedRange = '';
     this._seen.clear();
     this._unsubscribeWeather();
