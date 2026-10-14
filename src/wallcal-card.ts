@@ -3,7 +3,7 @@ import { repeat } from 'lit/directives/repeat.js';
 import { styleMap } from 'lit/directives/style-map.js';
 import type { HeaderToggle } from './components/header-toggles';
 import { renderDayColumn } from './components/day-column';
-import { OverlayCards, renderOverlay } from './components/overlay-host';
+import { OverlayCards, renderOverlay, renderPill } from './components/overlay-host';
 import { renderTopBar } from './components/top-bar';
 import { isCalendarEntityId, normalizeConfig, type HeaderTitle, type OverlayConfig, type WallCalConfig } from './config';
 import { cycleInfo, type CycleInput } from './cycle/predict';
@@ -17,7 +17,7 @@ import {
   type EventCache,
 } from './data/events';
 import { loadHidden, toggleHidden } from './data/hidden';
-import { isOverlayShown, loadOverlayState, overlayKey, toggleOverlay, type OverlayState } from './data/overlays';
+import { isOverlayShown, loadOverlayState, overlayKey, pillCount, toggleOverlay, type OverlayState } from './data/overlays';
 import { forecastType, subscribeForecast, type DayForecast } from './data/weather';
 import { addDays, dayKey, isSameDay, msUntilNextMidnight, startOfDay } from './date';
 import { formatTitle, resolveHourCycle } from './format';
@@ -68,6 +68,7 @@ export class WallCalCard extends LitElement {
   private _scrollPending = true;
   private _weatherUnsub: Promise<() => Promise<void>> | null = null;
   private _overlayCards = new OverlayCards(() => this.requestUpdate());
+  private _pillCounts = '';
 
   constructor() {
     super();
@@ -107,6 +108,12 @@ export class WallCalCard extends LitElement {
     const previous = this._hass;
     this._hass = hass;
     this._overlayCards.hass = hass;
+    // Pills show their entity's count, so they are the one hass change besides calendars that re-renders.
+    const pillCounts = this._pillCountsOf(hass);
+    if (pillCounts !== this._pillCounts) {
+      this._pillCounts = pillCounts;
+      this.requestUpdate();
+    }
     if (!previous || previous.locale !== hass.locale) this.requestUpdate();
     if (previous && this._calendarsChanged(hass)) void this._fetch();
     this._subscribeWeather();
@@ -207,9 +214,9 @@ export class WallCalCard extends LitElement {
           });
         })}
         ${repeat(
-          config.overlays.filter((o) => isOverlayShown(o, this._overlayState)),
+          config.overlays.filter((o) => o.toggle === 'pill' || isOverlayShown(o, this._overlayState)),
           overlayKey,
-          (o) => renderOverlay(o, this._overlayCards.card(overlayKey(o), o.card)),
+          (o) => this._renderOverlay(o),
         )}
       </div>
     </ha-card>`;
@@ -242,6 +249,23 @@ export class WallCalCard extends LitElement {
 
   private _toggleCalendar(entity: string): void {
     this._hidden = toggleHidden(entity, this._hidden);
+  }
+
+  private _renderOverlay(overlay: OverlayConfig) {
+    const key = overlayKey(overlay);
+    if (overlay.toggle !== 'pill') return renderOverlay(overlay, this._overlayCards.card(key, overlay.card));
+    const label = overlay.name ?? overlayName(this._hass, overlay);
+    const toggle = () => this._toggleOverlay(key);
+    return isOverlayShown(overlay, this._overlayState)
+      ? renderOverlay(overlay, this._overlayCards.card(key, overlay.card), { label, onMinimize: toggle })
+      : renderPill(overlay, { label, count: pillCount(this._hass, overlay.card), onExpand: toggle });
+  }
+
+  private _pillCountsOf(hass: HomeAssistant): string {
+    return (this._config?.overlays ?? [])
+      .filter((o) => o.toggle === 'pill')
+      .map((o) => pillCount(hass, o.card) ?? '')
+      .join('|');
   }
 
   private _overlayToggles(config: WallCalConfig): HeaderToggle[] {
@@ -338,11 +362,11 @@ export class WallCalCard extends LitElement {
     this._armIdleReturn();
   }
 
-  // The overlays sit inside the grid; using one must not pause auto-scroll of the day lists.
+  // The overlays and pills sit inside the grid; using one must not pause auto-scroll of the day lists.
   private _touchList(event: Event): void {
     const inOverlay = event
       .composedPath()
-      .some((node) => node instanceof HTMLElement && node.classList.contains('overlay'));
+      .some((node) => node instanceof HTMLElement && (node.classList.contains('overlay') || node.classList.contains('pill')));
     if (!inOverlay) this._lastListTouch = Date.now();
     this._touch();
   }

@@ -35,7 +35,8 @@ views:
         overlays:
           - position: bottom-right
             icon: mdi:format-list-checks
-            visible: true
+            toggle: pill
+            name: Shopping
             card:
               type: todo-list
               entity: todo.shopping

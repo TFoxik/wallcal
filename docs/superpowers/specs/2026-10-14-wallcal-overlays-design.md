@@ -45,7 +45,7 @@ overlays:
     width: 90%                        # share of those columns, centered; 10%..100%, default 90%
     max_height: 40%                   # % of the grid height or px (e.g. 320); default 40%
     offset: 8                         # px between the grid bottom and the overlay; 0..400, default 8
-    toggle: true                      # header button; false = always shown, no button; default true
+    toggle: header                    # header | pill | none (true/false = header/none); default header
     visible: false                    # state on a device that never toggled it; default false
     icon: mdi:format-list-checks      # header button icon; default mdi:card-outline
     name: Shopping                    # button tooltip / aria label; default derived (see 4.2)
@@ -86,6 +86,14 @@ Validation (`config.ts`, throws like the rest of `normalizeConfig`):
 - Default `name`: the card's `title`, else the friendly name of the card's `entity`, else its
   `type`.
 - With `header.show: false` there are no buttons; overlays use their stored or initial state.
+
+### 4.2a Pill mode (`toggle: pill`)
+- Minimized, the overlay is a pill at its own position (same `offset`), centred on its band so it
+  expands in place: icon, name (4.2 rules) and, when the card's `entity` state is numeric, a count
+  badge with the unit if any. A todo entity's state is its open-item count.
+- Tapping the pill expands it; the expanded panel has a 22 px handle strip on top that minimizes it.
+  No header button. Expanded/minimized uses the same per-device state as 4.3 (`visible` = expanded).
+- WallCal re-renders on a hass update only when a pill's count changed (besides calendar changes).
 
 ### 4.3 Visibility state
 - `src/data/overlays.ts`, same shape as `hidden.ts`: one localStorage map under `wallcal:overlays`,

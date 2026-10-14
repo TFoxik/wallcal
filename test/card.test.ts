@@ -566,6 +566,66 @@ describe('wallcal-card', () => {
       expect(hosted(el)?.dataset.entity).toBe('todo.chores');
     });
 
+    describe('pill mode', () => {
+      const pill = (extra: Record<string, unknown> = {}) => right({ toggle: 'pill', name: 'Shopping', ...extra });
+      const withCount = (count: string) => {
+        const { hass } = makeHass(async () => []);
+        hass.states['todo.shopping'] = { state: count, last_changed: '' };
+        return hass;
+      };
+
+      it('starts as a pill with the open-item count and no header button', async () => {
+        const el = await mount(withOverlays(pill()), withCount('4'));
+        expect(root(el).querySelector('.toggle')).toBeNull();
+        expect(root(el).querySelector('.overlay')).toBeNull();
+        expect(root(el).querySelector('.pill--bottom-right .pill__count')?.textContent).toBe('4');
+      });
+
+      it('expands from the pill and minimizes back with the handle', async () => {
+        const el = await mount(withOverlays(pill()), withCount('4'));
+        click(el, '.pill');
+        await settle(el);
+        expect(root(el).querySelector('.pill')).toBeNull();
+        expect(hosted(el)).not.toBeNull();
+
+        click(el, '.overlay__handle');
+        await settle(el);
+        expect(root(el).querySelector('.overlay')).toBeNull();
+        expect(root(el).querySelector('.pill')).not.toBeNull();
+        expect(created).toHaveLength(1);
+      });
+
+      it('remembers being expanded on this device', async () => {
+        const first = await mount(withOverlays(pill()), withCount('4'));
+        click(first, '.pill');
+        const second = await mount(withOverlays(pill()), withCount('4'));
+        await settle(second);
+        expect(hosted(second)).not.toBeNull();
+      });
+
+      it('updates the count when the entity changes, without re-rendering for anything else', async () => {
+        const hass = withCount('4');
+        const el = await mount(withOverlays(pill()), hass);
+        const renders = vi.spyOn(el as unknown as { render(): unknown }, 'render');
+        el.hass = { ...hass, states: { ...hass.states, 'light.kitchen': { last_changed: 'x' } } };
+        await flush(el);
+        expect(renders).not.toHaveBeenCalled();
+
+        el.hass = { ...hass, states: { ...hass.states, 'todo.shopping': { state: '3', last_changed: '' } } };
+        await flush(el);
+        expect(root(el).querySelector('.pill__count')?.textContent).toBe('3');
+      });
+
+      it('does not count a tap on the pill as touching the day lists', async () => {
+        const el = await mount(withOverlays(pill()), withCount('4'));
+        const probe = el as unknown as { _lastListTouch: number };
+        const pillButton = root(el).querySelector('.pill');
+        expect(pillButton).not.toBeNull();
+        pillButton?.dispatchEvent(new Event('pointerdown', { bubbles: true, composed: true }));
+        expect(probe._lastListTouch).toBe(0);
+      });
+    });
+
     it('counts a touch on an overlay as activity but not as touching the day lists', async () => {
       const el = await mount(withOverlays(right({ visible: true })), makeHass(async () => []).hass);
       await settle(el);
