@@ -67,6 +67,32 @@ describe('OverlayCards', () => {
     expect(createCardElement).toHaveBeenCalledTimes(2);
   });
 
+  it('recreates a card that asks to be rebuilt, e.g. a custom card that loaded late', async () => {
+    const onRebuild = vi.fn();
+    const cards = new OverlayCards(onRebuild);
+    const first = (await cards.card('k', todo)) as HassCard;
+    first.dispatchEvent(new Event('ll-rebuild'));
+    expect(onRebuild).toHaveBeenCalledTimes(1);
+    const second = await cards.card('k', todo);
+    expect(second).not.toBe(first);
+    expect(createCardElement).toHaveBeenCalledTimes(2);
+    const a = hassA();
+    cards.hass = a;
+    expect(first.hass).toBeUndefined();
+  });
+
+  it('ignores a rebuild request from a card that is no longer configured', async () => {
+    const onRebuild = vi.fn();
+    const cards = new OverlayCards(onRebuild);
+    const old = await cards.card('k', todo);
+    cards.retain(new Set());
+    await Promise.resolve();
+    const current = await cards.card('k', todo);
+    old.dispatchEvent(new Event('ll-rebuild'));
+    expect(onRebuild).not.toHaveBeenCalled();
+    expect(await cards.card('k', todo)).toBe(current);
+  });
+
   it('shows a message when the card factory is missing', async () => {
     delete window.loadCardHelpers;
     const el = await new OverlayCards().card('k', todo);

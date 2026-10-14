@@ -55,11 +55,23 @@ describe('overlay visibility', () => {
     expect(loadOverlayState()).toEqual({ a: true });
   });
 
+  it('keeps toggling when storage can be read but not written', () => {
+    const setItem = vi.spyOn(localStorage, 'setItem').mockImplementation(() => {
+      throw new Error('quota');
+    });
+    const o = make();
+    const shown = toggleOverlay(o, {});
+    expect(setItem).toHaveBeenCalled();
+    expect(localStorage.getItem('wallcal:overlays')).toBeNull();
+    expect(isOverlayShown(o, shown)).toBe(true);
+    expect(isOverlayShown(o, toggleOverlay(o, shown))).toBe(false);
+  });
+
   it('keeps toggling while storage is blocked', () => {
-    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+    vi.spyOn(localStorage, 'getItem').mockImplementation(() => {
       throw new Error('blocked');
     });
-    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+    vi.spyOn(localStorage, 'setItem').mockImplementation(() => {
       throw new Error('blocked');
     });
     const o = make();

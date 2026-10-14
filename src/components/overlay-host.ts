@@ -16,6 +16,8 @@ export class OverlayCards {
   private _live = new Set<HassCard>();
   private _hass?: HomeAssistant;
 
+  constructor(private readonly _onRebuild: () => void = () => undefined) {}
+
   card(key: string, config: Record<string, unknown>): Promise<HTMLElement> {
     let card = this._cards.get(key);
     if (!card) {
@@ -23,6 +25,17 @@ export class OverlayCards {
         (el) => {
           if (this._hass) el.hass = this._hass;
           this._live.add(el);
+          // HA's factory fires this when a custom card's element got defined after its error card was
+          // made, or a lazily loaded card rejected its config: the element has to be created again.
+          el.addEventListener(
+            'll-rebuild',
+            () => {
+              if (!this._live.delete(el)) return;
+              this._cards.delete(key);
+              this._onRebuild();
+            },
+            { once: true },
+          );
           return el;
         },
         (error: unknown) => message(`Overlay card unavailable: ${error instanceof Error ? error.message : String(error)}`),

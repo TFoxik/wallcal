@@ -67,7 +67,7 @@ export class WallCalCard extends LitElement {
   private _lastListTouch = 0;
   private _scrollPending = true;
   private _weatherUnsub: Promise<() => Promise<void>> | null = null;
-  private _overlayCards = new OverlayCards();
+  private _overlayCards = new OverlayCards(() => this.requestUpdate());
 
   constructor() {
     super();
