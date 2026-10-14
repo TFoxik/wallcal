@@ -152,6 +152,23 @@ export const cardStyles = css`
     --secondary-text-color: var(--wallcal-muted);
     --primary-color: var(--wallcal-accent);
     --divider-color: var(--wallcal-divider);
+    /* HA resolves these from its own theme once on the page; remap them so hosted cards follow the
+       WallCal preset even when it differs from the HA theme (paper on a dark HA). */
+    --mdc-theme-text-primary-on-background: var(--wallcal-text);
+    --mdc-theme-text-secondary-on-background: var(--wallcal-muted);
+    --mdc-theme-on-surface: var(--wallcal-text);
+    --mdc-theme-primary: var(--wallcal-accent);
+    --mdc-theme-secondary: var(--wallcal-accent);
+    --mdc-checkbox-unchecked-color: var(--wallcal-muted);
+    --ha-color-text-primary: var(--wallcal-text);
+    --ha-color-text-secondary: var(--wallcal-muted);
+    --wa-color-text-normal: var(--wallcal-text);
+    --wa-color-text-quiet: var(--wallcal-muted);
+    --wa-form-control-value-color: var(--wallcal-text);
+    --wa-form-control-placeholder-color: var(--wallcal-muted);
+    --ha-color-form-background: var(--wallcal-surface);
+    --ha-color-form-background-hover: var(--wallcal-surface);
+    --wa-form-control-background-color: var(--wallcal-surface);
   }
   .overlay--bottom-left {
     left: calc(var(--overlay-band) * (1 - var(--overlay-width)) / 2);
