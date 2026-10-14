@@ -1,4 +1,5 @@
 import type { OverlayConfig } from '../config';
+import type { HomeAssistant } from '../ha-types';
 
 // One map per device, shared by every card. The key includes a hash of the card config so the same
 // position on two dashboards keeps its own state.
@@ -49,6 +50,17 @@ export function toggleOverlay(overlay: OverlayConfig, current: OverlayState): Ov
     // Storage blocked (private mode, kiosk policy).
   }
   return state;
+}
+
+const NUMBER = /^-?\d+(\.\d+)?$/;
+
+// A todo entity's state is its number of open items; other numeric states (sensors) show too.
+export function pillCount(hass: HomeAssistant | undefined, card: Record<string, unknown>): string | null {
+  if (typeof card.entity !== 'string') return null;
+  const entity = hass?.states[card.entity];
+  if (!entity?.state || !NUMBER.test(entity.state)) return null;
+  const unit = entity.attributes?.unit_of_measurement;
+  return typeof unit === 'string' && unit ? `${entity.state} ${unit}` : entity.state;
 }
 
 // FNV-1a: only needs to tell card configs apart.

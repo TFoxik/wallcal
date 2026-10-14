@@ -131,12 +131,15 @@ export const cardStyles = css`
     min-height: 0;
     position: relative;
   }
-  .overlay {
+  .overlay,
+  .pill {
     --overlay-col: calc((100% - (var(--wallcal-days, 7) - 1) * var(--wallcal-gap)) / var(--wallcal-days, 7));
     --overlay-band: calc(var(--overlay-span) * var(--overlay-col) + (var(--overlay-span) - 1) * var(--wallcal-gap));
     position: absolute;
     z-index: 1;
     bottom: var(--overlay-offset);
+  }
+  .overlay {
     width: calc(var(--overlay-band) * var(--overlay-width));
     max-height: var(--overlay-max-height);
     overflow: auto;
@@ -178,6 +181,76 @@ export const cardStyles = css`
   }
   .overlay--bottom-center {
     left: calc((100% - var(--overlay-band) * var(--overlay-width)) / 2);
+  }
+  .overlay__handle {
+    all: unset;
+    cursor: pointer;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 22px;
+    background: inherit;
+  }
+  .overlay__handle::before {
+    content: '';
+    width: 36px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--wallcal-muted);
+    opacity: 0.6;
+  }
+  /* The pill sits on the centre of its band, where the panel opens. */
+  .pill {
+    all: unset;
+    position: absolute;
+    z-index: 1;
+    bottom: var(--overlay-offset);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 44px;
+    padding: 0 16px 0 12px;
+    box-sizing: border-box;
+    border-radius: 22px;
+    background: var(--wallcal-overlay-background);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+    color: var(--wallcal-text);
+    font-size: 15px;
+    font-weight: 500;
+    white-space: nowrap;
+    --mdc-icon-size: 22px;
+  }
+  .pill ha-icon {
+    color: var(--wallcal-accent);
+  }
+  .pill--bottom-left {
+    left: calc(var(--overlay-band) / 2);
+    transform: translateX(-50%);
+  }
+  .pill--bottom-right {
+    right: calc(var(--overlay-band) / 2);
+    transform: translateX(50%);
+  }
+  .pill--bottom-center {
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  .pill__count {
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
+    box-sizing: border-box;
+    border-radius: 11px;
+    background: var(--wallcal-accent);
+    color: #fff;
+    font-size: 13px;
+    display: inline-grid;
+    place-items: center;
   }
   .overlay__message {
     margin: 0;

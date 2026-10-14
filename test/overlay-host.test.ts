@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { render } from 'lit';
 import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
-import { OverlayCards, renderOverlay, type HassCard } from '../src/components/overlay-host';
+import { OverlayCards, renderOverlay, renderPill, type HassCard } from '../src/components/overlay-host';
 import { normalizeConfig } from '../src/config';
 import type { HomeAssistant } from '../src/ha-types';
 import { makeHass } from './fixtures';
@@ -119,5 +119,50 @@ describe('renderOverlay', () => {
     expect(box?.style.getPropertyValue('--overlay-width')).toBe('0.9');
     expect(box?.style.getPropertyValue('--overlay-max-height')).toBe('300px');
     expect(box?.style.getPropertyValue('--overlay-offset')).toBe('72px');
+  });
+});
+
+describe('overlay pill and handle', () => {
+  const overlay = normalizeConfig({
+    entities: ['calendar.family'],
+    overlays: [{ position: 'bottom-right', toggle: 'pill', icon: 'mdi:cart', card: todo }],
+  }).overlays[0];
+  let host: HTMLElement;
+  beforeEach(() => {
+    host = document.createElement('div');
+    document.body.append(host);
+  });
+
+  it('shows icon, name and count, and expands when tapped', () => {
+    const onExpand = vi.fn();
+    render(renderPill(overlay, { label: 'Shopping', count: '4', onExpand }), host);
+    const pill = host.querySelector<HTMLButtonElement>('button.pill.pill--bottom-right');
+    expect(pill?.getAttribute('aria-label')).toBe('Show Shopping');
+    expect(pill?.querySelector('ha-icon')?.getAttribute('icon')).toBe('mdi:cart');
+    expect(pill?.querySelector('.pill__label')?.textContent).toBe('Shopping');
+    expect(pill?.querySelector('.pill__count')?.textContent).toBe('4');
+    pill?.click();
+    expect(onExpand).toHaveBeenCalledTimes(1);
+  });
+
+  it('leaves the count out when there is none', () => {
+    render(renderPill(overlay, { label: 'Home', count: null, onExpand: vi.fn() }), host);
+    expect(host.querySelector('.pill__count')).toBeNull();
+  });
+
+  it('adds a handle that minimizes the panel only when asked to', () => {
+    const onMinimize = vi.fn();
+    const card = new OverlayCards().card('k', todo);
+    render(renderOverlay(overlay, card, { label: 'Shopping', onMinimize }), host);
+    const handle = host.querySelector<HTMLButtonElement>('.overlay > button.overlay__handle');
+    expect(handle?.getAttribute('aria-label')).toBe('Minimize Shopping');
+    handle?.click();
+    expect(onMinimize).toHaveBeenCalledTimes(1);
+    render(renderOverlay(overlay, card), document.createElement('div'));
+  });
+
+  it('has no handle without a minimize action', () => {
+    render(renderOverlay(overlay, new OverlayCards().card('k', todo)), host);
+    expect(host.querySelector('.overlay__handle')).toBeNull();
   });
 });

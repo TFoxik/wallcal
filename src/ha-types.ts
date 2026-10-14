@@ -1,4 +1,5 @@
 export interface HassEntity {
+  state?: string;
   last_changed: string;
   attributes?: Record<string, unknown>;
 }

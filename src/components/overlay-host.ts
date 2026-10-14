@@ -59,14 +59,46 @@ export class OverlayCards {
   }
 }
 
-export function renderOverlay(overlay: OverlayConfig, card: Promise<HTMLElement>): TemplateResult {
-  const vars = {
+export interface Minimize {
+  label: string;
+  onMinimize(): void;
+}
+
+export interface PillProps {
+  label: string;
+  count: string | null;
+  onExpand(): void;
+}
+
+export function renderOverlay(overlay: OverlayConfig, card: Promise<HTMLElement>, minimize?: Minimize): TemplateResult {
+  const handle = minimize
+    ? html`<button class="overlay__handle" aria-label=${`Minimize ${minimize.label}`} @click=${minimize.onMinimize}></button>`
+    : nothing;
+  return html`<div class="overlay overlay--${overlay.position}" style=${styleMap(overlayVars(overlay))}>
+    ${handle}${until(card, nothing)}
+  </div>`;
+}
+
+export function renderPill(overlay: OverlayConfig, p: PillProps): TemplateResult {
+  return html`<button
+    class="pill pill--${overlay.position}"
+    style=${styleMap(overlayVars(overlay))}
+    aria-label=${`Show ${p.label}`}
+    @click=${p.onExpand}
+  >
+    <ha-icon icon=${overlay.icon}></ha-icon><span class="pill__label">${p.label}</span>${p.count === null
+      ? nothing
+      : html`<span class="pill__count">${p.count}</span>`}
+  </button>`;
+}
+
+function overlayVars(overlay: OverlayConfig): Record<string, string> {
+  return {
     '--overlay-span': String(overlay.span),
     '--overlay-width': String(overlay.width),
     '--overlay-max-height': overlay.max_height,
     '--overlay-offset': `${overlay.offset}px`,
   };
-  return html`<div class="overlay overlay--${overlay.position}" style=${styleMap(vars)}>${until(card, nothing)}</div>`;
 }
 
 async function createCard(config: Record<string, unknown>): Promise<HassCard> {
