@@ -2,7 +2,7 @@ import { LitElement, html, nothing } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
 import { styleMap } from 'lit/directives/style-map.js';
 import type { HeaderToggle } from './components/header-toggles';
-import { renderDayColumn } from './components/day-column';
+import { chipsBelow, renderDayColumn } from './components/day-column';
 import { OverlayCards, renderOverlay, renderPill } from './components/overlay-host';
 import { renderTopBar } from './components/top-bar';
 import { isCalendarEntityId, normalizeConfig, type HeaderTitle, type OverlayConfig, type WallCalConfig } from './config';
@@ -43,6 +43,7 @@ export class WallCalCard extends LitElement {
     _pillCounts: { state: true },
     _forecast: { state: true },
     _weatherWarning: { state: true },
+    _more: { state: true },
   };
 
   /** Set by HA: 'panel', 'grid' (sections) or 'masonry'. */
@@ -58,6 +59,8 @@ export class WallCalCard extends LitElement {
   declare _pillCounts: string;
   declare _forecast: Map<string, DayForecast> | null;
   declare _weatherWarning: string | null;
+  /** Per day key, how many timed events are below the visible part of that day's list. */
+  declare _more: Map<string, number>;
 
   private _hass?: HomeAssistant;
   private _seen = new Map<string, string>();
@@ -72,6 +75,9 @@ export class WallCalCard extends LitElement {
   private _scrollPending = true;
   private _weatherUnsub: Promise<() => Promise<void>> | null = null;
   private _overlayCards = new OverlayCards(() => this.requestUpdate());
+  private _measureFrame?: number;
+  // A resize changes how many events fit; the lists do not change size on their own otherwise.
+  private _resizeObserver = new ResizeObserver(() => this._scheduleMeasure());
 
   constructor() {
     super();
@@ -85,6 +91,7 @@ export class WallCalCard extends LitElement {
     this._pillCounts = '';
     this._forecast = null;
     this._weatherWarning = null;
+    this._more = new Map();
   }
 
   static getStubConfig(hass?: HomeAssistant): Record<string, unknown> {
@@ -147,6 +154,7 @@ export class WallCalCard extends LitElement {
   connectedCallback(): void {
     super.connectedCallback();
     document.addEventListener('visibilitychange', this._onVisibilityChange);
+    this._resizeObserver.observe(this);
     this._tick();
     this._armIdleReturn();
     this._subscribeWeather();
@@ -158,6 +166,9 @@ export class WallCalCard extends LitElement {
     clearTimeout(this._tickTimer);
     clearTimeout(this._endTimer);
     clearTimeout(this._idleTimer);
+    this._resizeObserver.disconnect();
+    if (this._measureFrame !== undefined) cancelAnimationFrame(this._measureFrame);
+    this._measureFrame = undefined;
     this._unsubscribeWeather();
   }
 
@@ -199,6 +210,7 @@ export class WallCalCard extends LitElement {
         class="grid grid--past-${config.past_days} grid--events-${config.past_events} ${cycleInput ? 'grid--cycle' : ''}"
         @pointerdown=${(event: Event) => this._touchList(event)}
         @wheel=${{ handleEvent: (event: Event) => this._touchList(event), passive: true }}
+        @scroll=${{ handleEvent: () => this._scheduleMeasure(), capture: true, passive: true }}
       >
         ${days.map((date) => {
           const isToday = isSameDay(date, this._today);
@@ -221,6 +233,7 @@ export class WallCalCard extends LitElement {
             labelCalendars,
             weatherRow: config.weather !== null,
             markersInInfo: config.weather !== null && (config.moon.enabled || cycleInput !== null),
+            more: this._more.get(dayKey(date)) ?? 0,
           });
         })}
         ${repeat(config.overlays, (o) => o.key, (o) => this._renderOverlay(o))}
@@ -231,6 +244,7 @@ export class WallCalCard extends LitElement {
   // Brings today's next upcoming event to the top of its list. Waits until the lists have not been
   // touched for the idle time, so it never yanks a list the user is reading.
   protected updated(): void {
+    this._scheduleMeasure();
     const config = this._config;
     if (!this._scrollPending || !config?.auto_scroll) return;
     if (Date.now() - this._lastListTouch < (config.header.idle_return || 60) * 1000) return;
@@ -239,6 +253,21 @@ export class WallCalCard extends LitElement {
     this._scrollPending = false;
     const next = list.querySelector<HTMLElement>('.chip:not(.chip--ended)');
     list.scrollTop = next ? next.offsetTop : list.scrollHeight;
+  }
+
+  // Counts need layout, so they are measured after the render and on every scroll. Showing a count
+  // shortens its list and may hide one more event; that settles after one more render.
+  private _scheduleMeasure(): void {
+    if (this._measureFrame !== undefined) return;
+    this._measureFrame = requestAnimationFrame(() => {
+      this._measureFrame = undefined;
+      const more = new Map<string, number>();
+      for (const list of this.renderRoot.querySelectorAll<HTMLElement>('.day__events')) {
+        const below = chipsBelow(list).length;
+        if (below) more.set(list.dataset.day!, below);
+      }
+      if (JSON.stringify([...more]) !== JSON.stringify([...this._more])) this._more = more;
+    });
   }
 
   private _toggles(config: WallCalConfig, hidden: Set<string>): HeaderToggle[] {

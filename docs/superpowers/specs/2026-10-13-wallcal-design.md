@@ -113,7 +113,10 @@ that input is produced.
   calendar with its toggle chip removes its line.
 - All-day chips are compact: 4px vertical padding, one line, `allday_size` font.
 - Layout: all-day events are pinned under the day header; timed events scroll in their own list
-  when they overflow. In a panel view the card sizes itself to
+  when they overflow. A day whose list hides events below the visible part shows a muted `+N more` line
+  under it, counting chips not fully in view; it follows the scroll position and the card size, and
+  tapping it scrolls the first hidden event to the top. The count needs layout, so the card measures
+  it in an animation frame after each render, scroll and resize. In a panel view the card sizes itself to
   `100vh − --header-height` (HA sets `layout = 'panel'` on the card; it is reflected to an
   attribute), because the panel wrapper has auto height and `100%` would grow with the events. In
   sections the grid row height bounds it; in masonry the card grows with its content.

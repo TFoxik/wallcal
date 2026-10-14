@@ -3,12 +3,12 @@ import { render } from 'lit';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderHeaderToggles, type HeaderToggle } from '../src/components/header-toggles';
 import { ringDash } from '../src/components/cycle-ring';
-import { renderDayColumn, type DayColumnProps } from '../src/components/day-column';
+import { chipsBelow, renderDayColumn, type DayColumnProps } from '../src/components/day-column';
 import { renderEventChip } from '../src/components/event-chip';
 import { renderTopBar, type TopBarProps } from '../src/components/top-bar';
 import { normalizeConfig } from '../src/config';
 import type { WallCalEvent } from '../src/data/events';
-import { wallEvent } from './fixtures';
+import { layOut, wallEvent } from './fixtures';
 
 let host: HTMLElement;
 beforeEach(() => {
@@ -94,6 +94,7 @@ describe('renderDayColumn', () => {
     labelCalendars: [],
     weatherRow: false,
     markersInInfo: false,
+    more: 0,
   };
   const ovulating = { day: 14, length: 28, isPeriod: false, isFertile: true, isOvulation: true };
   const bleeding = { day: 2, length: 28, isPeriod: true, isFertile: false, isOvulation: false };
@@ -206,6 +207,43 @@ describe('renderDayColumn', () => {
     render(renderDayColumn({ ...base, events: [item(event('Name day', true)), item(event('Dentist'))] }), host);
     expect(host.querySelector('.day__allday .chip__title')?.textContent).toBe('Name day');
     expect([...host.querySelectorAll('.day__events .chip__title')].map((n) => n.textContent)).toEqual(['Dentist']);
+  });
+
+  it('shows how many events are below the visible part of the list', () => {
+    render(renderDayColumn(base), host);
+    expect(host.querySelector('.day__more')).toBeNull();
+    render(renderDayColumn({ ...base, more: 3 }), host);
+    expect(host.querySelector('.day__more')?.textContent?.trim()).toBe('+3 more');
+  });
+
+  it('scrolls the first hidden event to the top of the list when the more line is tapped', () => {
+    const events = ['A', 'B', 'C', 'D'].map((t) => item(event(t)));
+    render(renderDayColumn({ ...base, events, more: 2 }), host);
+    const list = host.querySelector<HTMLElement>('.day__events')!;
+    layOut(list, 100, [40, 40, 40, 40]);
+    host.querySelector<HTMLButtonElement>('.day__more')!.click();
+    expect(list.scrollTop).toBe(92);
+  });
+
+  describe('chipsBelow', () => {
+    const list = (n: number) => {
+      render(renderDayColumn({ ...base, events: Array.from({ length: n }, (_, i) => item(event(`E${i}`))) }), host);
+      return host.querySelector<HTMLElement>('.day__events')!;
+    };
+
+    it('counts the chips that are not fully in view below the scroll position', () => {
+      const l = list(4);
+      layOut(l, 100, [40, 40, 40, 40]);
+      expect(chipsBelow(l).map((c) => c.textContent?.trim())).toEqual(['14:05E2', '14:05E3']);
+      l.scrollTop = 46;
+      expect(chipsBelow(l)).toHaveLength(1);
+    });
+
+    it('ignores hidden chips and is empty when everything fits', () => {
+      const l = list(3);
+      layOut(l, 100, [40, 0, 40]);
+      expect(chipsBelow(l)).toEqual([]);
+    });
   });
 
   describe('past events on today', () => {

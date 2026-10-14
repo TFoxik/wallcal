@@ -505,6 +505,18 @@ export const cardStyles = css`
     overscroll-behavior: contain;
     scrollbar-width: thin;
   }
+  .day__more {
+    flex: none;
+    align-self: flex-start;
+    margin: 0;
+    padding: 0 2px;
+    border: 0;
+    background: none;
+    font: inherit;
+    font-size: var(--wallcal-time-size);
+    color: var(--wallcal-muted);
+    cursor: pointer;
+  }
   .grid--events-dim .chip--ended {
     opacity: 0.5;
   }

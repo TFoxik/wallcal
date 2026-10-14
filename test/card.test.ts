@@ -5,7 +5,7 @@ import type { WallCalCard } from '../src/wallcal-card';
 import type { HaCalendarEvent } from '../src/data/events';
 import type { HomeAssistant } from '../src/ha-types';
 import { dayKey } from '../src/date';
-import { makeHass, timed } from './fixtures';
+import { layOut, makeHass, timed } from './fixtures';
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -26,10 +26,13 @@ async function mount(config: Record<string, unknown>, hass: HomeAssistant): Prom
   return el;
 }
 
-async function flush(el: WallCalCard) {
-  await vi.advanceTimersByTimeAsync(0);
+async function flush(el: WallCalCard, ms = 0) {
+  await vi.advanceTimersByTimeAsync(ms);
   await el.updateComplete;
 }
+
+// Layout-dependent work waits for an animation frame.
+const nextFrame = (el: WallCalCard) => flush(el, 16);
 
 const root = (el: WallCalCard) => el.shadowRoot as ShadowRoot;
 const firstDate = (el: WallCalCard) => root(el).querySelector('.day__date')?.textContent;
@@ -670,6 +673,24 @@ describe('wallcal-card', () => {
     await el.updateComplete;
     expect(fetchesOf(calls)).toHaveLength(1);
     expect(root(el).querySelector('.chip--ended .chip__title')?.textContent).toBe('Standup');
+  });
+
+  it('shows how many events of a day are below its visible list, following the scroll position', async () => {
+    const at = (h: number) => `2026-10-14T${String(h).padStart(2, '0')}:00:00+02:00`;
+    const { hass } = makeHass(async () => [8, 9, 10, 11].map((h) => timed(`E${h}`, at(h), at(h + 1))));
+    const el = await mount(config, hass);
+    const list = root(el).querySelector<HTMLElement>('.day__events[data-day="2026-10-14"]')!;
+    const more = () => root(el).querySelector('.day__more')?.textContent?.trim();
+    layOut(list, 100, [40, 40, 40, 40]);
+    list.dispatchEvent(new Event('scroll'));
+    await nextFrame(el);
+    expect(more()).toBe('+2 more');
+    expect(root(el).querySelectorAll('.day__more')).toHaveLength(1);
+
+    list.scrollTop = 92;
+    list.dispatchEvent(new Event('scroll'));
+    await nextFrame(el);
+    expect(more()).toBeUndefined();
   });
 
   it('reflects the layout HA assigns so the panel view can fit it to the screen', async () => {

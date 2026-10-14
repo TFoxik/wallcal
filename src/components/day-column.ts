@@ -6,6 +6,7 @@ import type { MoonConfig } from '../config';
 import type { CycleDay } from '../cycle/predict';
 import { isEnded, type DayEvent } from '../data/events';
 import { conditionIcon, type DayForecast } from '../data/weather';
+import { dayKey } from '../date';
 import { formatWeekday, type HourCycle, type WeekdayFormat } from '../format';
 import { renderCycleRing } from './cycle-ring';
 import { renderEventChip, renderTitle } from './event-chip';
@@ -37,6 +38,8 @@ export interface DayColumnProps {
   /** Weather took the markers' place: moon and period markers sit on the first info line, and that
    *  line is kept on days without a marker. */
   markersInInfo: boolean;
+  /** Timed events below the visible part of the list, measured by the card after layout. */
+  more: number;
 }
 
 export function renderDayColumn(p: DayColumnProps): TemplateResult {
@@ -92,10 +95,26 @@ export function renderDayColumn(p: DayColumnProps): TemplateResult {
     ${allDay.length
       ? html`<div class="day__allday">${allDay.map((e) => renderEventChip(e, p.language, p.hourCycle))}</div>`
       : nothing}
-    <div class="day__events">
+    <div class="day__events" data-day=${dayKey(p.date)}>
       ${timed.map((e) => renderEventChip(e, p.language, p.hourCycle, p.showEndTime, ended(e)))}
     </div>
+    ${p.more ? html`<button class="day__more" type="button" @click=${showMore}>+${p.more} more</button>` : nothing}
   </section>`;
+}
+
+/** Chips in a day list that are not fully in view below its scroll position; hidden chips have no height. */
+export function chipsBelow(list: HTMLElement): HTMLElement[] {
+  const bottom = list.scrollTop + list.clientHeight;
+  // 1px of slack: layout positions are fractional and these offsets are rounded.
+  return [...list.querySelectorAll<HTMLElement>('.chip')].filter(
+    (chip) => chip.offsetHeight > 0 && chip.offsetTop + chip.offsetHeight > bottom + 1,
+  );
+}
+
+function showMore(event: Event): void {
+  const list = (event.currentTarget as HTMLElement).closest('.day')!.querySelector<HTMLElement>('.day__events')!;
+  const first = chipsBelow(list)[0];
+  if (first) list.scrollTop = first.offsetTop;
 }
 
 function renderWeather(day: DayForecast, showLow: boolean): TemplateResult {

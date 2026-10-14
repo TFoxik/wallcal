@@ -25,3 +25,15 @@ export function makeHass(
   };
   return { hass, calls };
 }
+
+// happy-dom has no layout: give the list a height and its chips heights, stacked with the 6px gap.
+export function layOut(list: HTMLElement, height: number, chipHeights: number[]) {
+  Object.defineProperty(list, 'clientHeight', { value: height, configurable: true });
+  let top = 0;
+  list.querySelectorAll<HTMLElement>('.chip').forEach((chip, i) => {
+    const h = chipHeights[i] ?? 0;
+    Object.defineProperty(chip, 'offsetTop', { value: top, configurable: true });
+    Object.defineProperty(chip, 'offsetHeight', { value: h, configurable: true });
+    if (h) top += h + 6;
+  });
+}
