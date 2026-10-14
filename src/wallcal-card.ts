@@ -246,7 +246,7 @@ export class WallCalCard extends LitElement {
 
   private _overlayToggles(config: WallCalConfig): HeaderToggle[] {
     return config.overlays
-      .filter((o) => o.toggle)
+      .filter((o) => o.toggle === 'header')
       .map((o) => ({
         id: overlayKey(o),
         label: o.name ?? overlayName(this._hass, o),

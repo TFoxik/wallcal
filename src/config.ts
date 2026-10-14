@@ -59,6 +59,9 @@ export type PastEvents = (typeof PAST_EVENTS)[number];
 export const OVERLAY_POSITIONS = ['bottom-left', 'bottom-center', 'bottom-right'] as const;
 export type OverlayPosition = (typeof OVERLAY_POSITIONS)[number];
 
+export const OVERLAY_TOGGLES = ['header', 'pill', 'none'] as const;
+export type OverlayToggle = (typeof OVERLAY_TOGGLES)[number];
+
 export interface OverlayConfig {
   position: OverlayPosition;
   span: number;
@@ -67,7 +70,7 @@ export interface OverlayConfig {
   /** CSS length: a percentage of the grid height or pixels. */
   max_height: string;
   offset: number;
-  toggle: boolean;
+  toggle: OverlayToggle;
   visible: boolean;
   icon: string;
   name?: string;
@@ -292,7 +295,7 @@ function parseOverlays(value: unknown, days: number): OverlayConfig[] {
       width: percent(obj.width, 90, `${path}.width`) / 100,
       max_height: maxHeight(obj.max_height, `${path}.max_height`),
       offset: int(obj.offset, 8, 0, 400, `${path}.offset`),
-      toggle: bool(obj.toggle, true, `${path}.toggle`),
+      toggle: overlayToggle(obj.toggle, `${path}.toggle`),
       visible: bool(obj.visible, false, `${path}.visible`),
       icon,
       card,
@@ -300,6 +303,12 @@ function parseOverlays(value: unknown, days: number): OverlayConfig[] {
     if (obj.name !== undefined) result.name = String(obj.name);
     return result;
   });
+}
+
+function overlayToggle(value: unknown, path: string): OverlayToggle {
+  if (value === true) return 'header';
+  if (value === false) return 'none';
+  return oneOf(value, OVERLAY_TOGGLES, 'header', path);
 }
 
 function percent(value: unknown, fallback: number, path: string): number {

@@ -202,7 +202,7 @@ describe('normalizeConfig', () => {
           width: 0.9,
           max_height: '40%',
           offset: 8,
-          toggle: true,
+          toggle: 'header',
           visible: false,
           icon: 'mdi:card-outline',
           card: todo,
@@ -214,9 +214,18 @@ describe('normalizeConfig', () => {
       const [o] = parse(
         overlay({ span: 1, width: '60%', max_height: 320, offset: 72, toggle: false, visible: true, name: 'Shop', icon: 'mdi:cart' }),
       );
-      expect(o).toMatchObject({ span: 1, width: 0.6, max_height: '320px', offset: 72, toggle: false, visible: true, name: 'Shop', icon: 'mdi:cart' });
+      expect(o).toMatchObject({ span: 1, width: 0.6, max_height: '320px', offset: 72, toggle: 'none', visible: true, name: 'Shop', icon: 'mdi:cart' });
       expect(parse(overlay({ max_height: '25%' }))[0].max_height).toBe('25%');
       expect(parse(overlay({ max_height: '300px' }))[0].max_height).toBe('300px');
+    });
+
+    it('reads toggle as header, pill or none, with true and false as header and none', () => {
+      expect(parse(overlay({ toggle: 'pill' }))[0].toggle).toBe('pill');
+      expect(parse(overlay({ toggle: 'Header' }))[0].toggle).toBe('header');
+      expect(parse(overlay({ toggle: 'none' }))[0].toggle).toBe('none');
+      expect(parse(overlay({ toggle: true }))[0].toggle).toBe('header');
+      expect(parse(overlay({ toggle: false }))[0].toggle).toBe('none');
+      expect(() => parse(overlay({ toggle: 'banner' }))).toThrow(/overlays\[0\]\.toggle must be one of: header, pill, none/);
     });
 
     it('allows one overlay per position', () => {

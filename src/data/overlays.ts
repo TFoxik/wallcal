@@ -34,7 +34,7 @@ export function loadOverlayState(): OverlayState {
 }
 
 export function isOverlayShown(overlay: OverlayConfig, state: OverlayState): boolean {
-  if (!overlay.toggle) return true;
+  if (overlay.toggle === 'none') return true;
   return state[overlayKey(overlay)] ?? overlay.visible;
 }
 
