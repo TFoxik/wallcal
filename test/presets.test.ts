@@ -19,6 +19,15 @@ describe('theme tokens', () => {
     expect(resolveTokens('default', {})['--wallcal-date-size']).toBe('32px');
   });
 
+  it('day columns follow the card radius unless day_radius is set', () => {
+    expect(resolveTokens('default', {})['--wallcal-day-radius']).toBe('var(--wallcal-radius)');
+    expect(resolveTokens('default', { radius: '0', day_radius: '12px' })['--wallcal-day-radius']).toBe('12px');
+  });
+
+  it('all-day titles default a little smaller than event titles', () => {
+    expect(resolveTokens('default', {})['--wallcal-allday-size']).toBe('calc(var(--wallcal-event-size) - 2px)');
+  });
+
   it('presets override defaults', () => {
     expect(resolveTokens('paper', {})['--wallcal-background']).toBe(PRESETS.paper.background);
   });

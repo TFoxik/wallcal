@@ -11,7 +11,7 @@ import {
 } from '../src/data/events';
 import { makeHass, wallEvent as ev } from './fixtures';
 
-const family = { entity: 'calendar.family', color: '#7F77DD', toggle: false };
+const family = { entity: 'calendar.family', color: '#7F77DD', toggle: false, display: 'chip' as const };
 const titles = (day: Date, events: WallCalEvent[]) => eventsForDay(events, day).map((d) => d.event.title);
 
 describe('normalizeEvent', () => {
@@ -38,6 +38,16 @@ describe('normalizeEvent', () => {
   it('drops events without a usable start', () => {
     expect(normalizeEvent({ summary: 'x', start: {}, end: {} }, family)).toBeNull();
     expect(normalizeEvent({ summary: 'x', start: { dateTime: 'garbage' }, end: {} }, family)).toBeNull();
+  });
+
+  it('strips the configured title prefix and carries the suffix', () => {
+    const namedays = { ...family, display: 'label' as const, strip_prefix: 'Svátek:' };
+    const raw = { start: { date: '2026-10-12' }, end: { date: '2026-10-13' } };
+    expect(normalizeEvent({ ...raw, summary: 'Svátek: Sabina' }, namedays)).toMatchObject({ title: 'Sabina' });
+    expect(normalizeEvent({ ...raw, summary: 'Státní svátek' }, namedays)?.title).toBe('Státní svátek');
+    expect(normalizeEvent({ ...raw, summary: 'Svátek:' }, namedays)?.title).toBe('(no title)');
+    expect(normalizeEvent({ ...raw, summary: 'Sabina' }, { ...namedays, suffix: 'SK' })?.suffix).toBe('SK');
+    expect(normalizeEvent({ ...raw, summary: 'Trip' }, family)).not.toHaveProperty('suffix');
   });
 
   it('repairs an end before the start', () => {
@@ -121,7 +131,7 @@ describe('fetchEvents', () => {
     const start = new Date(Date.UTC(2026, 9, 12));
     const end = new Date(Date.UTC(2026, 9, 19));
 
-    const results = await fetchEvents(hass, [family, { entity: 'calendar.broken', color: '#000', toggle: false }], start, end);
+    const results = await fetchEvents(hass, [family, { entity: 'calendar.broken', color: '#000', toggle: false, display: 'chip' as const }], start, end);
 
     expect(paths[0]).toBe(
       'calendars/calendar.family?start=2026-10-12T00%3A00%3A00.000Z&end=2026-10-19T00%3A00%3A00.000Z',

@@ -6,10 +6,11 @@ const minimal = { entities: ['calendar.family'] };
 describe('normalizeConfig', () => {
   it('fills every default', () => {
     expect(normalizeConfig(minimal)).toEqual({
-      entities: [{ entity: 'calendar.family', color: ENTITY_PALETTE[0], toggle: false }],
+      entities: [{ entity: 'calendar.family', color: ENTITY_PALETTE[0], toggle: false, display: 'chip' }],
       days: 7,
       first_day: 1,
       time_format: 'auto',
+      weekday_format: 'short',
       show_end_time: false,
       past_days: 'normal',
       past_events: 'show',
@@ -35,8 +36,8 @@ describe('normalizeConfig', () => {
   it('accepts shorthand and object entities, assigning palette colours by position', () => {
     const c = normalizeConfig({ entities: [{ entity: 'calendar.a', color: '#000', name: 'A' }, 'calendar.b'] });
     expect(c.entities).toEqual([
-      { entity: 'calendar.a', color: '#000', name: 'A', toggle: false },
-      { entity: 'calendar.b', color: ENTITY_PALETTE[1], toggle: false },
+      { entity: 'calendar.a', color: '#000', name: 'A', toggle: false, display: 'chip' },
+      { entity: 'calendar.b', color: ENTITY_PALETTE[1], toggle: false, display: 'chip' },
     ]);
   });
 
@@ -45,6 +46,22 @@ describe('normalizeConfig', () => {
     expect(c.entities[0]).toMatchObject({ toggle: true, icon: 'mdi:flag' });
     expect(() => normalizeConfig({ entities: [{ entity: 'calendar.a', icon: 'flag' }] })).toThrow(/icon/);
     expect(() => normalizeConfig({ entities: [{ entity: 'calendar.a', toggle: 'yes' }] })).toThrow(/toggle/);
+  });
+
+  it('reads display and strip_prefix on entities', () => {
+    const c = normalizeConfig({ entities: [{ entity: 'calendar.a', display: 'Label', strip_prefix: 'Svátek: ', suffix: 'SK' }] });
+    expect(c.entities[0]).toMatchObject({ display: 'label', strip_prefix: 'Svátek: ', suffix: 'SK' });
+    expect(() => normalizeConfig({ entities: [{ entity: 'calendar.a', display: 'banner' }] })).toThrow(/display/);
+    const label = (entity: string) => ({ entity, display: 'label' });
+    expect(normalizeConfig({ entities: [label('calendar.a'), label('calendar.b')] }).entities).toHaveLength(2);
+    expect(() => normalizeConfig({ entities: [label('calendar.a'), label('calendar.b'), label('calendar.c')] })).toThrow(
+      /at most 2/,
+    );
+  });
+
+  it('validates weekday_format', () => {
+    expect(normalizeConfig({ ...minimal, weekday_format: 'long' }).weekday_format).toBe('long');
+    expect(() => normalizeConfig({ ...minimal, weekday_format: 'narrow' })).toThrow(/weekday_format/);
   });
 
   it('validates past_events and auto_scroll', () => {

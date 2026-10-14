@@ -4,6 +4,9 @@ import type { HassLocale } from './ha-types';
 export const TIME_FORMATS = ['12', '24', 'auto'] as const;
 export type TimeFormat = (typeof TIME_FORMATS)[number];
 export type HourCycle = 'h12' | 'h23';
+export const WEEKDAY_FORMATS = ['short', 'long'] as const;
+export type WeekdayFormat = (typeof WEEKDAY_FORMATS)[number];
+
 export const TITLE_MODES = ['month', 'range'] as const;
 export type TitleMode = (typeof TITLE_MODES)[number];
 
@@ -43,8 +46,8 @@ export function formatEventTime(item: DayEvent, language: string, hourCycle: Hou
   return time.formatRange(event.start, event.end);
 }
 
-export function formatWeekday(date: Date, language: string): string {
-  return formatter(language, { weekday: 'short' }).format(date);
+export function formatWeekday(date: Date, language: string, style: WeekdayFormat): string {
+  return formatter(language, { weekday: style }).format(date);
 }
 
 export function formatTitle(dates: Date[], mode: TitleMode, language: string): string {

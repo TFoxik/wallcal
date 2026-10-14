@@ -152,6 +152,7 @@ export class WallCalCard extends LitElement {
         ? { starts: [period.last_period], cycleLength: period.cycle_length, periodLength: period.period_length }
         : null;
     const tokens = { ...resolveTokens(config.theme, config.style), '--wallcal-days': String(config.days) };
+    const labelCalendars = config.entities.filter((e) => e.display === 'label' && !hidden.has(e.entity)).map((e) => e.entity);
 
     return html`<ha-card style=${styleMap(tokens)} @pointerdown=${() => this._touch()}>
       ${renderTopBar({
@@ -167,7 +168,7 @@ export class WallCalCard extends LitElement {
         onNext: () => this._show(addDays(this._anchor, 7)),
       })}
       <div
-        class="grid grid--past-${config.past_days} grid--events-${config.past_events}"
+        class="grid grid--past-${config.past_days} grid--events-${config.past_events} ${cycleInput ? 'grid--cycle' : ''}"
         @pointerdown=${() => this._touchList()}
         @wheel=${{ handleEvent: () => this._touchList(), passive: true }}
       >
@@ -188,6 +189,9 @@ export class WallCalCard extends LitElement {
             now: isToday ? this._now : null,
             weather: this._forecast?.get(dayKey(date)) ?? null,
             showLow: config.weather?.show_low ?? true,
+            weekdayFormat: config.weekday_format,
+            labelCalendars,
+            weatherRow: config.weather !== null,
           });
         })}
       </div>

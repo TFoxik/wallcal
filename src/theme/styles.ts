@@ -122,6 +122,7 @@ export const cardStyles = css`
     opacity: 0.6;
   }
   .grid {
+    --ring-size: calc(var(--wallcal-date-size) * 1.75);
     flex: 1;
     display: grid;
     grid-template-columns: repeat(var(--wallcal-days, 7), minmax(0, 1fr));
@@ -138,7 +139,7 @@ export const cardStyles = css`
     min-width: 0;
     min-height: 240px;
     padding: 8px;
-    border-radius: var(--wallcal-radius);
+    border-radius: var(--wallcal-day-radius);
     background: var(--wallcal-surface);
   }
   .grid--past-dim .day--past {
@@ -168,15 +169,44 @@ export const cardStyles = css`
     position: relative;
     isolation: isolate;
     display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 4px 10px;
+    flex-direction: column;
+    gap: 4px;
     padding: 4px;
-    border-radius: calc(var(--wallcal-radius) - 4px);
+    border-radius: calc(var(--wallcal-day-radius) - 4px);
   }
   .day--fertile .day__header::before {
     background: var(--wallcal-fertile-color);
     opacity: 0.25;
+  }
+  .day__top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+  }
+  /* Days before the first configured period have no ring; keep their header as tall as the rest. */
+  .grid--cycle .day__top {
+    min-height: var(--ring-size);
+  }
+  /* Every info line, and the weather icon on the first one, share this height so headers match. */
+  .day__info {
+    --line: 18px;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    min-height: var(--line);
+    font-size: var(--wallcal-time-size);
+    line-height: var(--line);
+  }
+  .day__labels {
+    flex: 1;
+    min-width: 0;
+  }
+  .day__label-line {
+    height: var(--line);
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
   .day__date {
     font-size: var(--wallcal-date-size);
@@ -194,8 +224,17 @@ export const cardStyles = css`
     min-width: 0;
   }
   .day__weekday {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
     font-size: var(--wallcal-weekday-size);
     color: var(--wallcal-muted);
+  }
+  .suffix {
+    font-size: 0.8em;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    opacity: 0.6;
   }
   .day__markers {
     display: flex;
@@ -220,8 +259,8 @@ export const cardStyles = css`
     flex: none;
     display: grid;
     place-items: center;
-    width: calc(var(--wallcal-date-size) * 1.75);
-    height: calc(var(--wallcal-date-size) * 1.75);
+    width: var(--ring-size);
+    height: var(--ring-size);
   }
   .ring svg {
     position: absolute;
@@ -271,11 +310,13 @@ export const cardStyles = css`
     display: inline-flex;
     align-items: center;
     gap: 2px;
-    margin-left: auto;
     font-size: var(--wallcal-time-size);
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
-    --mdc-icon-size: 18px;
+    --mdc-icon-size: var(--line);
+  }
+  .day__weather ha-icon {
+    display: flex;
   }
   .day__low {
     color: var(--wallcal-muted);
@@ -316,6 +357,9 @@ export const cardStyles = css`
     padding: 8px 10px;
     border-radius: var(--wallcal-chip-radius);
   }
+  .chip--allday {
+    padding-block: 4px;
+  }
   .chip--allday::before {
     background: var(--chip-color);
     opacity: 0.22;
@@ -336,5 +380,9 @@ export const cardStyles = css`
     overflow: hidden;
     font-size: var(--wallcal-event-size);
     line-height: 1.3;
+  }
+  .chip--allday .chip__title {
+    -webkit-line-clamp: 1;
+    font-size: var(--wallcal-allday-size);
   }
 `;

@@ -15,6 +15,7 @@ export interface WallCalEvent {
   end: Date;
   allDay: boolean;
   color: string;
+  suffix?: string;
 }
 
 export interface DayEvent {
@@ -35,7 +36,12 @@ export interface EventCache {
 }
 
 export function normalizeEvent(raw: HaCalendarEvent, source: EntityConfig): WallCalEvent | null {
-  const base = { entity: source.entity, title: raw.summary?.trim() || '(no title)', color: source.color };
+  const base = {
+    entity: source.entity,
+    title: eventTitle(raw.summary, source.strip_prefix),
+    color: source.color,
+    ...(source.suffix ? { suffix: source.suffix } : {}),
+  };
 
   if (raw.start?.date) {
     const start = parseLocalDate(raw.start.date);
@@ -53,6 +59,12 @@ export function normalizeEvent(raw: HaCalendarEvent, source: EntityConfig): Wall
   }
 
   return null;
+}
+
+function eventTitle(summary: string | undefined, stripPrefix: string | undefined): string {
+  let title = summary?.trim() ?? '';
+  if (stripPrefix && title.startsWith(stripPrefix)) title = title.slice(stripPrefix.length).trim();
+  return title || '(no title)';
 }
 
 export function eventsForDay(events: WallCalEvent[], day: Date): DayEvent[] {

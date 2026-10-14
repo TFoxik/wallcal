@@ -36,7 +36,8 @@ describe('formatter', () => {
 });
 
 describe('formatWeekday', () => {
-  it('short localised weekday', () => expect(formatWeekday(d(2026, 10, 13), 'en-US')).toBe('Tue'));
+  it('short localised weekday', () => expect(formatWeekday(d(2026, 10, 13), 'en-US', 'short')).toBe('Tue'));
+  it('long localised weekday', () => expect(formatWeekday(d(2026, 10, 13), 'cs', 'long')).toBe('úterý'));
 });
 
 describe('formatEventTime', () => {

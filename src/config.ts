@@ -1,8 +1,11 @@
 import { parseLocalDate, type Weekday } from './date';
 import type { Hemisphere } from './astro/moon';
-import { TIME_FORMATS, TITLE_MODES, type TimeFormat } from './format';
+import { TIME_FORMATS, TITLE_MODES, WEEKDAY_FORMATS, type TimeFormat, type WeekdayFormat } from './format';
 import type { DayCount } from './week';
 import { THEME_NAMES, TOKENS, type ThemeName, type Token } from './theme/presets';
+
+export const ENTITY_DISPLAYS = ['chip', 'label'] as const;
+export type EntityDisplay = (typeof ENTITY_DISPLAYS)[number];
 
 export interface EntityConfig {
   entity: string;
@@ -10,6 +13,9 @@ export interface EntityConfig {
   name?: string;
   icon?: string;
   toggle: boolean;
+  display: EntityDisplay;
+  strip_prefix?: string;
+  suffix?: string;
 }
 
 const TITLE_SETTINGS = [...TITLE_MODES, 'none'] as const;
@@ -55,6 +61,7 @@ export interface WallCalConfig {
   days: DayCount;
   first_day: Weekday;
   time_format: TimeFormat;
+  weekday_format: WeekdayFormat;
   show_end_time: boolean;
   past_days: PastDays;
   past_events: PastEvents;
@@ -75,6 +82,8 @@ const WEEKDAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'frida
 const ENTITY_ID = /^calendar\.[a-z0-9_]+$/;
 const WEATHER_ID = /^weather\.[a-z0-9_]+$/;
 const ICON = /^[a-z0-9-]+:[a-z0-9-]+$/;
+// Each label calendar gets its own header line; more than two would crowd out the events.
+const MAX_LABEL_CALENDARS = 2;
 const FONT_URL = /^(https:\/\/|\/(?!\/))/;
 
 type Raw = Record<string, unknown>;
@@ -101,6 +110,7 @@ export function normalizeConfig(input: unknown): WallCalConfig {
     days: choice(raw.days, [5, 7] as const, 7, 'days'),
     first_day: WEEKDAYS.indexOf(oneOf(raw.first_day, WEEKDAYS, 'monday', 'first_day')) as Weekday,
     time_format: oneOf(raw.time_format, TIME_FORMATS, 'auto', 'time_format'),
+    weekday_format: oneOf(raw.weekday_format, WEEKDAY_FORMATS, 'short', 'weekday_format'),
     show_end_time: bool(raw.show_end_time, false, 'show_end_time'),
     past_days: oneOf(raw.past_days, PAST_DAYS, 'normal', 'past_days'),
     past_events: oneOf(raw.past_events, PAST_EVENTS, 'show', 'past_events'),
@@ -196,15 +206,22 @@ function parseEntities(value: unknown): EntityConfig[] {
   if (!Array.isArray(value) || value.length === 0) {
     throw new Error('entities must list at least one calendar entity');
   }
-  return value.map((item, i) => {
+  const entities = value.map((item, i) => {
     const obj: Raw = typeof item === 'string' ? { entity: item } : section(item, `entities[${i}]`);
     const entity = String(obj.entity ?? '');
     if (!ENTITY_ID.test(entity)) {
       throw new Error(`entities[${i}]: "${entity}" is not a calendar entity id (expected calendar.something)`);
     }
     const color = obj.color === undefined ? ENTITY_PALETTE[i % ENTITY_PALETTE.length] : String(obj.color);
-    const result: EntityConfig = { entity, color, toggle: bool(obj.toggle, false, `entities[${i}].toggle`) };
+    const result: EntityConfig = {
+      entity,
+      color,
+      toggle: bool(obj.toggle, false, `entities[${i}].toggle`),
+      display: oneOf(obj.display, ENTITY_DISPLAYS, 'chip', `entities[${i}].display`),
+    };
     if (obj.name !== undefined) result.name = String(obj.name);
+    if (obj.strip_prefix !== undefined) result.strip_prefix = String(obj.strip_prefix);
+    if (obj.suffix !== undefined) result.suffix = String(obj.suffix);
     if (obj.icon !== undefined) {
       const icon = String(obj.icon);
       if (!ICON.test(icon)) throw new Error(`entities[${i}].icon must look like mdi:flag`);
@@ -212,6 +229,10 @@ function parseEntities(value: unknown): EntityConfig[] {
     }
     return result;
   });
+  if (entities.filter((e) => e.display === 'label').length > MAX_LABEL_CALENDARS) {
+    throw new Error(`at most ${MAX_LABEL_CALENDARS} entities can use display: label`);
+  }
+  return entities;
 }
 
 function parseWeather(raw: Raw): WeatherConfig {

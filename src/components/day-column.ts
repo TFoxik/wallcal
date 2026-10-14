@@ -1,13 +1,14 @@
 import { html, nothing, type TemplateResult } from 'lit';
 import { classMap } from 'lit/directives/class-map.js';
+import { styleMap } from 'lit/directives/style-map.js';
 import { moonPhase } from '../astro/moon';
 import type { MoonConfig } from '../config';
 import type { CycleDay } from '../cycle/predict';
 import { isEnded, type DayEvent } from '../data/events';
 import { conditionIcon, type DayForecast } from '../data/weather';
-import { formatWeekday, type HourCycle } from '../format';
+import { formatWeekday, type HourCycle, type WeekdayFormat } from '../format';
 import { renderCycleRing } from './cycle-ring';
-import { renderEventChip } from './event-chip';
+import { renderEventChip, renderTitle } from './event-chip';
 import { dropIcon, eggIcon, icon } from './icons';
 import { renderMoonIcon } from './moon-icon';
 
@@ -27,6 +28,12 @@ export interface DayColumnProps {
   now: Date | null;
   weather: DayForecast | null;
   showLow: boolean;
+  weekdayFormat: WeekdayFormat;
+  /** Visible label calendars in config order: one header line each, kept on days without an entry
+   *  so every header in the week has the same height and each calendar keeps its line. */
+  labelCalendars: string[];
+  /** Weather is configured: keep its line even on days without a forecast. */
+  weatherRow: boolean;
 }
 
 export function renderDayColumn(p: DayColumnProps): TemplateResult {
@@ -36,8 +43,10 @@ export function renderDayColumn(p: DayColumnProps): TemplateResult {
   const dateNumber = html`<span class="day__date">${p.date.getDate()}</span>`;
   const now = p.now;
   const ended = (item: DayEvent) => now !== null && isEnded(item, now);
-  const allDay = p.events.filter((e) => e.event.allDay);
-  const timed = p.events.filter((e) => !e.event.allDay);
+  const labelLines = p.labelCalendars.map((entity) => p.events.filter((e) => e.event.entity === entity));
+  const chips = p.events.filter((e) => !p.labelCalendars.includes(e.event.entity));
+  const allDay = chips.filter((e) => e.event.allDay);
+  const timed = chips.filter((e) => !e.event.allDay);
 
   return html`<section class=${classMap({
     day: true,
@@ -46,16 +55,29 @@ export function renderDayColumn(p: DayColumnProps): TemplateResult {
     'day--past': p.isPast,
   })}>
     <header class="day__header">
-      ${cycle ? renderCycleRing(cycle, dateNumber) : dateNumber}
-      <div class="day__meta">
-        <span class="day__weekday">${formatWeekday(p.date, p.language)}</span>
-        <span class="day__markers">
-          ${cycle?.isPeriod ? icon(dropIcon, 'marker marker--period', 'Expected period') : nothing}
-          ${ovulation ? icon(eggIcon, 'marker marker--ovulation', 'Expected ovulation') : nothing}
-          ${p.moon.enabled ? renderMoonIcon(moonPhase(p.date), p.moon.hemisphere, p.moon.show_name) : nothing}
-        </span>
+      <div class="day__top">
+        ${cycle ? renderCycleRing(cycle, dateNumber) : dateNumber}
+        <div class="day__meta">
+          <span class="day__weekday">${formatWeekday(p.date, p.language, p.weekdayFormat)}</span>
+          <span class="day__markers">
+            ${cycle?.isPeriod ? icon(dropIcon, 'marker marker--period', 'Expected period') : nothing}
+            ${ovulation ? icon(eggIcon, 'marker marker--ovulation', 'Expected ovulation') : nothing}
+            ${p.moon.enabled ? renderMoonIcon(moonPhase(p.date), p.moon.hemisphere, p.moon.show_name) : nothing}
+          </span>
+        </div>
       </div>
-      ${p.weather ? renderWeather(p.weather, p.showLow) : nothing}
+      ${labelLines.length || p.weatherRow
+        ? html`<div class="day__info">
+            <div class="day__labels">
+              ${labelLines.map(
+                (line) => html`<div class="day__label-line" style=${styleMap({ color: line[0]?.event.color })}>
+                  ${line.map((e, i) => html`${i ? ' · ' : ''}${renderTitle(e.event)}`)}
+                </div>`,
+              )}
+            </div>
+            ${p.weather ? renderWeather(p.weather, p.showLow) : nothing}
+          </div>`
+        : nothing}
     </header>
     ${allDay.length
       ? html`<div class="day__allday">${allDay.map((e) => renderEventChip(e, p.language, p.hourCycle))}</div>`

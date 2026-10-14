@@ -30,9 +30,13 @@ entities:
     color: "#F4A27A"
     toggle: true     # round chip in the header shows/hides this calendar
     icon: mdi:flag   # optional; otherwise the chip shows the first letter
+    display: label   # name under the date instead of an event chip (max 2 calendars)
+    strip_prefix: "Svátek:"
+    suffix: CZ       # optional small tag after the name
 days: 7              # or 5 for Mon–Fri
 first_day: monday
 time_format: auto    # 12 | 24 | auto
+weekday_format: long # short (Mon) | long (Monday)
 past_events: dim     # show | dim | hide today's finished events
 weather:
   entity: weather.home

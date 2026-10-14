@@ -95,6 +95,18 @@ that input is produced.
   The `hass` setter alone never triggers a fetch: HA sets it many times per second.
 - On failure: keep the last good data, show a warning icon in the top bar (title attribute holds
   the error message), retry on the next trigger.
+- Day header: a top row (date or cycle ring, weekday, markers) and, when weather or any label
+  calendar is configured, an info block: one 18px line per visible label calendar (config order),
+  with the weather on the right of the first line. Lines are kept on days without an entry, and days
+  without a ring keep the ring's height, so every header in the week has the same height and each
+  calendar keeps its line. Old WebViews (Chrome 87) lack subgrid, so equal height
+  comes from this fixed structure rather than from aligning rows across columns.
+- Calendars with `display: label` (e.g. Czech and Slovak name days) render their event titles on
+  their own coloured header line instead of as chips, `·`-separated, truncated with an ellipsis. At
+  most two entities may use it. `strip_prefix` drops a leading text such as `Svátek:` from that
+  calendar's titles; `suffix` appends a small muted tag such as `SK` (on chips too). Hiding a label
+  calendar with its toggle chip removes its line.
+- All-day chips are compact: 4px vertical padding, one line, `allday_size` font.
 - Layout: all-day events are pinned under the day header; timed events scroll in their own list
   when they overflow. In a panel view the card sizes itself to
   `100vh − --header-height` (HA sets `layout = 'panel'` on the card; it is reflected to an
@@ -121,7 +133,7 @@ that input is produced.
   the entity supports it, else `twice_daily` (day and night halves merged per date). Entities with
   only an hourly forecast show a warning instead.
 - Each day with a forecast shows the condition icon (`mdi:weather-*` via `ha-icon`) and the rounded
-  high, plus `/low` unless `weather.show_low: false`, on the right of the day header.
+  high, plus `/low` unless `weather.show_low: false`, on the right of the header's info row.
 - The subscription is dropped when the card is detached or reconfigured; HA's websocket library
   resubscribes it after a reconnect. A failed subscription shows a warning and is retried only when
   the card is reattached or reconfigured, not on every `hass` update.
@@ -204,7 +216,8 @@ Tokens (config key → CSS property):
 | `accent` | `--primary-color` | today highlight, buttons |
 | `today_background` | `accent` (drawn at 12% opacity) | today column tint |
 | `divider` | `--divider-color` | separators |
-| `radius` | `--ha-card-border-radius` (panel view: the theme radius it squares away), fallback 16px | card / column radius; day headers use radius − 4px |
+| `radius` | `--ha-card-border-radius` (panel view: the theme radius it squares away), fallback 16px | card radius |
+| `day_radius` | `radius` | day column radius; day headers use day_radius − 4px |
 | `chip_radius` | 10px | event chip radius |
 | `gap` | 4px | gap between columns |
 | `padding` | 8px | space between the card edge and its content |
@@ -214,6 +227,7 @@ Tokens (config key → CSS property):
 | `date_size` | 32px | day number |
 | `weekday_size` | 15px | weekday name |
 | `event_size` | 15px | event title |
+| `allday_size` | `event_size` − 2px | all-day event title (one line, compact chip) |
 | `time_size` | 13px | event time |
 | `period_color` | `#E24B4A` | drop, period ring |
 | `fertile_color` | `#5DCAA5` (drawn at 25% opacity) | fertile tint |
@@ -240,10 +254,14 @@ entities:                         # required, ≥ 1
     name: Family                  # optional
     toggle: false                 # true adds a show/hide chip in the top bar
     icon: mdi:account-group       # optional chip icon; default is the first letter of the name
+    display: chip                 # chip | label: label shows titles as a line in the day header
+    strip_prefix: "Svátek:"       # optional; removed from the start of this calendar's titles
+    suffix: SK                    # optional small tag after each title
   - calendar.work                 # shorthand
 days: 7                           # 5 | 7, default 7
 first_day: monday                 # monday … sunday, default monday; ignored when days: 5
 time_format: auto                 # 12 | 24 | auto, default auto
+weekday_format: short             # short (Mon) | long (Monday), default short
 show_end_time: false              # timed events show "8:30 – 9:15"
 past_days: normal                 # normal | dim | grey: days before today
 past_events: show                 # show | dim | hide: today's events that have ended

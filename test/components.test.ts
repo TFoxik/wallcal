@@ -90,6 +90,9 @@ describe('renderDayColumn', () => {
     now: null,
     weather: null,
     showLow: true,
+    weekdayFormat: 'short',
+    labelCalendars: [],
+    weatherRow: false,
   };
   const ovulating = { day: 14, length: 28, isPeriod: false, isFertile: true, isOvulation: true };
   const bleeding = { day: 2, length: 28, isPeriod: true, isFertile: false, isOvulation: false };
@@ -99,6 +102,41 @@ describe('renderDayColumn', () => {
     expect(host.querySelector('.day__date')?.textContent).toBe('13');
     expect(host.querySelector('.day__weekday')?.textContent).toBe('Tue');
     expect(host.querySelector('.ring, .moon, .marker')).toBeNull();
+  });
+
+  it('shows label calendars as header text instead of chips', () => {
+    const nameday = { ...event('Sabina', true), entity: 'calendar.namedays', color: '#F4A27A' };
+    const props = { ...base, labelCalendars: ['calendar.namedays'] };
+    render(renderDayColumn({ ...props, events: [item(nameday), item(event('Trip', true))] }), host);
+    const line = host.querySelector('.day__label-line') as HTMLElement;
+    expect(line.textContent?.trim()).toBe('Sabina');
+    expect(line.style.color).toBe('#F4A27A');
+    expect([...host.querySelectorAll('.chip__title')].map((t) => t.textContent)).toEqual(['Trip']);
+  });
+
+  it('gives each label calendar its own line, in config order, even when it has no entry that day', () => {
+    const cz = { ...event('Vendelín', true), entity: 'calendar.cz' };
+    const sk = { ...event('Vendelín', true), entity: 'calendar.sk', suffix: 'SK' };
+    const lines = () => [...host.querySelectorAll('.day__label-line')].map((l) => l.textContent?.replace(/\s+/g, ' ').trim());
+    render(renderDayColumn({ ...base, labelCalendars: ['calendar.cz', 'calendar.sk'], events: [item(sk), item(cz)] }), host);
+    expect(lines()).toEqual(['Vendelín', 'Vendelín SK']);
+    render(renderDayColumn({ ...base, labelCalendars: ['calendar.cz', 'calendar.sk'], events: [item(sk)] }), host);
+    expect(lines()).toEqual(['', 'Vendelín SK']);
+    const second = { ...event('Valentýn', true), entity: 'calendar.cz' };
+    render(renderDayColumn({ ...base, labelCalendars: ['calendar.cz'], events: [item(cz), item(second)] }), host);
+    expect(lines()).toEqual(['Vendelín · Valentýn']);
+  });
+
+  it('keeps the info row on days without labels or weather only when weather is configured', () => {
+    render(renderDayColumn(base), host);
+    expect(host.querySelector('.day__info')).toBeNull();
+    render(renderDayColumn({ ...base, weatherRow: true }), host);
+    expect(host.querySelector('.day__info')).not.toBeNull();
+  });
+
+  it('shows the long weekday name when asked', () => {
+    render(renderDayColumn({ ...base, weekdayFormat: 'long' }), host);
+    expect(host.querySelector('.day__weekday')?.textContent).toBe('Tuesday');
   });
 
   it('marks past days', () => {
@@ -176,10 +214,11 @@ describe('renderDayColumn', () => {
 
   it('shows the weather icon with rounded high and low temperatures', () => {
     const weather = { condition: 'rainy', high: 17.6, low: 8.4 };
-    render(renderDayColumn({ ...base, weather }), host);
+    const configured = { ...base, weatherRow: true };
+    render(renderDayColumn({ ...configured, weather }), host);
     expect(host.querySelector('.day__weather ha-icon')?.getAttribute('icon')).toBe('mdi:weather-rainy');
     expect(host.querySelector('.day__temp')?.textContent?.replace(/\s+/g, '')).toBe('18°/8°');
-    render(renderDayColumn({ ...base, weather, showLow: false }), host);
+    render(renderDayColumn({ ...configured, weather, showLow: false }), host);
     expect(host.querySelector('.day__temp')?.textContent?.trim()).toBe('18°');
     render(renderDayColumn(base), host);
     expect(host.querySelector('.day__weather')).toBeNull();
