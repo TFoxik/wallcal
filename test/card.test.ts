@@ -322,6 +322,27 @@ describe('wallcal-card', () => {
       const el = await mount(twoCalendars, makeHass(byCalendar).hass);
       expect(chipTitles(el)).toEqual(['Dentist', 'Standup']);
     });
+
+    it('toggles back and forth when storage is blocked', async () => {
+      const blocked = () => {
+        throw new DOMException('blocked', 'SecurityError');
+      };
+      const getItem = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(blocked);
+      const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(blocked);
+      try {
+        const el = await mount(twoCalendars, makeHass(byCalendar).hass);
+        click(el, '.toggle');
+        await flush(el);
+        expect(chipTitles(el)).toEqual(['Dentist']);
+
+        click(el, '.toggle');
+        await flush(el);
+        expect(chipTitles(el)).toEqual(['Dentist', 'Standup']);
+      } finally {
+        getItem.mockRestore();
+        setItem.mockRestore();
+      }
+    });
   });
 
   describe('weather', () => {

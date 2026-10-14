@@ -225,7 +225,7 @@ export class WallCalCard extends LitElement {
   }
 
   private _toggleCalendar(entity: string): void {
-    this._hidden = toggleHidden(entity);
+    this._hidden = toggleHidden(entity, this._hidden);
   }
 
   private _subscribeWeather(): void {
