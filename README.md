@@ -72,8 +72,7 @@ overlays:            # small cards floating over the bottom of the week, one per
       hide_completed: true   # todo-list option; also hide_create, display_order
 ```
 
-Every option and style token is listed in
-[the design spec](docs/superpowers/specs/2026-10-13-wallcal-design.md#6-configuration-reference).
+Every option, default and style token is listed in [docs/configuration.md](docs/configuration.md).
 
 ## Please note
 
