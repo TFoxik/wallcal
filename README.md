@@ -82,13 +82,17 @@ npm run build
 
 `dev/ha/` holds a throwaway Home Assistant setup: two fixture calendars (`calendar.family`,
 `calendar.work`) whose events come from `dev/ha/config/wallcal_fixture.json` relative to today,
-and a YAML dashboard with three WallCal variants. It needs any installed `hass` binary:
+and a YAML dashboard with three WallCal variants. Install Home Assistant once as a uv tool (puts
+`hass` on PATH, kept apart from any project's environment), then start the harness:
 
 ```bash
-HASS_BIN=/path/to/venv/bin/hass ./dev/ha/start.sh
+uv tool install --python 3.14 homeassistant==2026.10.0
+./dev/ha/start.sh
 ```
 
-It builds the card, serves it on http://localhost:8124 and starts HA with `--skip-pip`.
+It builds the card, serves it on http://localhost:8124 and starts HA, which installs the packages
+its integrations need into that tool environment on first start. `HASS_BIN=/other/hass` uses a
+different install; add `HASS_SKIP_PIP=1` when that install belongs to another project.
 Browsers on this machine skip the login (trusted networks); first-run onboarding can be finished
 in the browser. Edit the fixture JSON while it runs to see the card pick up changes. After a
 rebuild, hard-refresh the page: HA's browser cache keeps the old card otherwise.

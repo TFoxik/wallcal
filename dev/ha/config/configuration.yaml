@@ -28,21 +28,22 @@ lovelace:
 calendar:
   - platform: wallcal_fixture
 
-weather:
-  - platform: template
-    name: Home
-    condition_template: "partlycloudy"
-    temperature_template: "{{ 16 }}"
-    humidity_template: "{{ 60 }}"
-    forecast_daily_template: >
-      {% set conditions = ['sunny', 'partlycloudy', 'rainy', 'cloudy', 'pouring', 'lightning-rainy', 'fog'] %}
-      {% set ns = namespace(days=[]) %}
-      {% for i in range(-1, 9) %}
-        {% set ns.days = ns.days + [{
-          'datetime': (today_at() + timedelta(days=i)).isoformat(),
-          'condition': conditions[i % 7],
-          'temperature': 18 - i,
-          'templow': 8 - i % 4,
-        }] %}
-      {% endfor %}
-      {{ ns.days }}
+template:
+  - weather:
+      - name: Home
+        unique_id: wallcal_dev_weather
+        condition: "partlycloudy"
+        temperature: "{{ 16 }}"
+        humidity: "{{ 60 }}"
+        forecast_daily: >
+          {% set conditions = ['sunny', 'partlycloudy', 'rainy', 'cloudy', 'pouring', 'lightning-rainy', 'fog'] %}
+          {% set ns = namespace(days=[]) %}
+          {% for i in range(-1, 9) %}
+            {% set ns.days = ns.days + [{
+              'datetime': (today_at() + timedelta(days=i)).isoformat(),
+              'condition': conditions[i % 7],
+              'temperature': 18 - i,
+              'templow': 8 - i % 4,
+            }] %}
+          {% endfor %}
+          {{ ns.days }}
