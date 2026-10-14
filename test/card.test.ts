@@ -557,6 +557,18 @@ describe('wallcal-card', () => {
       expect(hosted(el)).not.toBeNull();
     });
 
+    it('keeps the hosted card when HA applies an identical config again', async () => {
+      const overlayConfig = withOverlays(right({ visible: true }));
+      const el = await mount(overlayConfig, makeHass(async () => []).hass);
+      await settle(el);
+      const node = hosted(el);
+      expect(node).not.toBeNull();
+      el.setConfig(structuredClone(overlayConfig));
+      await settle(el);
+      expect(hosted(el)).toBe(node);
+      expect(created).toHaveLength(1);
+    });
+
     it('creates a new card when the card config changes', async () => {
       const el = await mount(withOverlays(right({ visible: true })), makeHass(async () => []).hass);
       await settle(el);

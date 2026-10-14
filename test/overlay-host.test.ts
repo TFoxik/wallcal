@@ -124,6 +124,27 @@ describe('OverlayCards', () => {
     expect(createCardElement).toHaveBeenCalledTimes(1);
   });
 
+  it('drops a card that is removed from the config while it is still being created', async () => {
+    let release!: () => void;
+    const loaded = new Promise<void>((resolve) => (release = resolve));
+    window.loadCardHelpers = async () => {
+      await loaded;
+      return { createCardElement };
+    };
+    const cards = new OverlayCards();
+    const pending = cards.card('k', todo);
+    cards.retain(new Set());
+    release();
+    const orphan = (await pending) as HassCard;
+    document.body.append(orphan);
+
+    cards.hass = hassA();
+    expect(orphan.hass).toBeUndefined();
+    const fresh = await cards.card('k', todo);
+    expect(fresh).not.toBe(orphan);
+    expect(createCardElement).toHaveBeenCalledTimes(2);
+  });
+
   it('shows a message when the card factory is missing', async () => {
     delete window.loadCardHelpers;
     const el = await new OverlayCards().card('k', todo);
