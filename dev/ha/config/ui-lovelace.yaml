@@ -8,8 +8,16 @@ views:
         entities:
           - entity: calendar.family
             color: "#7F77DD"
-          - calendar.work
+          - entity: calendar.work
+            toggle: true
+            icon: mdi:briefcase
+          - entity: calendar.namedays
+            color: "#F4A27A"
+            toggle: true
         refresh_interval: 60
+        past_events: dim
+        weather:
+          entity: weather.home
         moon:
           enabled: true
         period:

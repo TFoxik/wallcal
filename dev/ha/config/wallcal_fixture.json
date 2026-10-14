@@ -86,6 +86,48 @@
       "day": 5,
       "start": "08:00",
       "end": "16:00"
+    },
+    {
+      "summary": "Breakfast with the kids",
+      "day": 0,
+      "start": "07:00",
+      "end": "07:45"
+    },
+    {
+      "summary": "Call with the plumber",
+      "day": 0,
+      "start": "11:00",
+      "end": "11:30"
+    },
+    {
+      "summary": "Groceries",
+      "day": 0,
+      "start": "13:00",
+      "end": "13:45"
+    },
+    {
+      "summary": "School pickup",
+      "day": 0,
+      "start": "15:00",
+      "end": "15:30"
+    },
+    {
+      "summary": "Homework help",
+      "day": 0,
+      "start": "16:30",
+      "end": "17:30"
+    },
+    {
+      "summary": "Dinner",
+      "day": 0,
+      "start": "18:30",
+      "end": "19:15"
+    },
+    {
+      "summary": "Movie night",
+      "day": 0,
+      "start": "20:00",
+      "end": "22:00"
     }
   ],
   "work": [
@@ -124,6 +166,40 @@
       "summary": "Quarter end",
       "day": 4,
       "days": 1
+    }
+  ],
+  "namedays": [
+    {
+      "summary": "Svátek: Sabina",
+      "day": -2
+    },
+    {
+      "summary": "Svátek: Tereza",
+      "day": -1
+    },
+    {
+      "summary": "Svátek: Vendelín",
+      "day": 0
+    },
+    {
+      "summary": "Svátek: Hedvika",
+      "day": 1
+    },
+    {
+      "summary": "Svátek: Lukáš",
+      "day": 2
+    },
+    {
+      "summary": "Svátek: Michaela",
+      "day": 3
+    },
+    {
+      "summary": "Svátek: Vendelín",
+      "day": 4
+    },
+    {
+      "summary": "Svátek: Nataša",
+      "day": 5
     }
   ]
 }
