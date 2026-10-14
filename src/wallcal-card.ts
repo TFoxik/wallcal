@@ -91,19 +91,24 @@ export class WallCalCard extends LitElement {
   }
 
   setConfig(config: unknown): void {
+    const previous = this._config;
     this._config = normalizeConfig(config);
     this._overlayCards.retain(new Set(this._config.overlays.map((o) => o.key)));
-    this._cache = null;
-    // A request still in flight was made for the old config; its response must not fill the new cache.
-    this._fetchSeq++;
-    this._requestedRange = '';
-    this._seen.clear();
+    // The editor re-applies the config on every keystroke; only drop the events when they would differ.
+    const sameEvents = previous !== undefined && eventSource(previous) === eventSource(this._config);
+    if (!sameEvents) {
+      this._cache = null;
+      // A request still in flight was made for the old config; its response must not fill the new cache.
+      this._fetchSeq++;
+      this._requestedRange = '';
+      this._seen.clear();
+    }
     this._unsubscribeWeather();
     this._forecast = null;
     this._weatherWarning = null;
     loadFont(this._config.font_url);
     if (this.isConnected) {
-      this._tick();
+      this._tick(!sameEvents);
       this._subscribeWeather();
     }
   }
@@ -374,14 +379,14 @@ export class WallCalCard extends LitElement {
 
   // Timers do not run while the card is detached or the device sleeps, so every tick, and every
   // reconnect or wake-up, re-derives today from the clock instead of trusting the last timer.
-  private _tick = (): void => {
+  private _tick = (refetch = true): void => {
     clearTimeout(this._tickTimer);
     const now = new Date();
     this._syncToday(now);
-    if (!document.hidden) void this._fetch();
+    if (refetch && !document.hidden) void this._fetch();
     this._advanceNow();
     const refresh = (this._config?.refresh_interval ?? 300) * 1000;
-    this._tickTimer = setTimeout(this._tick, Math.min(refresh, msUntilNextMidnight(now) + 1000));
+    this._tickTimer = setTimeout(() => this._tick(), Math.min(refresh, msUntilNextMidnight(now) + 1000));
   };
 
   private _advanceNow = (): void => {
@@ -408,6 +413,11 @@ export class WallCalCard extends LitElement {
   private _onVisibilityChange = (): void => {
     if (!document.hidden) this._tick();
   };
+}
+
+// What cached events depend on: the range, the calendars, and the labels baked into each event.
+function eventSource(config: WallCalConfig): string {
+  return JSON.stringify([config.days, config.first_day, config.entities.map((e) => [e.entity, e.color, e.strip_prefix, e.suffix])]);
 }
 
 function headerText(setting: HeaderTitle, days: Date[], language: string): string | null {

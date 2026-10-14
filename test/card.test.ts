@@ -144,6 +144,31 @@ describe('wallcal-card', () => {
     expect(chipTitles(el)).toEqual([]);
   });
 
+  it('keeps its events without refetching when setConfig only changes how the card looks', async () => {
+    const { hass, calls } = makeHass(async () => [timed('Dentist', '2026-10-13T08:30:00+02:00', '2026-10-13T09:00:00+02:00')]);
+    const el = await mount(config, hass);
+    expect(calls).toHaveLength(1);
+
+    el.setConfig({ ...config, theme: 'paper', past_events: 'dim', header: { title: 'range' } });
+    await flush(el);
+    expect(chipTitles(el)).toEqual(['Dentist']);
+    expect(calls).toHaveLength(1);
+  });
+
+  it('refetches when setConfig changes the calendars, their labels or the range', async () => {
+    const { hass, calls } = makeHass(async () => [timed('Dentist', '2026-10-13T08:30:00+02:00', '2026-10-13T09:00:00+02:00')]);
+    const el = await mount(config, hass);
+    el.setConfig({ entities: [{ entity: 'calendar.family', color: '#000000' }] });
+    await flush(el);
+    expect(calls).toHaveLength(2);
+    el.setConfig({ entities: [{ entity: 'calendar.family', color: '#000000', strip_prefix: 'Event:' }] });
+    await flush(el);
+    expect(calls).toHaveLength(3);
+    el.setConfig({ entities: [{ entity: 'calendar.family', color: '#000000', strip_prefix: 'Event:' }], first_day: 'sunday' });
+    await flush(el);
+    expect(calls).toHaveLength(4);
+  });
+
   it('navigates weeks and returns to today', async () => {
     const { hass } = makeHass(async () => []);
     const el = await mount({ ...config, header: { idle_return: 0 } }, hass);
