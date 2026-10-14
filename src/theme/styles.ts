@@ -181,6 +181,8 @@ export const cardStyles = css`
     --mdc-theme-primary: var(--wallcal-accent);
     --mdc-theme-secondary: var(--wallcal-accent);
     --mdc-checkbox-unchecked-color: var(--wallcal-muted);
+    --ha-color-fill-primary-loud-resting: var(--wallcal-accent);
+    --ha-color-fill-primary-loud-hover: var(--wallcal-accent);
     --ha-color-text-primary: var(--wallcal-text);
     --ha-color-text-secondary: var(--wallcal-muted);
     --wa-color-text-normal: var(--wallcal-text);

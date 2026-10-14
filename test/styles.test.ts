@@ -13,6 +13,8 @@ describe('overlay theming', () => {
       ['--mdc-theme-primary', '--wallcal-accent'],
       ['--mdc-theme-secondary', '--wallcal-accent'],
       ['--mdc-checkbox-unchecked-color', '--wallcal-muted'],
+      ['--ha-color-fill-primary-loud-resting', '--wallcal-accent'],
+      ['--ha-color-fill-primary-loud-hover', '--wallcal-accent'],
       ['--ha-color-text-primary', '--wallcal-text'],
       ['--ha-color-text-secondary', '--wallcal-muted'],
       ['--wa-color-text-normal', '--wallcal-text'],

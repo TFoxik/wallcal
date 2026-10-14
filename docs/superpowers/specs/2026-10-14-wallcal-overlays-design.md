@@ -160,7 +160,7 @@ covers in light and dark themes. It is opaque so events underneath never show th
 per card with `style: overlay_background: "#2A2A30"`.
 
 HA also resolves derived variables (`--mdc-theme-text-*`, `--ha-color-text-*`, `--wa-color-text-*`,
-form backgrounds, `--mdc-theme-primary`) once on the page, so the overlay remaps those too
+form backgrounds, `--mdc-theme-primary`, the checkbox fill `--ha-color-fill-primary-loud-*`) once on the page, so the overlay remaps those too
 (`src/theme/styles.ts`); without them the paper preset on a dark HA theme leaves the todo card's
 text light on light.
 
