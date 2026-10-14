@@ -5,18 +5,20 @@ Clean by default, restylable from YAML, with optional moon phase and cycle overl
 
 ## Install
 
-**Manual (for now):** `npm install && npm run build`, copy `dist/wallcal-card.js` to
-`/config/www/`, then add `/local/wallcal-card.js?v=0.1.0` as a JavaScript module under Settings →
-Dashboards → Resources. Bump the `?v=` value after copying a new build, otherwise browsers (and
-wall tablets especially) keep running the cached old one.
+**HACS:** HACS → ⋮ (top right) → Custom repositories → add `https://github.com/TFoxik/wallcal`
+with type *Dashboard*. Find WallCal in HACS, download it and reload the browser; HACS registers
+the dashboard resource for you.
+
+**Manual:** download `wallcal-card.js` from the
+[latest release](https://github.com/TFoxik/wallcal/releases/latest), copy it to `/config/www/`,
+then add `/local/wallcal-card.js?v=0.1.0` as a JavaScript module under Settings → Dashboards →
+Resources. Bump the `?v=` value after copying a new version, otherwise browsers (and wall tablets
+especially) keep running the cached old one.
 
 For a wall display, put the card in a **panel** view so it fills the screen. In a sections view,
 give its section a wide `column_span`: seven day columns need roughly 900 px. In a panel view the
 card fills the screen below the HA header and busy days scroll inside their column; in sections it
 uses its grid height. In a masonry view the card grows to fit every event instead.
-
-**HACS:** available once the first GitHub release with a built `wallcal-card.js` is published
-(HACS → Frontend → ⋮ → Custom repositories → add this repo as *Dashboard*).
 
 ## Configure
 
@@ -96,6 +98,17 @@ npm test
 npm run dev   # open http://localhost:5173/dev/index.html
 npm run build
 ```
+
+### Release
+
+Bump `version` in `package.json`, commit, then tag and push:
+
+```bash
+git tag v0.1.0 && git push origin v0.1.0
+```
+
+The release workflow checks the tag matches `package.json`, runs the tests, builds and attaches
+`wallcal-card.js` to a GitHub release, which is what HACS installs.
 
 ### Local Home Assistant
 

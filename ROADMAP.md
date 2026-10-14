@@ -2,9 +2,7 @@
 
 ## Now
 
-### Release workflow
-GitHub Action that builds `dist/wallcal-card.js` and attaches it to a GitHub release, so HACS
-installs a built file instead of requiring `dist/` in git.
+Nothing in progress.
 
 ## Next
 
