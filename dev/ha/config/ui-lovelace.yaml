@@ -43,7 +43,8 @@ views:
               entity: todo.shopping
               hide_completed: true
           - position: bottom-left
-            span: 1
+            span: 2
+            width: 45%
             icon: mdi:weather-partly-cloudy
             visible: true
             card:

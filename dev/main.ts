@@ -139,7 +139,7 @@ const VARIANTS: Array<[string, Record<string, unknown>]> = [
       weather: { entity: 'weather.home' },
       overlays: [
         { position: 'bottom-right', toggle: 'pill', name: 'Shopping', icon: 'mdi:format-list-checks', card: { type: 'todo-list', entity: 'todo.shopping' } },
-        { position: 'bottom-left', span: 1, visible: true, icon: 'mdi:weather-partly-cloudy', card: { type: 'tile', entity: 'weather.home' } },
+        { position: 'bottom-left', span: 2, width: '45%', visible: true, icon: 'mdi:weather-partly-cloudy', card: { type: 'tile', entity: 'weather.home' } },
       ],
     },
   ],
