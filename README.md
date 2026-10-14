@@ -62,9 +62,10 @@ overlays:            # small cards floating over the bottom of the week, one per
     max_height: 40%  # of the grid height, or px; scrolls past it
     offset: 8        # px from the bottom, e.g. 72 to clear navbar-card
     icon: mdi:format-list-checks  # header button; toggle: false shows it always
-    card:
+    card:            # any Lovelace card, with that card's own options
       type: todo-list
       entity: todo.shopping
+      hide_completed: true   # todo-list option; also hide_create, display_order
 ```
 
 Every option and style token is listed in

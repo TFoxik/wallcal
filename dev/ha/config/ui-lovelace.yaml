@@ -39,6 +39,7 @@ views:
             card:
               type: todo-list
               entity: todo.shopping
+              hide_completed: true
           - position: bottom-left
             span: 1
             icon: mdi:weather-partly-cloudy
