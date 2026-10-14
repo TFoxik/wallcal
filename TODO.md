@@ -21,3 +21,7 @@ Clock or other widgets in the `start | center | end` slots.
 ## Release workflow
 GitHub Action that builds `dist/wallcal-card.js` and attaches it to a GitHub release, so HACS
 installs a built file instead of requiring `dist/` in git.
+
+## Overlay space in covered columns
+Events under a shown overlay are hidden until it is toggled off. Pad the covered day lists by the
+overlay's measured height (ResizeObserver) so the last events can be scrolled clear of it.

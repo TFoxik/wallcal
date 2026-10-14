@@ -224,6 +224,7 @@ Tokens (config key → CSS property):
 | `radius` | `--ha-card-border-radius` (panel view: the theme radius it squares away), fallback 16px | card radius |
 | `day_radius` | `radius` | day column radius; day headers use day_radius − 4px |
 | `chip_radius` | 10px | event chip radius |
+| `overlay_background` | day-column colour + light wash | floating overlay panel |
 | `gap` | 4px | gap between columns |
 | `padding` | 8px | space between the card edge and its content |
 | `font_family` | `inherit` | everything |
@@ -295,7 +296,19 @@ period:
   show_ovulation: true
 theme: default                    # default | paper | midnight
 style: {}                         # any token from section 5, plus font_url
+overlays:                         # small cards floating over the bottom of the week, one per position
+  - position: bottom-right   # bottom-left | bottom-center | bottom-right
+    span: 2          # day columns it is centred over
+    width: 90%       # share of those columns
+    max_height: 40%  # of the grid height, or px; scrolls past it
+    offset: 8        # px from the bottom, e.g. 72 to clear navbar-card
+    icon: mdi:format-list-checks  # header button; toggle: false shows it always
+    card:
+      type: todo-list
+      entity: todo.shopping
 ```
+
+Overlays: see `docs/superpowers/specs/2026-10-14-wallcal-overlays-design.md`.
 
 Invalid config throws from `setConfig` with a human-readable message; HA renders it as an error
 card.

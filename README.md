@@ -55,6 +55,16 @@ theme: paper         # default | paper | midnight
 style:
   date_size: 36
   accent: "#D4537E"
+overlays:            # small cards floating over the bottom of the week, one per position
+  - position: bottom-right   # bottom-left | bottom-center | bottom-right
+    span: 2          # day columns it is centred over
+    width: 90%       # share of those columns
+    max_height: 40%  # of the grid height, or px; scrolls past it
+    offset: 8        # px from the bottom, e.g. 72 to clear navbar-card
+    icon: mdi:format-list-checks  # header button; toggle: false shows it always
+    card:
+      type: todo-list
+      entity: todo.shopping
 ```
 
 Every option and style token is listed in
@@ -62,6 +72,8 @@ Every option and style token is listed in
 
 ## Please note
 
+- Overlays can hold any card. Built-in HA cards follow the WallCal theme; cards that hard-code
+  their colours may not. The panel colour is the `overlay_background` style token. Shown/hidden overlays are remembered per device, like hidden calendars.
 - **Privacy:** the period settings are stored in the dashboard configuration. Anyone who can open
   that dashboard in Home Assistant can read them, and they are included in backups.
 - **Predictions are estimates.** Expected period, fertile window and ovulation come from a fixed
