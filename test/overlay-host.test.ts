@@ -106,6 +106,24 @@ describe('OverlayCards', () => {
     expect(await cards.card('k', todo)).toBe(current);
   });
 
+  it('keeps a failure while it is shown and retries the next time the overlay is shown', async () => {
+    const helpers = window.loadCardHelpers;
+    delete window.loadCardHelpers;
+    const cards = new OverlayCards();
+    const failed = cards.card('k', todo);
+    const message = await failed;
+    expect(message.classList.contains('overlay__message')).toBe(true);
+
+    document.body.append(message);
+    expect(cards.card('k', todo)).toBe(failed);
+
+    message.remove();
+    window.loadCardHelpers = helpers;
+    const retried = await cards.card('k', todo);
+    expect(retried.classList.contains('hosted')).toBe(true);
+    expect(createCardElement).toHaveBeenCalledTimes(1);
+  });
+
   it('shows a message when the card factory is missing', async () => {
     delete window.loadCardHelpers;
     const el = await new OverlayCards().card('k', todo);

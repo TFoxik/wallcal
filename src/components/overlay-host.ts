@@ -14,6 +14,7 @@ export interface HassCard extends HTMLElement {
 interface Entry {
   ready: Promise<HTMLElement>;
   el?: HassCard;
+  failure?: HTMLElement;
 }
 
 export class OverlayCards {
@@ -24,7 +25,10 @@ export class OverlayCards {
 
   card(key: string, config: Record<string, unknown>): Promise<HTMLElement> {
     const existing = this._cards.get(key);
-    if (existing) {
+    // A failure stays while its message is on the page; once the overlay was hidden, showing it
+    // again retries (the factory may have been missing only while HA was still loading).
+    if (existing?.failure && !existing.failure.isConnected) this._cards.delete(key);
+    else if (existing) {
       // Hidden cards miss hass updates (see the setter); catch up as the card is shown again.
       if (existing.el && this._hass) existing.el.hass = this._hass;
       return existing.ready;
@@ -47,7 +51,10 @@ export class OverlayCards {
           );
           return el;
         },
-        (error: unknown) => message(`Overlay card unavailable: ${error instanceof Error ? error.message : String(error)}`),
+        (error: unknown) => {
+          entry.failure = message(`Overlay card unavailable: ${error instanceof Error ? error.message : String(error)}`);
+          return entry.failure;
+        },
       ),
     };
     this._cards.set(key, entry);

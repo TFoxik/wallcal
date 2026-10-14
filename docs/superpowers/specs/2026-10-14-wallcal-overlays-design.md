@@ -122,7 +122,8 @@ Validation (`config.ts`, throws like the rest of `normalizeConfig`):
   disconnects and drops its subscriptions (the todo card's live item subscription). Detached cards
   get no `hass` updates (a Lit card would still re-render for each); they catch up when shown again.
 - `loadCardHelpers` missing (dev harness) or rejecting: the overlay shows a one-line message
-  instead of a card; the calendar keeps working.
+  instead of a card; the calendar keeps working. The failure is kept while the message is shown;
+  hiding or minimizing the overlay and showing it again retries.
 
 ### 4.5 Interaction
 - The overlay lives inside `.grid`, whose pointer / wheel handler marks the day lists as touched
