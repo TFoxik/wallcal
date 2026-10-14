@@ -1,20 +1,12 @@
+import { readJson, writeJson } from './storage';
+
 // One list per device, shared by every card; a card only applies it to calendars it has a chip for.
 const HIDDEN_KEY = 'wallcal:hidden-calendars';
 
-// undefined means storage itself is unreachable; corrupt contents still count as readable (empty).
 function readStored(): Set<string> | undefined {
-  let raw: string | null;
-  try {
-    raw = localStorage.getItem(HIDDEN_KEY);
-  } catch {
-    return undefined;
-  }
-  try {
-    const stored: unknown = JSON.parse(raw ?? '[]');
-    return new Set(Array.isArray(stored) ? stored.filter((id): id is string => typeof id === 'string') : []);
-  } catch {
-    return new Set();
-  }
+  const stored = readJson(HIDDEN_KEY);
+  if (stored === undefined) return undefined;
+  return new Set(Array.isArray(stored) ? stored.filter((id): id is string => typeof id === 'string') : []);
 }
 
 export function loadHidden(): Set<string> {
@@ -28,10 +20,6 @@ export function toggleHidden(entity: string, current: Set<string>): Set<string> 
   const hidden = new Set(readStored() ?? current);
   if (current.has(entity)) hidden.delete(entity);
   else hidden.add(entity);
-  try {
-    localStorage.setItem(HIDDEN_KEY, JSON.stringify([...hidden]));
-  } catch {
-    // Storage blocked (private mode, kiosk policy).
-  }
+  writeJson(HIDDEN_KEY, [...hidden]);
   return hidden;
 }

@@ -1,5 +1,6 @@
 import type { OverlayConfig } from '../config';
 import type { HomeAssistant } from '../ha-types';
+import { readJson, writeJson } from './storage';
 
 // One map per device, shared by every card. The key includes a hash of the card config so the same
 // position on two dashboards keeps its own state.
@@ -11,23 +12,13 @@ export function overlayKey(overlay: Pick<OverlayConfig, 'position' | 'card'>): s
   return `${overlay.position}:${hash(JSON.stringify(overlay.card))}`;
 }
 
-// undefined means storage itself is unreachable; corrupt contents still count as readable (empty).
 function readStored(): OverlayState | undefined {
-  let raw: string | null;
-  try {
-    raw = localStorage.getItem(OVERLAYS_KEY);
-  } catch {
-    return undefined;
-  }
-  try {
-    const stored: unknown = JSON.parse(raw ?? '{}');
-    if (!stored || typeof stored !== 'object' || Array.isArray(stored)) return {};
-    return Object.fromEntries(
-      Object.entries(stored).filter((entry): entry is [string, boolean] => typeof entry[1] === 'boolean'),
-    );
-  } catch {
-    return {};
-  }
+  const stored = readJson(OVERLAYS_KEY);
+  if (stored === undefined) return undefined;
+  if (!stored || typeof stored !== 'object' || Array.isArray(stored)) return {};
+  return Object.fromEntries(
+    Object.entries(stored).filter((entry): entry is [string, boolean] => typeof entry[1] === 'boolean'),
+  );
 }
 
 export function loadOverlayState(): OverlayState {
@@ -44,11 +35,7 @@ export function isOverlayShown(overlay: OverlayConfig, state: OverlayState): boo
 export function toggleOverlay(overlay: OverlayConfig, current: OverlayState): OverlayState {
   const state = { ...(readStored() ?? current) };
   state[overlay.key] = !isOverlayShown(overlay, current);
-  try {
-    localStorage.setItem(OVERLAYS_KEY, JSON.stringify(state));
-  } catch {
-    // Storage blocked (private mode, kiosk policy).
-  }
+  writeJson(OVERLAYS_KEY, state);
   return state;
 }
 
