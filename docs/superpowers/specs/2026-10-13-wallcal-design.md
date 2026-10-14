@@ -33,7 +33,7 @@ HA calendars, looks good with zero styling config, and can be restyled entirely 
 
 ### Not in v1
 Month or day views, visual config editor, creating or editing events, weather, learned cycle
-prediction, companion integration. See `TODO.md`.
+prediction, companion integration. See `ROADMAP.md`.
 
 ## 3. Architecture
 
@@ -317,7 +317,7 @@ card.
 
 Period settings live in the Lovelace dashboard config. Any HA user who can load that dashboard can
 read them, and they are included in `.storage/lovelace` and backups. Accepted for v1 and stated in
-the README. Learned prediction (see `TODO.md`) moves the data into a dedicated calendar entity.
+the README. Learned prediction (see `ROADMAP.md`) moves the data into a dedicated calendar entity.
 
 The card makes no network requests other than to the HA instance it runs in, plus the optional
 `font_url` chosen by the user.

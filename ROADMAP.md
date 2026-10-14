@@ -1,6 +1,14 @@
-# TODO — later iterations
+# Roadmap
 
-## Learned cycle prediction
+## Now
+
+### Release workflow
+GitHub Action that builds `dist/wallcal-card.js` and attaches it to a GitHub release, so HACS
+installs a built file instead of requiring `dist/` in git.
+
+## Next
+
+### Learned cycle prediction
 Store period history in a dedicated HA Local Calendar (`calendar.cycle`, one "Period" event per
 period). Log it from the HA phone app, an automation, or a "Period started" button on the card
 (`calendar.create_event`).
@@ -12,12 +20,17 @@ period). Log it from the HA phone app, an automation, or a "Period started" butt
 - `cycle/predict.ts` already takes `{ starts[], cycleLength, periodLength }`, so only the input
   source changes.
 
-## Visual config editor
+### Visual config editor
 GUI editor (`getConfigElement`) for everything currently YAML-only.
 
-## Top bar slots
+## Later
+
+### Top bar slots
 Clock or other widgets in the `start | center | end` slots.
 
-## Release workflow
-GitHub Action that builds `dist/wallcal-card.js` and attaches it to a GitHub release, so HACS
-installs a built file instead of requiring `dist/` in git.
+### Overlay auto-hide
+Hide overlays automatically after idle. Today an overlay is hidden only with its header toggle.
+
+### Overlay top positions
+Overlays sit only at `bottom-left | bottom-center | bottom-right`. Add positions at the top of the
+grid; free x/y placement was left out with them.
