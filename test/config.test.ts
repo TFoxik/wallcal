@@ -204,6 +204,7 @@ describe('normalizeConfig', () => {
           max_height: '40%',
           offset: 8,
           toggle: 'header',
+          pill: 'full',
           visible: false,
           icon: 'mdi:card-outline',
           card: todo,
@@ -227,6 +228,12 @@ describe('normalizeConfig', () => {
       expect(parse(overlay({ toggle: true }))[0].toggle).toBe('header');
       expect(parse(overlay({ toggle: false }))[0].toggle).toBe('none');
       expect(() => parse(overlay({ toggle: 'banner' }))).toThrow(/overlays\[0\]\.toggle must be one of: header, pill, none/);
+    });
+
+    it('reads the pill style, full by default', () => {
+      expect(parse(overlay({ toggle: 'pill', pill: 'compact' }))[0].pill).toBe('compact');
+      expect(parse(overlay({ toggle: 'pill' }))[0].pill).toBe('full');
+      expect(() => parse(overlay({ pill: 'tiny' }))).toThrow(/overlays\[0\]\.pill must be one of: full, compact/);
     });
 
     it('allows one overlay per position', () => {

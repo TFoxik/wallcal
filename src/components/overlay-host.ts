@@ -86,13 +86,15 @@ export function renderOverlay(overlay: OverlayConfig, card: Promise<HTMLElement>
 }
 
 export function renderPill(overlay: OverlayConfig, p: PillProps): TemplateResult {
+  const compact = overlay.pill === 'compact';
   return html`<button
-    class="pill pill--${overlay.position}"
+    class="pill pill--${overlay.position} ${compact ? 'pill--compact' : ''}"
     style=${styleMap(overlayVars(overlay))}
     aria-label=${`Show ${p.label}`}
+    title=${p.label}
     @click=${p.onExpand}
   >
-    <ha-icon icon=${overlay.icon}></ha-icon><span class="pill__label">${p.label}</span>${p.count === null
+    <ha-icon icon=${overlay.icon}></ha-icon>${compact ? nothing : html`<span class="pill__label">${p.label}</span>`}${p.count === null
       ? nothing
       : html`<span class="pill__count">${p.count}</span>`}
   </button>`;

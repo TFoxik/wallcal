@@ -228,6 +228,11 @@ export const cardStyles = css`
     white-space: nowrap;
     --mdc-icon-size: 22px;
   }
+  .pill--compact {
+    justify-content: center;
+    min-width: 44px;
+    padding: 0 11px;
+  }
   .pill ha-icon {
     color: var(--wallcal-accent);
   }

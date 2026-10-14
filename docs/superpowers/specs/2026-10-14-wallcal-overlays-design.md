@@ -91,6 +91,8 @@ Validation (`config.ts`, throws like the rest of `normalizeConfig`):
 - Minimized, the overlay is a pill at its own position (same `offset`), centred on its band so it
   expands in place: icon, name (4.2 rules) and, when the card's `entity` state is numeric, a count
   badge with the unit if any. A todo entity's state is its open-item count.
+- `pill: compact` leaves the name out (icon and count; a round icon button without a count); the
+  name stays as the pill's aria-label and tooltip.
 - Tapping the pill expands it; the expanded panel has a 22 px handle strip on top that minimizes it.
   No header button. Expanded/minimized uses the same per-device state as 4.3 (`visible` = expanded).
 - WallCal re-renders on a hass update only when a pill's count changed (besides calendar changes).

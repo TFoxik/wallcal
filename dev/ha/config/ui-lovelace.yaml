@@ -36,6 +36,7 @@ views:
           - position: bottom-right
             icon: mdi:format-list-checks
             toggle: pill
+            pill: compact
             name: Shopping
             card:
               type: todo-list

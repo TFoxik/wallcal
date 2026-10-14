@@ -63,6 +63,7 @@ overlays:            # small cards floating over the bottom of the week, one per
     offset: 8        # px from the bottom, e.g. 72 to clear navbar-card
     icon: mdi:format-list-checks
     toggle: pill     # header (button in the top bar) | pill (minimizes in place) | none (always shown)
+    pill: compact    # full (icon, name, count) | compact (icon and count only)
     card:            # any Lovelace card, with that card's own options
       type: todo-list
       entity: todo.shopping

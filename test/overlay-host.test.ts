@@ -158,6 +158,17 @@ describe('overlay pill and handle', () => {
     expect(onExpand).toHaveBeenCalledTimes(1);
   });
 
+  it('shows only the icon and count when compact, keeping the name for the label and tooltip', () => {
+    const compact = { ...overlay, pill: 'compact' as const };
+    render(renderPill(compact, { label: 'Shopping', count: '4', onExpand: vi.fn() }), host);
+    const pill = host.querySelector<HTMLButtonElement>('button.pill.pill--compact');
+    expect(pill?.querySelector('.pill__label')).toBeNull();
+    expect(pill?.querySelector('.pill__count')?.textContent).toBe('4');
+    expect(pill?.querySelector('ha-icon')).not.toBeNull();
+    expect(pill?.getAttribute('aria-label')).toBe('Show Shopping');
+    expect(pill?.getAttribute('title')).toBe('Shopping');
+  });
+
   it('leaves the count out when there is none', () => {
     render(renderPill(overlay, { label: 'Home', count: null, onExpand: vi.fn() }), host);
     expect(host.querySelector('.pill__count')).toBeNull();

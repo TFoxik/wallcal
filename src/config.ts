@@ -63,6 +63,9 @@ export type OverlayPosition = (typeof OVERLAY_POSITIONS)[number];
 export const OVERLAY_TOGGLES = ['header', 'pill', 'none'] as const;
 export type OverlayToggle = (typeof OVERLAY_TOGGLES)[number];
 
+export const PILL_STYLES = ['full', 'compact'] as const;
+export type PillStyle = (typeof PILL_STYLES)[number];
+
 export interface OverlayConfig {
   /** Position plus a hash of `card`: identifies the overlay's stored state and hosted card. */
   key: string;
@@ -74,6 +77,8 @@ export interface OverlayConfig {
   max_height: string;
   offset: number;
   toggle: OverlayToggle;
+  /** `compact` leaves the name out of the pill: icon and count only. */
+  pill: PillStyle;
   visible: boolean;
   icon: string;
   name?: string;
@@ -293,6 +298,7 @@ function parseOverlays(value: unknown, days: number): OverlayConfig[] {
       max_height: maxHeight(obj.max_height, `${path}.max_height`),
       offset: int(obj.offset, 8, 0, 400, `${path}.offset`),
       toggle: overlayToggle(obj.toggle, `${path}.toggle`),
+      pill: oneOf(obj.pill, PILL_STYLES, 'full', `${path}.pill`),
       visible: bool(obj.visible, false, `${path}.visible`),
       icon: obj.icon === undefined ? 'mdi:card-outline' : icon(obj.icon, `${path}.icon`),
       card,
