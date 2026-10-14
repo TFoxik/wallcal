@@ -4,6 +4,7 @@ import '../src/wallcal-card';
 import type { WallCalCard } from '../src/wallcal-card';
 import type { HaCalendarEvent } from '../src/data/events';
 import type { HomeAssistant } from '../src/ha-types';
+import { dayKey } from '../src/date';
 import { makeHass, timed } from './fixtures';
 
 function deferred<T>() {
@@ -36,6 +37,11 @@ const chipTitles = (el: WallCalCard) => [...root(el).querySelectorAll('.chip__ti
 const click = (el: WallCalCard, selector: string) => root(el).querySelector<HTMLButtonElement>(selector)?.click();
 
 const config = { entities: ['calendar.family'] };
+
+const startParam = (weekStart: Date) => `start=${encodeURIComponent(weekStart.toISOString())}`;
+// Requests for the week starting on the given day; the card also prefetches the weeks either side.
+const fetchesOf = (calls: string[], weekStart = new Date(2026, 9, 12)) =>
+  calls.filter((path) => path.includes(startParam(weekStart)));
 
 beforeEach(() => {
   vi.useFakeTimers({ now: new Date(2026, 9, 13, 10, 0) });
@@ -84,16 +90,16 @@ describe('wallcal-card', () => {
   it('fetches once on connect and refetches only when a calendar entity changes', async () => {
     const { hass, calls } = makeHass(async () => []);
     const el = await mount(config, hass);
-    expect(calls).toHaveLength(1);
+    expect(fetchesOf(calls)).toHaveLength(1);
 
     el.hass = { ...hass };
     await flush(el);
-    expect(calls).toHaveLength(1);
+    expect(fetchesOf(calls)).toHaveLength(1);
 
     const family = hass.states['calendar.family'];
     el.hass = { ...hass, states: { 'calendar.family': { ...family, last_changed: '2026-10-13T09:00:00Z' } } };
     await flush(el);
-    expect(calls).toHaveLength(2);
+    expect(fetchesOf(calls)).toHaveLength(2);
   });
 
   it('does not re-render on hass updates that do not concern it', async () => {
@@ -111,7 +117,7 @@ describe('wallcal-card', () => {
     const renders = vi.spyOn(el as unknown as { render(): unknown }, 'render');
     el.hass = { ...hass, states: { 'calendar.family': { last_changed: '2026-10-13T09:00:00Z' } } };
     await flush(el);
-    expect(calls).toHaveLength(2);
+    expect(fetchesOf(calls)).toHaveLength(2);
     expect(renders).not.toHaveBeenCalled();
   });
 
@@ -119,14 +125,15 @@ describe('wallcal-card', () => {
     const { hass, calls } = makeHass(async () => []);
     await mount({ ...config, refresh_interval: 60 }, hass);
     await vi.advanceTimersByTimeAsync(60_000);
-    expect(calls).toHaveLength(2);
+    expect(fetchesOf(calls)).toHaveLength(2);
   });
 
   it('ignores a response that arrives after a newer request', async () => {
     const first = deferred<HaCalendarEvent[]>();
     const second = deferred<HaCalendarEvent[]>();
     const queue = [first, second];
-    const { hass } = makeHass(() => queue.shift()!.promise);
+    // Any later request prefetches a neighbouring week and never answers.
+    const { hass } = makeHass(() => queue.shift()?.promise ?? new Promise<HaCalendarEvent[]>(() => undefined));
     const el = await mount(config, hass);
 
     click(el, 'button[aria-label="Next week"]');
@@ -157,12 +164,12 @@ describe('wallcal-card', () => {
   it('keeps its events without refetching when setConfig only changes how the card looks', async () => {
     const { hass, calls } = makeHass(async () => [timed('Dentist', '2026-10-13T08:30:00+02:00', '2026-10-13T09:00:00+02:00')]);
     const el = await mount(config, hass);
-    expect(calls).toHaveLength(1);
+    expect(fetchesOf(calls)).toHaveLength(1);
 
     el.setConfig({ ...config, theme: 'paper', past_events: 'dim', header: { title: 'range' } });
     await flush(el);
     expect(chipTitles(el)).toEqual(['Dentist']);
-    expect(calls).toHaveLength(1);
+    expect(fetchesOf(calls)).toHaveLength(1);
   });
 
   it('refetches when setConfig changes the calendars, their labels or the range', async () => {
@@ -170,13 +177,13 @@ describe('wallcal-card', () => {
     const el = await mount(config, hass);
     el.setConfig({ entities: [{ entity: 'calendar.family', color: '#000000' }] });
     await flush(el);
-    expect(calls).toHaveLength(2);
+    expect(fetchesOf(calls)).toHaveLength(2);
     el.setConfig({ entities: [{ entity: 'calendar.family', color: '#000000', strip_prefix: 'Event:' }] });
     await flush(el);
-    expect(calls).toHaveLength(3);
+    expect(fetchesOf(calls)).toHaveLength(3);
     el.setConfig({ entities: [{ entity: 'calendar.family', color: '#000000', strip_prefix: 'Event:' }], first_day: 'sunday' });
     await flush(el);
-    expect(calls).toHaveLength(4);
+    expect(fetchesOf(calls, new Date(2026, 9, 11))).toHaveLength(1);
   });
 
   it('navigates weeks and returns to today', async () => {
@@ -283,11 +290,11 @@ describe('wallcal-card', () => {
     await mount({ ...config, refresh_interval: 60 }, hass);
     hidden.mockReturnValue(true);
     await vi.advanceTimersByTimeAsync(180_000);
-    expect(calls).toHaveLength(1);
+    expect(fetchesOf(calls)).toHaveLength(1);
     hidden.mockReturnValue(false);
     document.dispatchEvent(new Event('visibilitychange'));
     await vi.advanceTimersByTimeAsync(0);
-    expect(calls).toHaveLength(2);
+    expect(fetchesOf(calls)).toHaveLength(2);
     hidden.mockRestore();
   });
 
@@ -329,6 +336,130 @@ describe('wallcal-card', () => {
     const card = root(el).querySelector('ha-card') as HTMLElement;
     expect(card.style.getPropertyValue('--wallcal-background')).toBe('#F7F3EC');
     expect(card.style.getPropertyValue('--wallcal-date-size')).toBe('40px');
+  });
+
+  describe('week cache', () => {
+    // One event per week, titled by the week's first day and the label at request time, so a chip
+    // shows which week and which fetch it came from. A hold delays one request for that week.
+    function weekly() {
+      const state = { label: 'v1', gate: null as Promise<void> | null, holds: new Map<string, Promise<void>>() };
+      const { hass, calls } = makeHass(async (path) => {
+        const day = dayKey(new Date(decodeURIComponent(/start=([^&]+)/.exec(path)![1])));
+        const label = state.label;
+        const gate = state.holds.get(day) ?? state.gate;
+        state.holds.delete(day);
+        if (gate) await gate;
+        return [timed(`${label} ${day}`, `${day}T10:00:00+02:00`, `${day}T11:00:00+02:00`)];
+      });
+      const hold = (day: string) => {
+        const gate = deferred<void>();
+        state.holds.set(day, gate.promise);
+        return gate;
+      };
+      return { hass, calls, state, hold };
+    }
+    const never = new Promise<void>(() => undefined);
+    const next = (el: WallCalCard) => click(el, 'button[aria-label="Next week"]');
+    const prev = (el: WallCalCard) => click(el, 'button[aria-label="Previous week"]');
+
+    it('prefetches the weeks before and after once the shown week has loaded', async () => {
+      const { hass, calls } = weekly();
+      await mount(config, hass);
+      expect(fetchesOf(calls, new Date(2026, 9, 5))).toHaveLength(1);
+      expect(fetchesOf(calls, new Date(2026, 9, 19))).toHaveLength(1);
+    });
+
+    it('shows a prefetched week at once and refreshes it in the background', async () => {
+      const { hass, state, hold } = weekly();
+      const el = await mount(config, hass);
+      state.label = 'v2';
+      const refresh = hold('2026-10-19');
+      next(el);
+      await flush(el);
+      expect(chipTitles(el)).toEqual(['v1 2026-10-19']);
+      refresh.resolve();
+      await flush(el);
+      expect(chipTitles(el)).toEqual(['v2 2026-10-19']);
+    });
+
+    it('does not prefetch a week it already holds', async () => {
+      const { hass, calls } = weekly();
+      await mount({ ...config, refresh_interval: 60 }, hass);
+      await vi.advanceTimersByTimeAsync(60_000);
+      expect(fetchesOf(calls)).toHaveLength(2);
+      expect(calls).toHaveLength(4);
+    });
+
+    it('drops a prefetch that lands after the calendars changed', async () => {
+      const { hass, state, hold } = weekly();
+      const stale = hold('2026-10-19');
+      const el = await mount(config, hass);
+      state.gate = never;
+      el.setConfig({ entities: [{ entity: 'calendar.family', color: '#123456' }] });
+      await flush(el);
+      stale.resolve();
+      await flush(el);
+      next(el);
+      await flush(el);
+      expect(chipTitles(el)).toEqual([]);
+    });
+
+    it('does not keep a prefetched week in which a calendar failed', async () => {
+      let gate: Promise<void> | null = null;
+      const nextWeek = startParam(new Date(2026, 9, 19));
+      const { hass } = makeHass(async (path) => {
+        if (gate) await gate;
+        if (path.startsWith('calendars/calendar.work') && path.includes(nextWeek)) throw new Error('timeout');
+        return [timed('Family', '2026-10-20T10:00:00+02:00', '2026-10-20T11:00:00+02:00')];
+      });
+      hass.states['calendar.work'] = { last_changed: '' };
+      const el = await mount({ entities: ['calendar.family', 'calendar.work'] }, hass);
+      gate = never;
+      next(el);
+      await flush(el);
+      expect(chipTitles(el)).toEqual([]);
+    });
+
+    it('does not retry a failed prefetch on every refresh', async () => {
+      const nextWeek = startParam(new Date(2026, 9, 19));
+      const { hass, calls } = makeHass(async (path) => {
+        if (path.includes(nextWeek)) throw new Error('timeout');
+        return [];
+      });
+      await mount({ ...config, refresh_interval: 60 }, hass);
+      await vi.advanceTimersByTimeAsync(120_000);
+      expect(fetchesOf(calls)).toHaveLength(3);
+      expect(fetchesOf(calls, new Date(2026, 9, 19))).toHaveLength(1);
+    });
+
+    it('forgets the cached weeks when the calendars change', async () => {
+      const { hass, state } = weekly();
+      const el = await mount(config, hass);
+      next(el);
+      await flush(el);
+      state.gate = never;
+      el.setConfig({ entities: [{ entity: 'calendar.family', color: '#123456' }] });
+      await flush(el);
+      prev(el);
+      await flush(el);
+      expect(chipTitles(el)).toEqual([]);
+    });
+
+    it('keeps only the most recently stored weeks', async () => {
+      const { hass, state } = weekly();
+      const el = await mount(config, hass);
+      for (let i = 0; i < 4; i++) {
+        next(el);
+        await flush(el);
+      }
+      state.gate = never;
+      prev(el);
+      await flush(el);
+      expect(chipTitles(el)).toEqual(['v1 2026-11-02']);
+      click(el, '.nav--today');
+      await flush(el);
+      expect(chipTitles(el)).toEqual([]);
+    });
   });
 
   describe('calendar toggles', () => {
@@ -537,7 +668,7 @@ describe('wallcal-card', () => {
     expect(root(el).querySelector('.chip--ended')).toBeNull();
     await vi.advanceTimersByTimeAsync(30 * 60_000 + 1000);
     await el.updateComplete;
-    expect(calls).toHaveLength(1);
+    expect(fetchesOf(calls)).toHaveLength(1);
     expect(root(el).querySelector('.chip--ended .chip__title')?.textContent).toBe('Standup');
   });
 

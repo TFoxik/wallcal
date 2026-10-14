@@ -19,6 +19,7 @@ import {
 import { loadHidden, toggleHidden } from './data/hidden';
 import { isOverlayShown, loadOverlayState, pillCount, toggleOverlay, type OverlayState } from './data/overlays';
 import { forecastType, sameForecast, subscribeForecast, type DayForecast } from './data/weather';
+import { rangeKeyOf, WeekCache } from './data/weeks';
 import { addDays, dayKey, isSameDay, msUntilNextMidnight, startOfDay } from './date';
 import { formatTitle, resolveHourCycle } from './format';
 import type { HomeAssistant } from './ha-types';
@@ -60,6 +61,7 @@ export class WallCalCard extends LitElement {
 
   private _hass?: HomeAssistant;
   private _seen = new Map<string, string>();
+  private _weeks = new WeekCache();
   private _fetchSeq = 0;
   private _requestedRange = '';
   private _tickTimer?: ReturnType<typeof setTimeout>;
@@ -98,6 +100,7 @@ export class WallCalCard extends LitElement {
     const sameEvents = previous !== undefined && eventSource(previous) === eventSource(this._config);
     if (!sameEvents) {
       this._cache = null;
+      this._weeks.clear();
       // A request still in flight was made for the old config; its response must not fill the new cache.
       this._fetchSeq++;
       this._requestedRange = '';
@@ -318,8 +321,7 @@ export class WallCalCard extends LitElement {
   }
 
   private _rangeKey(config: WallCalConfig): string {
-    const start = weekStart(this._anchor, config.days, config.first_day);
-    return `${start.getTime()}-${addDays(start, config.days).getTime()}`;
+    return rangeKeyOf(weekStart(this._anchor, config.days, config.first_day), config.days);
   }
 
   private _isCurrentWeek(): boolean {
@@ -341,9 +343,11 @@ export class WallCalCard extends LitElement {
     if (!config || !hass || !this.isConnected) return;
 
     const seq = ++this._fetchSeq;
-    const rangeKey = this._rangeKey(config);
-    this._requestedRange = rangeKey;
     const start = weekStart(this._anchor, config.days, config.first_day);
+    const rangeKey = rangeKeyOf(start, config.days);
+    this._requestedRange = rangeKey;
+    // Runs from willUpdate on a week change, so the cached week lands in that same render.
+    if (this._cache?.rangeKey !== rangeKey) this._cache = this._weeks.get(rangeKey);
     for (const e of config.entities) this._seen.set(e.entity, hass.states[e.entity]?.last_changed ?? '');
 
     const results = await fetchEvents(hass, config.entities, start, addDays(start, config.days));
@@ -351,9 +355,13 @@ export class WallCalCard extends LitElement {
     if (seq !== this._fetchSeq) return;
 
     this._cache = mergeResults(this._cache, rangeKey, results);
+    this._weeks.put(rangeKey, this._cache);
     const errors = results.flatMap((r) => (r.error ? [r.error] : []));
     this._warning = errors.length ? errors.join('\n') : null;
-    if (this.isConnected) this._armEndTimer();
+    if (this.isConnected) {
+      this._armEndTimer();
+      this._weeks.prefetchAround(hass, config.entities, start, config.days);
+    }
   }
 
   private _show(anchor: Date): void {
