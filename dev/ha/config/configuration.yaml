@@ -2,7 +2,9 @@ homeassistant:
   name: WallCal dev
   time_zone: Europe/Prague
   auth_providers:
-    # Local-only dev instance: browsers on this machine skip the login screen.
+    # DEV ONLY: browsers on this machine skip the login screen. Never copy this to a real
+    # instance, and never run it behind a proxy or in a container: there every client can
+    # appear as 127.0.0.1 and gets in without a password.
     - type: trusted_networks
       trusted_networks:
         - 127.0.0.1

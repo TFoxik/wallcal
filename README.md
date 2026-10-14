@@ -125,5 +125,7 @@ It builds the card, serves it on http://localhost:8124 and starts HA, which inst
 its integrations need into that tool environment on first start. `HASS_BIN=/other/hass` uses a
 different install; add `HASS_SKIP_PIP=1` when that install belongs to another project.
 Browsers on this machine skip the login (trusted networks); first-run onboarding can be finished
-in the browser. Edit the fixture JSON while it runs to see the card pick up changes. After a
+in the browser. That login bypass is for this throwaway instance only: never copy it to a real
+Home Assistant, and never run the harness behind a proxy or in a container, where every request
+can appear to come from a trusted address. Edit the fixture JSON while it runs to see the card pick up changes. After a
 rebuild, hard-refresh the page: HA's browser cache keeps the old card otherwise.
