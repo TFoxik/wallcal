@@ -23,9 +23,11 @@ export function loadHidden(): Set<string> {
 
 // Re-reads storage first so another card on the page that toggled a different calendar is kept;
 // falls back to the card's own set when storage is blocked, so the choice still lasts until reload.
+// Flips what this card shows, which stays right when a write silently failed.
 export function toggleHidden(entity: string, current: Set<string>): Set<string> {
   const hidden = new Set(readStored() ?? current);
-  if (!hidden.delete(entity)) hidden.add(entity);
+  if (current.has(entity)) hidden.delete(entity);
+  else hidden.add(entity);
   try {
     localStorage.setItem(HIDDEN_KEY, JSON.stringify([...hidden]));
   } catch {

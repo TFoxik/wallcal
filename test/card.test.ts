@@ -327,8 +327,8 @@ describe('wallcal-card', () => {
       const blocked = () => {
         throw new DOMException('blocked', 'SecurityError');
       };
-      const getItem = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(blocked);
-      const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(blocked);
+      const getItem = vi.spyOn(localStorage, 'getItem').mockImplementation(blocked);
+      const setItem = vi.spyOn(localStorage, 'setItem').mockImplementation(blocked);
       try {
         const el = await mount(twoCalendars, makeHass(byCalendar).hass);
         click(el, '.toggle');
@@ -338,8 +338,28 @@ describe('wallcal-card', () => {
         click(el, '.toggle');
         await flush(el);
         expect(chipTitles(el)).toEqual(['Dentist', 'Standup']);
+        expect(getItem).toHaveBeenCalled();
       } finally {
         getItem.mockRestore();
+        setItem.mockRestore();
+      }
+    });
+
+    it('toggles back and forth when storage is readable but writes fail', async () => {
+      const setItem = vi.spyOn(localStorage, 'setItem').mockImplementation(() => {
+        throw new DOMException('quota', 'QuotaExceededError');
+      });
+      try {
+        const el = await mount(twoCalendars, makeHass(byCalendar).hass);
+        click(el, '.toggle');
+        await flush(el);
+        expect(chipTitles(el)).toEqual(['Dentist']);
+
+        click(el, '.toggle');
+        await flush(el);
+        expect(chipTitles(el)).toEqual(['Dentist', 'Standup']);
+        expect(setItem).toHaveBeenCalled();
+      } finally {
         setItem.mockRestore();
       }
     });
