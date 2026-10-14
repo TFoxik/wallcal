@@ -459,6 +459,42 @@ describe('wallcal-card', () => {
       expect(root(el).querySelector('.bar__warning')?.getAttribute('title')).toBe('weather.home: unknown entity');
     });
 
+    it('keeps the forecast and its subscription when setConfig leaves the weather entity alone', async () => {
+      const { hass, subscribe, stop } = weatherHass();
+      const el = await mount(weatherConfig, hass);
+      el.setConfig({ ...weatherConfig, theme: 'paper', weather: { entity: 'weather.home', show_low: false } });
+      await flush(el);
+      expect(subscribe).toHaveBeenCalledTimes(1);
+      expect(stop).not.toHaveBeenCalled();
+      expect(root(el).querySelectorAll('.day')[2].querySelector('.day__temp')?.textContent?.replace(/\s+/g, '')).toBe('18°');
+    });
+
+    it('resubscribes when setConfig changes the weather entity and stops when weather is removed', async () => {
+      const { hass, subscribe, stop } = weatherHass();
+      hass.states['weather.cottage'] = { last_changed: '', attributes: { supported_features: 1 } };
+      const el = await mount(weatherConfig, hass);
+      el.setConfig({ ...config, weather: { entity: 'weather.cottage' } });
+      await flush(el);
+      expect(stop).toHaveBeenCalledTimes(1);
+      expect(subscribe).toHaveBeenCalledTimes(2);
+      expect(subscribe.mock.calls[1][1]).toMatchObject({ entity_id: 'weather.cottage' });
+      el.setConfig(config);
+      await flush(el);
+      expect(stop).toHaveBeenCalledTimes(2);
+      expect(root(el).querySelector('.day__weather')).toBeNull();
+    });
+
+    it('retries a failed subscription when the card is reconfigured', async () => {
+      const { hass, subscribe } = weatherHass();
+      subscribe.mockRejectedValueOnce(new Error('not ready'));
+      const el = await mount(weatherConfig, hass);
+      expect(root(el).querySelector('.bar__warning')).not.toBeNull();
+      el.setConfig({ ...weatherConfig });
+      await flush(el);
+      expect(subscribe).toHaveBeenCalledTimes(2);
+      expect(root(el).querySelector('.bar__warning')).toBeNull();
+    });
+
     it('warns when the entity offers no daily forecast', async () => {
       const { hass, subscribe } = weatherHass(2);
       const el = await mount(weatherConfig, hass);

@@ -103,9 +103,14 @@ export class WallCalCard extends LitElement {
       this._requestedRange = '';
       this._seen.clear();
     }
-    this._unsubscribeWeather();
-    this._forecast = null;
-    this._weatherWarning = null;
+    // Same goes for a working forecast subscription; a failed or missing one is retried.
+    const sameWeather =
+      previous?.weather?.entity === this._config.weather?.entity && this._weatherUnsub !== null && this._weatherWarning === null;
+    if (!sameWeather) {
+      this._unsubscribeWeather();
+      this._forecast = null;
+      this._weatherWarning = null;
+    }
     loadFont(this._config.font_url);
     if (this.isConnected) {
       this._tick(!sameEvents);
