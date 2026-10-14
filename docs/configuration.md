@@ -8,7 +8,7 @@ type: custom:wallcal-card
 entities:                         # required, at least one
   - entity: calendar.family
     color: "#7F77DD"              # default from a built-in palette
-    name: Family                  # default: the entity's friendly name
+    name: Family                  # toggle chip label/tooltip; default: the entity's friendly name
     toggle: false                 # true adds a show/hide chip in the top bar
     icon: mdi:account-group       # chip icon; default is the first letter of the name
     display: chip                 # chip | label: label shows titles as a line in the day header (max 2 calendars)
