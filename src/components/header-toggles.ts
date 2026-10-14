@@ -2,17 +2,17 @@ import { html, nothing, type TemplateResult } from 'lit';
 import { classMap } from 'lit/directives/class-map.js';
 import { styleMap } from 'lit/directives/style-map.js';
 
-export interface CalendarToggle {
-  entity: string;
+export interface HeaderToggle {
+  id: string;
   label: string;
   color: string;
   icon?: string;
   hidden: boolean;
 }
 
-export function renderCalendarToggles(
-  toggles: CalendarToggle[],
-  onToggle: (entity: string) => void,
+export function renderHeaderToggles(
+  toggles: HeaderToggle[],
+  onToggle: (id: string) => void,
 ): TemplateResult | typeof nothing {
   if (!toggles.length) return nothing;
   return html`<div class="toggles">
@@ -23,7 +23,7 @@ export function renderCalendarToggles(
         aria-pressed=${t.hidden ? 'false' : 'true'}
         aria-label=${`${t.hidden ? 'Show' : 'Hide'} ${t.label}`}
         title=${t.label}
-        @click=${() => onToggle(t.entity)}
+        @click=${() => onToggle(t.id)}
       >
         ${t.icon ? html`<ha-icon icon=${t.icon}></ha-icon>` : initial(t.label)}
       </button>`,

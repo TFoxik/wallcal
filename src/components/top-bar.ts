@@ -1,7 +1,7 @@
 import { html, nothing, type TemplateResult } from 'lit';
 import { classMap } from 'lit/directives/class-map.js';
 import type { HeaderConfig } from '../config';
-import { renderCalendarToggles, type CalendarToggle } from './calendar-toggles';
+import { renderHeaderToggles, type HeaderToggle } from './header-toggles';
 import { chevronLeft, chevronRight, icon, warningIcon } from './icons';
 
 export interface TopBarProps {
@@ -10,8 +10,10 @@ export interface TopBarProps {
   subtitle: string | null;
   isCurrentWeek: boolean;
   warning: string | null;
-  toggles: CalendarToggle[];
-  onToggle(entity: string): void;
+  toggles: HeaderToggle[];
+  overlayToggles: HeaderToggle[];
+  onToggle(id: string): void;
+  onOverlayToggle(id: string): void;
   onPrev(): void;
   onToday(): void;
   onNext(): void;
@@ -30,7 +32,7 @@ export function renderTopBar(p: TopBarProps): TemplateResult | typeof nothing {
     <div class="bar__start">${centered ? nothing : title}</div>
     <div class="bar__center">${centered ? title : nothing}</div>
     <div class="bar__end">
-      ${renderCalendarToggles(p.toggles, p.onToggle)}
+      ${renderHeaderToggles(p.toggles, p.onToggle)} ${renderHeaderToggles(p.overlayToggles, p.onOverlayToggle)}
       ${p.warning
         ? html`<span class="bar__warning" title=${p.warning}>${icon(warningIcon)}</span>`
         : nothing}

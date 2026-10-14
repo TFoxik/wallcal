@@ -1,6 +1,6 @@
 import { LitElement, html, nothing } from 'lit';
 import { styleMap } from 'lit/directives/style-map.js';
-import type { CalendarToggle } from './components/calendar-toggles';
+import type { HeaderToggle } from './components/header-toggles';
 import { renderDayColumn } from './components/day-column';
 import { renderTopBar } from './components/top-bar';
 import { isCalendarEntityId, normalizeConfig, type HeaderTitle, type WallCalConfig } from './config';
@@ -163,6 +163,8 @@ export class WallCalCard extends LitElement {
         warning: [this._warning, this._weatherWarning].filter(Boolean).join('\n') || null,
         toggles: this._toggles(config, hidden),
         onToggle: (entity) => this._toggleCalendar(entity),
+        overlayToggles: [],
+        onOverlayToggle: () => undefined,
         onPrev: () => this._show(addDays(this._anchor, -7)),
         onToday: () => this._show(this._today),
         onNext: () => this._show(addDays(this._anchor, 7)),
@@ -212,11 +214,11 @@ export class WallCalCard extends LitElement {
     list.scrollTop = next ? next.offsetTop : list.scrollHeight;
   }
 
-  private _toggles(config: WallCalConfig, hidden: Set<string>): CalendarToggle[] {
+  private _toggles(config: WallCalConfig, hidden: Set<string>): HeaderToggle[] {
     return config.entities
       .filter((e) => e.toggle)
       .map((e) => ({
-        entity: e.entity,
+        id: e.entity,
         label: e.name ?? friendlyName(this._hass, e.entity),
         color: e.color,
         icon: e.icon,
