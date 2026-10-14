@@ -12,6 +12,7 @@ export const TOKENS = [
   'radius',
   'day_radius',
   'chip_radius',
+  'overlay_background',
   'gap',
   'padding',
   'font_family',
@@ -41,6 +42,9 @@ export const DEFAULT_TOKENS: Record<Token, string> = {
   radius: 'var(--ha-card-border-radius, 16px)',
   day_radius: 'var(--wallcal-radius)',
   chip_radius: '10px',
+  // Column colour plus a light wash: a touch lighter than the columns it covers, and opaque.
+  overlay_background:
+    'linear-gradient(rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.08)), linear-gradient(var(--wallcal-surface), var(--wallcal-surface)), var(--wallcal-background)',
   gap: '4px',
   padding: '8px',
   font_family: 'inherit',

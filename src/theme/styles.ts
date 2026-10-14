@@ -129,6 +129,44 @@ export const cardStyles = css`
     grid-template-rows: minmax(0, 1fr);
     gap: var(--wallcal-gap);
     min-height: 0;
+    position: relative;
+  }
+  .overlay {
+    --overlay-col: calc((100% - (var(--wallcal-days, 7) - 1) * var(--wallcal-gap)) / var(--wallcal-days, 7));
+    --overlay-band: calc(var(--overlay-span) * var(--overlay-col) + (var(--overlay-span) - 1) * var(--wallcal-gap));
+    position: absolute;
+    z-index: 1;
+    bottom: var(--overlay-offset);
+    width: calc(var(--overlay-band) * var(--overlay-width));
+    max-height: var(--overlay-max-height);
+    overflow: auto;
+    box-sizing: border-box;
+    background: var(--wallcal-overlay-background);
+    border-radius: var(--wallcal-day-radius);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+    --ha-card-background: transparent;
+    --card-background-color: transparent;
+    --ha-card-box-shadow: none;
+    --ha-card-border-width: 0;
+    --primary-text-color: var(--wallcal-text);
+    --secondary-text-color: var(--wallcal-muted);
+    --primary-color: var(--wallcal-accent);
+    --divider-color: var(--wallcal-divider);
+  }
+  .overlay--bottom-left {
+    left: calc(var(--overlay-band) * (1 - var(--overlay-width)) / 2);
+  }
+  .overlay--bottom-right {
+    right: calc(var(--overlay-band) * (1 - var(--overlay-width)) / 2);
+  }
+  .overlay--bottom-center {
+    left: calc((100% - var(--overlay-band) * var(--overlay-width)) / 2);
+  }
+  .overlay__message {
+    margin: 0;
+    padding: 12px 16px;
+    color: var(--wallcal-muted);
+    font-size: 14px;
   }
   .day {
     position: relative;

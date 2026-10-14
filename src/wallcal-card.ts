@@ -1,9 +1,11 @@
 import { LitElement, html, nothing } from 'lit';
+import { repeat } from 'lit/directives/repeat.js';
 import { styleMap } from 'lit/directives/style-map.js';
 import type { HeaderToggle } from './components/header-toggles';
 import { renderDayColumn } from './components/day-column';
+import { OverlayCards, renderOverlay } from './components/overlay-host';
 import { renderTopBar } from './components/top-bar';
-import { isCalendarEntityId, normalizeConfig, type HeaderTitle, type WallCalConfig } from './config';
+import { isCalendarEntityId, normalizeConfig, type HeaderTitle, type OverlayConfig, type WallCalConfig } from './config';
 import { cycleInfo, type CycleInput } from './cycle/predict';
 import {
   cachedEvents,
@@ -15,6 +17,7 @@ import {
   type EventCache,
 } from './data/events';
 import { loadHidden, toggleHidden } from './data/hidden';
+import { isOverlayShown, loadOverlayState, overlayKey, toggleOverlay, type OverlayState } from './data/overlays';
 import { forecastType, subscribeForecast, type DayForecast } from './data/weather';
 import { addDays, dayKey, isSameDay, msUntilNextMidnight, startOfDay } from './date';
 import { formatTitle, resolveHourCycle } from './format';
@@ -35,6 +38,7 @@ export class WallCalCard extends LitElement {
     _warning: { state: true },
     _now: { state: true },
     _hidden: { state: true },
+    _overlayState: { state: true },
     _forecast: { state: true },
     _weatherWarning: { state: true },
   };
@@ -48,6 +52,7 @@ export class WallCalCard extends LitElement {
   declare _warning: string | null;
   declare _now: Date;
   declare _hidden: Set<string>;
+  declare _overlayState: OverlayState;
   declare _forecast: Map<string, DayForecast> | null;
   declare _weatherWarning: string | null;
 
@@ -62,6 +67,7 @@ export class WallCalCard extends LitElement {
   private _lastListTouch = 0;
   private _scrollPending = true;
   private _weatherUnsub: Promise<() => Promise<void>> | null = null;
+  private _overlayCards = new OverlayCards();
 
   constructor() {
     super();
@@ -71,6 +77,7 @@ export class WallCalCard extends LitElement {
     this._cache = null;
     this._warning = null;
     this._hidden = loadHidden();
+    this._overlayState = loadOverlayState();
     this._forecast = null;
     this._weatherWarning = null;
   }
@@ -82,6 +89,7 @@ export class WallCalCard extends LitElement {
 
   setConfig(config: unknown): void {
     this._config = normalizeConfig(config);
+    this._overlayCards.retain(new Set(this._config.overlays.map(overlayKey)));
     this._cache = null;
     this._requestedRange = '';
     this._seen.clear();
@@ -98,6 +106,7 @@ export class WallCalCard extends LitElement {
   set hass(hass: HomeAssistant) {
     const previous = this._hass;
     this._hass = hass;
+    this._overlayCards.hass = hass;
     if (!previous || previous.locale !== hass.locale) this.requestUpdate();
     if (previous && this._calendarsChanged(hass)) void this._fetch();
     this._subscribeWeather();
@@ -163,16 +172,16 @@ export class WallCalCard extends LitElement {
         warning: [this._warning, this._weatherWarning].filter(Boolean).join('\n') || null,
         toggles: this._toggles(config, hidden),
         onToggle: (entity) => this._toggleCalendar(entity),
-        overlayToggles: [],
-        onOverlayToggle: () => undefined,
+        overlayToggles: this._overlayToggles(config),
+        onOverlayToggle: (key) => this._toggleOverlay(key),
         onPrev: () => this._show(addDays(this._anchor, -7)),
         onToday: () => this._show(this._today),
         onNext: () => this._show(addDays(this._anchor, 7)),
       })}
       <div
         class="grid grid--past-${config.past_days} grid--events-${config.past_events} ${cycleInput ? 'grid--cycle' : ''}"
-        @pointerdown=${() => this._touchList()}
-        @wheel=${{ handleEvent: () => this._touchList(), passive: true }}
+        @pointerdown=${(event: Event) => this._touchList(event)}
+        @wheel=${{ handleEvent: (event: Event) => this._touchList(event), passive: true }}
       >
         ${days.map((date) => {
           const isToday = isSameDay(date, this._today);
@@ -197,6 +206,11 @@ export class WallCalCard extends LitElement {
             markersInInfo: config.weather !== null && (config.moon.enabled || cycleInput !== null),
           });
         })}
+        ${repeat(
+          config.overlays.filter((o) => isOverlayShown(o, this._overlayState)),
+          overlayKey,
+          (o) => renderOverlay(o, this._overlayCards.card(overlayKey(o), o.card)),
+        )}
       </div>
     </ha-card>`;
   }
@@ -228,6 +242,23 @@ export class WallCalCard extends LitElement {
 
   private _toggleCalendar(entity: string): void {
     this._hidden = toggleHidden(entity, this._hidden);
+  }
+
+  private _overlayToggles(config: WallCalConfig): HeaderToggle[] {
+    return config.overlays
+      .filter((o) => o.toggle)
+      .map((o) => ({
+        id: overlayKey(o),
+        label: o.name ?? overlayName(this._hass, o),
+        color: 'var(--wallcal-accent)',
+        icon: o.icon,
+        hidden: !isOverlayShown(o, this._overlayState),
+      }));
+  }
+
+  private _toggleOverlay(key: string): void {
+    const overlay = this._config?.overlays.find((o) => overlayKey(o) === key);
+    if (overlay) this._overlayState = toggleOverlay(overlay, this._overlayState);
   }
 
   private _subscribeWeather(): void {
@@ -307,8 +338,12 @@ export class WallCalCard extends LitElement {
     this._armIdleReturn();
   }
 
-  private _touchList(): void {
-    this._lastListTouch = Date.now();
+  // The overlays sit inside the grid; using one must not pause auto-scroll of the day lists.
+  private _touchList(event: Event): void {
+    const inOverlay = event
+      .composedPath()
+      .some((node) => node instanceof HTMLElement && node.classList.contains('overlay'));
+    if (!inOverlay) this._lastListTouch = Date.now();
     this._touch();
   }
 
@@ -368,6 +403,16 @@ function headerText(setting: HeaderTitle, days: Date[], language: string): strin
 function friendlyName(hass: HomeAssistant | undefined, entity: string): string {
   const name = hass?.states[entity]?.attributes?.friendly_name;
   return typeof name === 'string' && name.trim() ? name : entity.slice('calendar.'.length);
+}
+
+function overlayName(hass: HomeAssistant | undefined, overlay: OverlayConfig): string {
+  const { title, entity, type } = overlay.card;
+  if (typeof title === 'string' && title.trim()) return title;
+  if (typeof entity === 'string') {
+    const name = hass?.states[entity]?.attributes?.friendly_name;
+    return typeof name === 'string' && name.trim() ? name : entity;
+  }
+  return String(type);
 }
 
 const loadedFonts = new Set<string>();

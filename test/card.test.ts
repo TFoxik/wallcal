@@ -452,4 +452,127 @@ describe('wallcal-card', () => {
     const Card = customElements.get('wallcal-card') as unknown as { getStubConfig(h: HomeAssistant): unknown };
     expect(Card.getStubConfig(makeHass(async () => []).hass)).toEqual({ entities: ['calendar.family'] });
   });
+
+  describe('overlays', () => {
+    const todo = { type: 'todo-list', entity: 'todo.shopping' };
+    const withOverlays = (...overlays: Record<string, unknown>[]) => ({ ...config, overlays });
+    const right = (extra: Record<string, unknown> = {}) => ({ position: 'bottom-right', card: todo, ...extra });
+    const hosted = (el: WallCalCard, position = 'bottom-right') =>
+      root(el).querySelector<HTMLElement>(`.overlay--${position} .hosted`);
+    let created: Array<HTMLElement & { hass?: unknown }>;
+
+    const settle = async (el: WallCalCard) => {
+      await flush(el);
+      await flush(el);
+    };
+
+    beforeEach(() => {
+      created = [];
+      window.loadCardHelpers = async () => ({
+        createCardElement: (cardConfig: Record<string, unknown>) => {
+          const el = document.createElement('div') as HTMLElement & { hass?: unknown };
+          el.className = 'hosted';
+          el.dataset.entity = String(cardConfig.entity);
+          created.push(el);
+          return el;
+        },
+      });
+    });
+
+    afterEach(() => {
+      delete window.loadCardHelpers;
+    });
+
+    it('starts hidden with a header button and shows the card when tapped', async () => {
+      const el = await mount(withOverlays(right()), makeHass(async () => []).hass);
+      expect(root(el).querySelector('.overlay')).toBeNull();
+      const button = root(el).querySelector<HTMLButtonElement>('.toggle');
+      expect(button?.getAttribute('aria-label')).toBe('Show todo.shopping');
+
+      button?.click();
+      await settle(el);
+      expect(hosted(el)).not.toBeNull();
+      expect(root(el).querySelector('.toggle')?.getAttribute('aria-pressed')).toBe('true');
+    });
+
+    it('names the button from the card title or the entity friendly name', async () => {
+      const { hass } = makeHass(async () => []);
+      hass.states['todo.shopping'] = { last_changed: '', attributes: { friendly_name: 'Shopping' } };
+      const named = await mount(withOverlays(right()), hass);
+      expect(root(named).querySelector('.toggle')?.getAttribute('aria-label')).toBe('Show Shopping');
+      const titled = await mount(withOverlays(right({ card: { ...todo, title: 'Groceries' } })), hass);
+      expect(root(titled).querySelector('.toggle')?.getAttribute('aria-label')).toBe('Show Groceries');
+    });
+
+    it('passes every hass update to the hosted card', async () => {
+      const { hass } = makeHass(async () => []);
+      const el = await mount(withOverlays(right({ visible: true })), hass);
+      await settle(el);
+      expect(created[0].hass).toBe(hass);
+      const next = { ...hass };
+      el.hass = next;
+      expect(created[0].hass).toBe(next);
+    });
+
+    it('keeps the same hosted node across re-renders and when the other overlay hides', async () => {
+      const left = { position: 'bottom-left', span: 1, card: { type: 'tile', entity: 'weather.home' }, visible: true };
+      const el = await mount(withOverlays(left, right({ visible: true })), makeHass(async () => []).hass);
+      await settle(el);
+      const node = hosted(el);
+      expect(node).not.toBeNull();
+      click(el, '.nav[aria-label="Next week"]');
+      await settle(el);
+      expect(hosted(el)).toBe(node);
+      click(el, '.toggle');
+      await settle(el);
+      expect(root(el).querySelector('.overlay--bottom-left')).toBeNull();
+      expect(hosted(el)).toBe(node);
+    });
+
+    it('reuses the card element across hide and show', async () => {
+      const el = await mount(withOverlays(right({ visible: true })), makeHass(async () => []).hass);
+      await settle(el);
+      const node = hosted(el);
+      click(el, '.toggle');
+      await settle(el);
+      expect(root(el).querySelector('.overlay')).toBeNull();
+      click(el, '.toggle');
+      await settle(el);
+      expect(hosted(el)).toBe(node);
+      expect(created).toHaveLength(1);
+    });
+
+    it('remembers the choice on this device', async () => {
+      const first = await mount(withOverlays(right()), makeHass(async () => []).hass);
+      click(first, '.toggle');
+      const second = await mount(withOverlays(right()), makeHass(async () => []).hass);
+      await settle(second);
+      expect(hosted(second)).not.toBeNull();
+    });
+
+    it('always shows an overlay with toggle: false and gives it no button', async () => {
+      const el = await mount(withOverlays(right({ toggle: false })), makeHass(async () => []).hass);
+      await settle(el);
+      expect(root(el).querySelector('.toggle')).toBeNull();
+      expect(hosted(el)).not.toBeNull();
+    });
+
+    it('creates a new card when the card config changes', async () => {
+      const el = await mount(withOverlays(right({ visible: true })), makeHass(async () => []).hass);
+      await settle(el);
+      el.setConfig(withOverlays(right({ visible: true, card: { ...todo, entity: 'todo.chores' } })));
+      await settle(el);
+      expect(created).toHaveLength(2);
+      expect(hosted(el)?.dataset.entity).toBe('todo.chores');
+    });
+
+    it('counts a touch on an overlay as activity but not as touching the day lists', async () => {
+      const el = await mount(withOverlays(right({ visible: true })), makeHass(async () => []).hass);
+      await settle(el);
+      const probe = el as unknown as { _lastListTouch: number; _lastTouch: number };
+      hosted(el)?.dispatchEvent(new Event('pointerdown', { bubbles: true, composed: true }));
+      expect(probe._lastListTouch).toBe(0);
+      expect(probe._lastTouch).toBe(Date.now());
+    });
+  });
 });
