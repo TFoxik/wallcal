@@ -7,3 +7,5 @@ dev/ha/config/*
 !dev/ha/config/wallcal_fixture.json
 !dev/ha/config/custom_components/
 dev/ha/config/custom_components/**/__pycache__/
+.claude/
+.superpowers/
