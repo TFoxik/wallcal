@@ -245,18 +245,18 @@ describe('renderDayColumn', () => {
 });
 
 describe('renderHeaderToggles', () => {
-  const toggles: HeaderToggle[] = [
-    { id: 'calendar.svatky', label: 'Čeští svátci', color: '#F4A27A', hidden: false },
-    { id: 'calendar.namedays', label: 'Namedays', color: '#5DCAA5', icon: 'mdi:flag', hidden: true },
+  const toggles = (): HeaderToggle[] => [
+    { label: 'Čeští svátci', color: '#F4A27A', hidden: false, onToggle: vi.fn() },
+    { label: 'Namedays', color: '#5DCAA5', icon: 'mdi:flag', hidden: true, onToggle: vi.fn() },
   ];
 
   it('renders nothing without toggles', () => {
-    render(renderHeaderToggles([], vi.fn()), host);
+    render(renderHeaderToggles([]), host);
     expect(host.querySelector('.toggles')).toBeNull();
   });
 
   it('shows the first letter or the icon, with the pressed state and an action label', () => {
-    render(renderHeaderToggles(toggles, vi.fn()), host);
+    render(renderHeaderToggles(toggles()), host);
     const [first, second] = host.querySelectorAll('button');
     expect(first.textContent?.trim()).toBe('Č');
     expect(first.getAttribute('aria-pressed')).toBe('true');
@@ -266,11 +266,12 @@ describe('renderHeaderToggles', () => {
     expect(second.getAttribute('aria-label')).toBe('Show Namedays');
   });
 
-  it('reports the tapped calendar', () => {
-    const onToggle = vi.fn();
-    render(renderHeaderToggles(toggles, onToggle), host);
+  it('calls the tapped toggle only', () => {
+    const items = toggles();
+    render(renderHeaderToggles(items), host);
     host.querySelectorAll('button')[1].click();
-    expect(onToggle).toHaveBeenCalledWith('calendar.namedays');
+    expect(items[1].onToggle).toHaveBeenCalledTimes(1);
+    expect(items[0].onToggle).not.toHaveBeenCalled();
   });
 });
 
@@ -282,9 +283,6 @@ describe('renderTopBar', () => {
     isCurrentWeek: true,
     warning: null,
     toggles: [],
-    overlayToggles: [],
-    onToggle: vi.fn(),
-    onOverlayToggle: vi.fn(),
     onPrev: vi.fn(),
     onToday: vi.fn(),
     onNext: vi.fn(),
@@ -296,26 +294,16 @@ describe('renderTopBar', () => {
     expect(host.querySelector('.bar')).toBeNull();
   });
 
-  it('puts overlay toggles after the calendar toggles and reports them separately', () => {
-    const onToggle = vi.fn();
-    const onOverlayToggle = vi.fn();
-    render(
-      renderTopBar({
-        ...props(),
-        toggles: [{ id: 'calendar.work', label: 'Work', color: '#378ADD', hidden: false }],
-        overlayToggles: [
-          { id: 'bottom-right:abc', label: 'Shopping', color: 'var(--wallcal-accent)', icon: 'mdi:cart', hidden: true },
-        ],
-        onToggle,
-        onOverlayToggle,
-      }),
-      host,
-    );
+  it('shows the toggles in order in the end slot', () => {
+    const toggles: HeaderToggle[] = [
+      { label: 'Work', color: '#378ADD', hidden: false, onToggle: vi.fn() },
+      { label: 'Shopping', color: 'var(--wallcal-accent)', icon: 'mdi:cart', hidden: true, onToggle: vi.fn() },
+    ];
+    render(renderTopBar({ ...props(), toggles }), host);
     const buttons = host.querySelectorAll<HTMLButtonElement>('.bar__end .toggle');
     expect([...buttons].map((b) => b.getAttribute('aria-label'))).toEqual(['Hide Work', 'Show Shopping']);
     buttons[1].click();
-    expect(onOverlayToggle).toHaveBeenCalledWith('bottom-right:abc');
-    expect(onToggle).not.toHaveBeenCalled();
+    expect(toggles[1].onToggle).toHaveBeenCalledTimes(1);
   });
 
   it('puts the title in the start or centre slot', () => {

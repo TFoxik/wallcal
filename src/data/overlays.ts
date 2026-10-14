@@ -36,14 +36,14 @@ export function loadOverlayState(): OverlayState {
 
 export function isOverlayShown(overlay: OverlayConfig, state: OverlayState): boolean {
   if (overlay.toggle === 'none') return true;
-  return state[overlayKey(overlay)] ?? overlay.visible;
+  return state[overlay.key] ?? overlay.visible;
 }
 
 // Re-reads storage first so another card's choices are kept; falls back to the card's own state when
 // storage is blocked. Flips what this card shows, which stays right when a write silently failed.
 export function toggleOverlay(overlay: OverlayConfig, current: OverlayState): OverlayState {
   const state = { ...(readStored() ?? current) };
-  state[overlayKey(overlay)] = !isOverlayShown(overlay, current);
+  state[overlay.key] = !isOverlayShown(overlay, current);
   try {
     localStorage.setItem(OVERLAYS_KEY, JSON.stringify(state));
   } catch {

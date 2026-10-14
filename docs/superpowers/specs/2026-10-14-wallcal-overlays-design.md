@@ -117,8 +117,8 @@ Validation (`config.ts`, throws like the rest of `normalizeConfig`):
   `hass` to every cached card element directly; a newly created element gets the current `hass`
   before it is inserted.
 - **Hidden = removed.** A hidden overlay's container is not rendered, so the hosted card
-  disconnects and drops its subscriptions (the todo card's live item subscription). Pushing `hass`
-  to a detached element is cheap; HA cards only re-render while connected.
+  disconnects and drops its subscriptions (the todo card's live item subscription). Detached cards
+  get no `hass` updates (a Lit card would still re-render for each); they catch up when shown again.
 - `loadCardHelpers` missing (dev harness) or rejecting: the overlay shows a one-line message
   instead of a card; the calendar keeps working.
 
@@ -156,6 +156,11 @@ New style token `overlay_background` (CSS `background` value). Default:
 i.e. the day-column colour with a light wash, so the panel is slightly lighter than the columns it
 covers in light and dark themes. It is opaque so events underneath never show through. Override it
 per card with `style: overlay_background: "#2A2A30"`.
+
+HA also resolves derived variables (`--mdc-theme-text-*`, `--ha-color-text-*`, `--wa-color-text-*`,
+form backgrounds, `--mdc-theme-primary`) once on the page, so the overlay remaps those too
+(`src/theme/styles.ts`); without them the paper preset on a dark HA theme leaves the todo card's
+text light on light.
 
 Third-party cards that hard-code colours may not follow; out of scope.
 

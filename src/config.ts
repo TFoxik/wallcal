@@ -2,6 +2,7 @@ import { parseLocalDate, type Weekday } from './date';
 import type { Hemisphere } from './astro/moon';
 import { TIME_FORMATS, TITLE_MODES, WEEKDAY_FORMATS, type TimeFormat, type WeekdayFormat } from './format';
 import type { DayCount } from './week';
+import { overlayKey } from './data/overlays';
 import { THEME_NAMES, TOKENS, type ThemeName, type Token } from './theme/presets';
 
 export const ENTITY_DISPLAYS = ['chip', 'label'] as const;
@@ -63,6 +64,8 @@ export const OVERLAY_TOGGLES = ['header', 'pill', 'none'] as const;
 export type OverlayToggle = (typeof OVERLAY_TOGGLES)[number];
 
 export interface OverlayConfig {
+  /** Position plus a hash of `card`: identifies the overlay's stored state and hosted card. */
+  key: string;
   position: OverlayPosition;
   span: number;
   /** Share of the spanned columns, 0.1–1. */
@@ -247,11 +250,7 @@ function parseEntities(value: unknown): EntityConfig[] {
     if (obj.name !== undefined) result.name = String(obj.name);
     if (obj.strip_prefix !== undefined) result.strip_prefix = String(obj.strip_prefix);
     if (obj.suffix !== undefined) result.suffix = String(obj.suffix);
-    if (obj.icon !== undefined) {
-      const icon = String(obj.icon);
-      if (!ICON.test(icon)) throw new Error(`entities[${i}].icon must look like mdi:flag`);
-      result.icon = icon;
-    }
+    if (obj.icon !== undefined) result.icon = icon(obj.icon, `entities[${i}].icon`);
     return result;
   });
   if (entities.filter((e) => e.display === 'label').length > MAX_LABEL_CALENDARS) {
@@ -286,10 +285,8 @@ function parseOverlays(value: unknown, days: number): OverlayConfig[] {
     if (typeof card.type !== 'string' || !card.type) {
       throw new Error(`${path}.card needs a type, for example type: todo-list`);
     }
-    const icon = obj.icon === undefined ? 'mdi:card-outline' : String(obj.icon);
-    if (!ICON.test(icon)) throw new Error(`${path}.icon must look like mdi:flag`);
-
     const result: OverlayConfig = {
+      key: overlayKey({ position, card }),
       position,
       span: int(obj.span, 2, 1, days, `${path}.span`),
       width: percent(obj.width, 90, `${path}.width`) / 100,
@@ -297,7 +294,7 @@ function parseOverlays(value: unknown, days: number): OverlayConfig[] {
       offset: int(obj.offset, 8, 0, 400, `${path}.offset`),
       toggle: overlayToggle(obj.toggle, `${path}.toggle`),
       visible: bool(obj.visible, false, `${path}.visible`),
-      icon,
+      icon: obj.icon === undefined ? 'mdi:card-outline' : icon(obj.icon, `${path}.icon`),
       card,
     };
     if (obj.name !== undefined) result.name = String(obj.name);
@@ -323,11 +320,13 @@ function maxHeight(value: unknown, path: string): string {
   if (value === undefined || value === null || value === '') return '40%';
   const text = String(value).trim();
   if (text.endsWith('%')) return `${percent(text, 40, path)}%`;
-  const px = Number(text.replace(/px$/, ''));
-  if (!Number.isInteger(px) || px < 40 || px > 2000) {
-    throw new Error(`${path} must be a percentage from 10% to 100% or pixels from 40 to 2000`);
-  }
-  return `${px}px`;
+  return `${int(text.replace(/px$/, ''), 0, 40, 2000, `${path} (pixels)`)}px`;
+}
+
+function icon(value: unknown, path: string): string {
+  const text = String(value);
+  if (!ICON.test(text)) throw new Error(`${path} must look like mdi:flag`);
+  return text;
 }
 
 function parseStyle(raw: Raw): { style: Partial<Record<Token, string>>; fontUrl: string | null } {

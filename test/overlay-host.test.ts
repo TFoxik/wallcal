@@ -45,8 +45,21 @@ describe('OverlayCards', () => {
     cards.hass = a;
     const el = (await cards.card('k', todo)) as HassCard;
     expect(el.hass).toBe(a);
+    document.body.append(el);
     const b = hassA();
     cards.hass = b;
+    expect(el.hass).toBe(b);
+  });
+
+  it('skips hass updates for a card that is not on the page and catches up when it is shown again', async () => {
+    const cards = new OverlayCards();
+    const a = hassA();
+    cards.hass = a;
+    const el = (await cards.card('k', todo)) as HassCard;
+    const b = hassA();
+    cards.hass = b;
+    expect(el.hass).toBe(a);
+    await cards.card('k', todo);
     expect(el.hass).toBe(b);
   });
 

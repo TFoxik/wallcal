@@ -11,9 +11,6 @@ export interface TopBarProps {
   isCurrentWeek: boolean;
   warning: string | null;
   toggles: HeaderToggle[];
-  overlayToggles: HeaderToggle[];
-  onToggle(id: string): void;
-  onOverlayToggle(id: string): void;
   onPrev(): void;
   onToday(): void;
   onNext(): void;
@@ -32,7 +29,7 @@ export function renderTopBar(p: TopBarProps): TemplateResult | typeof nothing {
     <div class="bar__start">${centered ? nothing : title}</div>
     <div class="bar__center">${centered ? title : nothing}</div>
     <div class="bar__end">
-      ${renderHeaderToggles(p.toggles, p.onToggle)} ${renderHeaderToggles(p.overlayToggles, p.onOverlayToggle)}
+      ${renderHeaderToggles(p.toggles)}
       ${p.warning
         ? html`<span class="bar__warning" title=${p.warning}>${icon(warningIcon)}</span>`
         : nothing}

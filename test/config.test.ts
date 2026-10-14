@@ -197,6 +197,7 @@ describe('normalizeConfig', () => {
     it('fills overlay defaults', () => {
       expect(parse(overlay())).toEqual([
         {
+          key: expect.stringMatching(/^bottom-right:/),
           position: 'bottom-right',
           span: 2,
           width: 0.9,

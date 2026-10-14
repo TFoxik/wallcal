@@ -17,7 +17,7 @@ import {
   type EventCache,
 } from './data/events';
 import { loadHidden, toggleHidden } from './data/hidden';
-import { isOverlayShown, loadOverlayState, overlayKey, pillCount, toggleOverlay, type OverlayState } from './data/overlays';
+import { isOverlayShown, loadOverlayState, pillCount, toggleOverlay, type OverlayState } from './data/overlays';
 import { forecastType, subscribeForecast, type DayForecast } from './data/weather';
 import { addDays, dayKey, isSameDay, msUntilNextMidnight, startOfDay } from './date';
 import { formatTitle, resolveHourCycle } from './format';
@@ -39,6 +39,7 @@ export class WallCalCard extends LitElement {
     _now: { state: true },
     _hidden: { state: true },
     _overlayState: { state: true },
+    _pillCounts: { state: true },
     _forecast: { state: true },
     _weatherWarning: { state: true },
   };
@@ -53,6 +54,7 @@ export class WallCalCard extends LitElement {
   declare _now: Date;
   declare _hidden: Set<string>;
   declare _overlayState: OverlayState;
+  declare _pillCounts: string;
   declare _forecast: Map<string, DayForecast> | null;
   declare _weatherWarning: string | null;
 
@@ -68,7 +70,6 @@ export class WallCalCard extends LitElement {
   private _scrollPending = true;
   private _weatherUnsub: Promise<() => Promise<void>> | null = null;
   private _overlayCards = new OverlayCards(() => this.requestUpdate());
-  private _pillCounts = '';
 
   constructor() {
     super();
@@ -79,6 +80,7 @@ export class WallCalCard extends LitElement {
     this._warning = null;
     this._hidden = loadHidden();
     this._overlayState = loadOverlayState();
+    this._pillCounts = '';
     this._forecast = null;
     this._weatherWarning = null;
   }
@@ -90,7 +92,7 @@ export class WallCalCard extends LitElement {
 
   setConfig(config: unknown): void {
     this._config = normalizeConfig(config);
-    this._overlayCards.retain(new Set(this._config.overlays.map(overlayKey)));
+    this._overlayCards.retain(new Set(this._config.overlays.map((o) => o.key)));
     this._cache = null;
     this._requestedRange = '';
     this._seen.clear();
@@ -108,12 +110,8 @@ export class WallCalCard extends LitElement {
     const previous = this._hass;
     this._hass = hass;
     this._overlayCards.hass = hass;
-    // Pills show their entity's count, so they are the one hass change besides calendars that re-renders.
-    const pillCounts = this._pillCountsOf(hass);
-    if (pillCounts !== this._pillCounts) {
-      this._pillCounts = pillCounts;
-      this.requestUpdate();
-    }
+    // Collapsed pills show their entity's count: the one hass change besides calendars that re-renders.
+    this._pillCounts = this._pillCountsOf(hass);
     if (!previous || previous.locale !== hass.locale) this.requestUpdate();
     if (previous && this._calendarsChanged(hass)) void this._fetch();
     this._subscribeWeather();
@@ -177,10 +175,7 @@ export class WallCalCard extends LitElement {
         subtitle: headerText(config.header.subtitle, days, language),
         isCurrentWeek: this._isCurrentWeek(),
         warning: [this._warning, this._weatherWarning].filter(Boolean).join('\n') || null,
-        toggles: this._toggles(config, hidden),
-        onToggle: (entity) => this._toggleCalendar(entity),
-        overlayToggles: this._overlayToggles(config),
-        onOverlayToggle: (key) => this._toggleOverlay(key),
+        toggles: [...this._toggles(config, hidden), ...this._overlayToggles(config)],
         onPrev: () => this._show(addDays(this._anchor, -7)),
         onToday: () => this._show(this._today),
         onNext: () => this._show(addDays(this._anchor, 7)),
@@ -213,11 +208,7 @@ export class WallCalCard extends LitElement {
             markersInInfo: config.weather !== null && (config.moon.enabled || cycleInput !== null),
           });
         })}
-        ${repeat(
-          config.overlays.filter((o) => o.toggle === 'pill' || isOverlayShown(o, this._overlayState)),
-          overlayKey,
-          (o) => this._renderOverlay(o),
-        )}
+        ${repeat(config.overlays, (o) => o.key, (o) => this._renderOverlay(o))}
       </div>
     </ha-card>`;
   }
@@ -239,11 +230,11 @@ export class WallCalCard extends LitElement {
     return config.entities
       .filter((e) => e.toggle)
       .map((e) => ({
-        id: e.entity,
-        label: e.name ?? friendlyName(this._hass, e.entity),
+        label: e.name ?? stateName(this._hass, e.entity) ?? e.entity.slice('calendar.'.length),
         color: e.color,
         icon: e.icon,
         hidden: hidden.has(e.entity),
+        onToggle: () => this._toggleCalendar(e.entity),
       }));
   }
 
@@ -252,37 +243,38 @@ export class WallCalCard extends LitElement {
   }
 
   private _renderOverlay(overlay: OverlayConfig) {
-    const key = overlayKey(overlay);
-    if (overlay.toggle !== 'pill') return renderOverlay(overlay, this._overlayCards.card(key, overlay.card));
+    const shown = isOverlayShown(overlay, this._overlayState);
+    const card = () => this._overlayCards.card(overlay.key, overlay.card);
+    if (overlay.toggle !== 'pill') return shown ? renderOverlay(overlay, card()) : nothing;
     const label = overlay.name ?? overlayName(this._hass, overlay);
-    const toggle = () => this._toggleOverlay(key);
-    return isOverlayShown(overlay, this._overlayState)
-      ? renderOverlay(overlay, this._overlayCards.card(key, overlay.card), { label, onMinimize: toggle })
+    const toggle = () => this._toggleOverlay(overlay);
+    return shown
+      ? renderOverlay(overlay, card(), { label, onMinimize: toggle })
       : renderPill(overlay, { label, count: pillCount(this._hass, overlay.card), onExpand: toggle });
   }
 
   private _pillCountsOf(hass: HomeAssistant): string {
-    return (this._config?.overlays ?? [])
-      .filter((o) => o.toggle === 'pill')
-      .map((o) => pillCount(hass, o.card) ?? '')
-      .join('|');
+    let counts = '';
+    for (const o of this._config?.overlays ?? []) {
+      if (o.toggle === 'pill' && !isOverlayShown(o, this._overlayState)) counts += `${pillCount(hass, o.card) ?? ''}|`;
+    }
+    return counts;
   }
 
   private _overlayToggles(config: WallCalConfig): HeaderToggle[] {
     return config.overlays
       .filter((o) => o.toggle === 'header')
       .map((o) => ({
-        id: overlayKey(o),
         label: o.name ?? overlayName(this._hass, o),
         color: 'var(--wallcal-accent)',
         icon: o.icon,
         hidden: !isOverlayShown(o, this._overlayState),
+        onToggle: () => this._toggleOverlay(o),
       }));
   }
 
-  private _toggleOverlay(key: string): void {
-    const overlay = this._config?.overlays.find((o) => overlayKey(o) === key);
-    if (overlay) this._overlayState = toggleOverlay(overlay, this._overlayState);
+  private _toggleOverlay(overlay: OverlayConfig): void {
+    this._overlayState = toggleOverlay(overlay, this._overlayState);
   }
 
   private _subscribeWeather(): void {
@@ -364,10 +356,7 @@ export class WallCalCard extends LitElement {
 
   // The overlays and pills sit inside the grid; using one must not pause auto-scroll of the day lists.
   private _touchList(event: Event): void {
-    const inOverlay = event
-      .composedPath()
-      .some((node) => node instanceof HTMLElement && (node.classList.contains('overlay') || node.classList.contains('pill')));
-    if (!inOverlay) this._lastListTouch = Date.now();
+    if (!(event.target as Element).closest('.overlay, .pill')) this._lastListTouch = Date.now();
     this._touch();
   }
 
@@ -424,18 +413,15 @@ function headerText(setting: HeaderTitle, days: Date[], language: string): strin
   return typeof setting === 'string' ? formatTitle(days, setting, language) : setting.text;
 }
 
-function friendlyName(hass: HomeAssistant | undefined, entity: string): string {
+function stateName(hass: HomeAssistant | undefined, entity: string): string | undefined {
   const name = hass?.states[entity]?.attributes?.friendly_name;
-  return typeof name === 'string' && name.trim() ? name : entity.slice('calendar.'.length);
+  return typeof name === 'string' && name.trim() ? name : undefined;
 }
 
 function overlayName(hass: HomeAssistant | undefined, overlay: OverlayConfig): string {
   const { title, entity, type } = overlay.card;
   if (typeof title === 'string' && title.trim()) return title;
-  if (typeof entity === 'string') {
-    const name = hass?.states[entity]?.attributes?.friendly_name;
-    return typeof name === 'string' && name.trim() ? name : entity;
-  }
+  if (typeof entity === 'string') return stateName(hass, entity) ?? entity;
   return String(type);
 }
 

@@ -131,6 +131,10 @@ export const cardStyles = css`
     min-height: 0;
     position: relative;
   }
+  /* The button reset goes first so the shared rule below is not wiped by it. */
+  .pill {
+    all: unset;
+  }
   .overlay,
   .pill {
     --overlay-col: calc((100% - (var(--wallcal-days, 7) - 1) * var(--wallcal-gap)) / var(--wallcal-days, 7));
@@ -138,15 +142,29 @@ export const cardStyles = css`
     position: absolute;
     z-index: 1;
     bottom: var(--overlay-offset);
+    box-sizing: border-box;
+    background: var(--wallcal-overlay-background);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+  }
+  /* Centre of the band: the panel and the pill share it, so a pill expands in place. */
+  .overlay--bottom-left,
+  .pill--bottom-left {
+    --overlay-centre: calc(var(--overlay-band) / 2);
+  }
+  .overlay--bottom-right,
+  .pill--bottom-right {
+    --overlay-centre: calc(100% - var(--overlay-band) / 2);
+  }
+  .overlay--bottom-center,
+  .pill--bottom-center {
+    --overlay-centre: 50%;
   }
   .overlay {
+    left: calc(var(--overlay-centre) - var(--overlay-band) * var(--overlay-width) / 2);
     width: calc(var(--overlay-band) * var(--overlay-width));
     max-height: var(--overlay-max-height);
     overflow: auto;
-    box-sizing: border-box;
-    background: var(--wallcal-overlay-background);
     border-radius: var(--wallcal-day-radius);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
     --ha-card-background: transparent;
     --card-background-color: transparent;
     --ha-card-box-shadow: none;
@@ -173,15 +191,6 @@ export const cardStyles = css`
     --ha-color-form-background-hover: var(--wallcal-surface);
     --wa-form-control-background-color: var(--wallcal-surface);
   }
-  .overlay--bottom-left {
-    left: calc(var(--overlay-band) * (1 - var(--overlay-width)) / 2);
-  }
-  .overlay--bottom-right {
-    right: calc(var(--overlay-band) * (1 - var(--overlay-width)) / 2);
-  }
-  .overlay--bottom-center {
-    left: calc((100% - var(--overlay-band) * var(--overlay-width)) / 2);
-  }
   .overlay__handle {
     all: unset;
     cursor: pointer;
@@ -203,22 +212,16 @@ export const cardStyles = css`
     background: var(--wallcal-muted);
     opacity: 0.6;
   }
-  /* The pill sits on the centre of its band, where the panel opens. */
   .pill {
-    all: unset;
-    position: absolute;
-    z-index: 1;
-    bottom: var(--overlay-offset);
+    left: var(--overlay-centre);
+    transform: translateX(-50%);
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     gap: 8px;
     height: 44px;
     padding: 0 16px 0 12px;
-    box-sizing: border-box;
     border-radius: 22px;
-    background: var(--wallcal-overlay-background);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
     color: var(--wallcal-text);
     font-size: 15px;
     font-weight: 500;
@@ -227,18 +230,6 @@ export const cardStyles = css`
   }
   .pill ha-icon {
     color: var(--wallcal-accent);
-  }
-  .pill--bottom-left {
-    left: calc(var(--overlay-band) / 2);
-    transform: translateX(-50%);
-  }
-  .pill--bottom-right {
-    right: calc(var(--overlay-band) / 2);
-    transform: translateX(50%);
-  }
-  .pill--bottom-center {
-    left: 50%;
-    transform: translateX(-50%);
   }
   .pill__count {
     min-width: 22px;

@@ -3,17 +3,14 @@ import { classMap } from 'lit/directives/class-map.js';
 import { styleMap } from 'lit/directives/style-map.js';
 
 export interface HeaderToggle {
-  id: string;
   label: string;
   color: string;
   icon?: string;
   hidden: boolean;
+  onToggle(): void;
 }
 
-export function renderHeaderToggles(
-  toggles: HeaderToggle[],
-  onToggle: (id: string) => void,
-): TemplateResult | typeof nothing {
+export function renderHeaderToggles(toggles: HeaderToggle[]): TemplateResult | typeof nothing {
   if (!toggles.length) return nothing;
   return html`<div class="toggles">
     ${toggles.map(
@@ -23,7 +20,7 @@ export function renderHeaderToggles(
         aria-pressed=${t.hidden ? 'false' : 'true'}
         aria-label=${`${t.hidden ? 'Show' : 'Hide'} ${t.label}`}
         title=${t.label}
-        @click=${() => onToggle(t.id)}
+        @click=${t.onToggle}
       >
         ${t.icon ? html`<ha-icon icon=${t.icon}></ha-icon>` : initial(t.label)}
       </button>`,

@@ -11,26 +11,35 @@ export interface HassCard extends HTMLElement {
 // Cards live here, not in the DOM, so a hidden overlay drops out of the page (and its card stops
 // its subscriptions) but showing it again reuses the same element. The promise per key must stay
 // the same object between renders, or `until` would swap the node out and reconnect the card.
+interface Entry {
+  ready: Promise<HTMLElement>;
+  el?: HassCard;
+}
+
 export class OverlayCards {
-  private _cards = new Map<string, Promise<HTMLElement>>();
-  private _live = new Set<HassCard>();
+  private _cards = new Map<string, Entry>();
   private _hass?: HomeAssistant;
 
   constructor(private readonly _onRebuild: () => void = () => undefined) {}
 
   card(key: string, config: Record<string, unknown>): Promise<HTMLElement> {
-    let card = this._cards.get(key);
-    if (!card) {
-      card = createCard(config).then(
+    const existing = this._cards.get(key);
+    if (existing) {
+      // Hidden cards miss hass updates (see the setter); catch up as the card is shown again.
+      if (existing.el && this._hass) existing.el.hass = this._hass;
+      return existing.ready;
+    }
+    const entry: Entry = {
+      ready: createCard(config).then(
         (el) => {
           if (this._hass) el.hass = this._hass;
-          this._live.add(el);
+          entry.el = el;
           // HA's factory fires this when a custom card's element got defined after its error card was
           // made, or a lazily loaded card rejected its config: the element has to be created again.
           el.addEventListener(
             'll-rebuild',
             () => {
-              if (!this._live.delete(el)) return;
+              if (this._cards.get(key) !== entry) return;
               this._cards.delete(key);
               this._onRebuild();
             },
@@ -39,23 +48,20 @@ export class OverlayCards {
           return el;
         },
         (error: unknown) => message(`Overlay card unavailable: ${error instanceof Error ? error.message : String(error)}`),
-      );
-      this._cards.set(key, card);
-    }
-    return card;
+      ),
+    };
+    this._cards.set(key, entry);
+    return entry.ready;
   }
 
+  // Only cards on the page get updates: a detached Lit card would still re-render for each one.
   set hass(hass: HomeAssistant) {
     this._hass = hass;
-    for (const el of this._live) el.hass = hass;
+    for (const { el } of this._cards.values()) if (el?.isConnected) el.hass = hass;
   }
 
   retain(keys: Set<string>): void {
-    for (const [key, card] of this._cards) {
-      if (keys.has(key)) continue;
-      this._cards.delete(key);
-      void card.then((el) => this._live.delete(el as HassCard));
-    }
+    for (const key of this._cards.keys()) if (!keys.has(key)) this._cards.delete(key);
   }
 }
 
