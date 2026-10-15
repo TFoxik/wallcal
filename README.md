@@ -3,6 +3,8 @@
 A week-view wall calendar card for Home Assistant, designed for an always-on landscape tablet.
 Clean by default, restylable from YAML, with optional moon phase and cycle overlays.
 
+![WallCal week view on a Home Assistant dashboard](docs/screenshot.png)
+
 ## Install
 
 **HACS:** HACS → ⋮ (top right) → Custom repositories → add `https://github.com/TFoxik/wallcal`
