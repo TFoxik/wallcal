@@ -46,7 +46,7 @@ the page: HA's browser cache keeps the old card otherwise.
 Bump `version` in `package.json`, commit, then tag and push:
 
 ```bash
-git tag v0.2.0 && git push origin v0.2.0
+git tag v0.3.0 && git push origin v0.3.0
 ```
 
 The release workflow checks the tag matches `package.json`, runs the tests, builds and attaches
