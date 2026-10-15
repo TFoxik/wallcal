@@ -13,7 +13,7 @@ the dashboard resource for you.
 
 **Manual:** download `wallcal-card.js` from the
 [latest release](https://github.com/TFoxik/wallcal/releases/latest), copy it to `/config/www/`,
-then add `/local/wallcal-card.js?v=0.1.0` as a JavaScript module under Settings → Dashboards →
+then add `/local/wallcal-card.js?v=0.2.0` as a JavaScript module under Settings → Dashboards →
 Resources. Bump the `?v=` value after copying a new version, otherwise browsers (and wall tablets
 especially) keep running the cached old one.
 
@@ -106,7 +106,7 @@ npm run build
 Bump `version` in `package.json`, commit, then tag and push:
 
 ```bash
-git tag v0.1.0 && git push origin v0.1.0
+git tag v0.2.0 && git push origin v0.2.0
 ```
 
 The release workflow checks the tag matches `package.json`, runs the tests, builds and attaches
