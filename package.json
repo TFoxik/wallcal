@@ -1,9 +1,17 @@
 {
   "name": "wallcal-card",
   "version": "0.1.0",
-  "description": "Home Assistant week wall calendar card with moon phase and cycle overlays",
+  "description": "Week-view wall calendar card for Home Assistant, with moon phase and cycle overlays",
   "type": "module",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TFoxik/wallcal.git"
+  },
+  "homepage": "https://github.com/TFoxik/wallcal#readme",
+  "bugs": {
+    "url": "https://github.com/TFoxik/wallcal/issues"
+  },
   "private": true,
   "scripts": {
     "dev": "vite",
