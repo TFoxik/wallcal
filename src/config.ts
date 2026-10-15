@@ -108,14 +108,14 @@ export interface WallCalConfig {
 
 export const ENTITY_PALETTE = ['#7F77DD', '#1D9E75', '#D85A30', '#378ADD', '#D4537E', '#BA7517'];
 
-const WEEKDAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
+export const WEEKDAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
 const ENTITY_ID = /^calendar\.[a-z0-9_]+$/;
 const WEATHER_ID = /^weather\.[a-z0-9_]+$/;
 const ICON = /^[a-z0-9-]+:[a-z0-9-]+$/;
 // Each label calendar gets its own header line; more than two would crowd out the events.
 const MAX_LABEL_CALENDARS = 2;
 const FONT_URL = /^(https:\/\/|\/(?!\/))/;
-const PERCENT = /^\d+(\.\d+)?%$/;
+export const PERCENT = /^\d+(\.\d+)?%$/;
 
 type Raw = Record<string, unknown>;
 

@@ -37,3 +37,11 @@ export function layOut(list: HTMLElement, height: number, chipHeights: number[])
     if (h) top += h + 6;
   });
 }
+
+export function deepFreeze<T>(value: T): T {
+  if (value && typeof value === 'object') {
+    Object.values(value as object).forEach(deepFreeze);
+    Object.freeze(value);
+  }
+  return value;
+}

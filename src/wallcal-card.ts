@@ -21,6 +21,7 @@ import { isOverlayShown, loadOverlayState, pillCount, toggleOverlay, type Overla
 import { forecastType, sameForecast, subscribeForecast, type DayForecast } from './data/weather';
 import { rangeKeyOf, WeekCache } from './data/weeks';
 import { addDays, dayKey, isSameDay, msUntilNextMidnight, startOfDay } from './date';
+import { defineEditor } from './editor/wallcal-card-editor';
 import { formatTitle, resolveHourCycle } from './format';
 import type { HomeAssistant } from './ha-types';
 import { resolveTokens } from './theme/presets';
@@ -92,6 +93,11 @@ export class WallCalCard extends LitElement {
     this._forecast = null;
     this._weatherWarning = null;
     this._more = new Map();
+  }
+
+  static getConfigElement(): HTMLElement {
+    defineEditor();
+    return document.createElement('wallcal-card-editor');
   }
 
   static getStubConfig(hass?: HomeAssistant): Record<string, unknown> {
@@ -493,13 +499,19 @@ function loadFont(url: string | null): void {
 
 if (!customElements.get('wallcal-card')) customElements.define('wallcal-card', WallCalCard);
 
+export function suggestCard(_hass: unknown, entityId: string): { config: Record<string, unknown> } | null {
+  return isCalendarEntityId(entityId) ? { config: { type: 'custom:wallcal-card', entities: [entityId] } } : null;
+}
+
 window.customCards = window.customCards ?? [];
 if (!window.customCards.some((card) => card.type === 'wallcal-card')) {
   window.customCards.push({
     type: 'wallcal-card',
     name: 'WallCal',
     description: 'Week wall calendar with moon phase and cycle overlays',
-    preview: false,
+    preview: true,
+    documentationURL: 'https://github.com/TFoxik/wallcal/blob/main/docs/guide.md',
+    getEntitySuggestion: suggestCard,
   });
 }
 

@@ -1,7 +1,6 @@
 // @vitest-environment happy-dom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import '../src/wallcal-card';
-import type { WallCalCard } from '../src/wallcal-card';
+import { suggestCard, WallCalCard } from '../src/wallcal-card';
 import type { HaCalendarEvent } from '../src/data/events';
 import type { HomeAssistant } from '../src/ha-types';
 import { dayKey } from '../src/date';
@@ -898,5 +897,22 @@ describe('wallcal-card', () => {
       expect(probe._lastListTouch).toBe(0);
       expect(probe._lastTouch).toBe(Date.now());
     });
+  });
+});
+
+describe('editor wiring', () => {
+  it('returns the visual editor, registering it only when asked for', () => {
+    expect(customElements.get('wallcal-card-editor')).toBeUndefined();
+    expect(WallCalCard.getConfigElement().tagName).toBe('WALLCAL-CARD-EDITOR');
+    expect(customElements.get('wallcal-card-editor')).toBeDefined();
+  });
+
+  it('registers a previewable picker entry with docs and calendar suggestions', () => {
+    const entry = window.customCards!.find((c) => c.type === 'wallcal-card')!;
+    expect(entry.preview).toBe(true);
+    expect(entry.documentationURL).toBe('https://github.com/TFoxik/wallcal/blob/main/docs/guide.md');
+    expect(entry.getEntitySuggestion).toBe(suggestCard);
+    expect(suggestCard({}, 'calendar.family')).toEqual({ config: { type: 'custom:wallcal-card', entities: ['calendar.family'] } });
+    expect(suggestCard({}, 'light.kitchen')).toBeNull();
   });
 });

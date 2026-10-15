@@ -18,9 +18,6 @@ period). Log it from the HA phone app, an automation, or a "Period started" butt
 - `cycle/predict.ts` already takes `{ starts[], cycleLength, periodLength }`, so only the input
   source changes.
 
-### Visual config editor
-GUI editor (`getConfigElement`) for everything currently YAML-only.
-
 ## Later
 
 ### Top bar slots
