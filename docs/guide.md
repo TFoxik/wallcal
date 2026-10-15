@@ -28,10 +28,10 @@ entities:
 
 Most of this guide can also be set in the card's **visual editor**, which has a panel for
 calendars, the week, the top bar, weather, the moon, cycle tracking, floating cards, and theme and
-style. The editor only writes what you change, so YAML you wrote by hand stays as it is. In the
-theme and style panel, a value a picker can't show (for example an `rgba(…)` colour) becomes a
-text box. A calendar colour that isn't `#RRGGBB` is kept as written until you edit that calendar,
-so change those in YAML. The editor needs Home Assistant 2026.10 or newer.
+style. The editor only writes what you change, so YAML you wrote by hand stays as it is. A colour
+or size a picker can't show (for example an `rgba(…)` colour) becomes a text box, and **Use
+default colour** on a calendar gives it back its colour from the built-in palette. The editor needs
+Home Assistant 2026.10 or newer.
 
 Any Home Assistant calendar works: Google, CalDAV, Local Calendar, holiday calendars and so on.
 If something in the config is wrong, the card shows an error that names the option, for example

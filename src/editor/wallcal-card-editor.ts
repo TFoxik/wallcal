@@ -1,11 +1,11 @@
 import { css, html, LitElement, nothing, type TemplateResult } from 'lit';
 import { normalizeConfig } from '../config';
 import type { HomeAssistant } from '../ha-types';
-import { CALENDARS_SCHEMA, fromCalendarItems, toCalendarItems } from './calendars';
+import { WallCalCalendarList } from './calendar-list';
 import { loadHaEditors, type HaEditorAvailability } from './ha-loader';
 import { CODE_EDITOR_NOTE, WallCalOverlayList } from './overlay-list';
 import { applyFormChange, clearAt, deepEqual, setAt, type Raw } from './raw-config';
-import { computeHelper, computeLabel, formData, HEADER, MOON, PERIOD, STYLE, THEME, WEATHER, WEEK, type FormSchema, type SectionDef } from './sections';
+import { computeHelper, formData, labelsFor, HEADER, MOON, PERIOD, STYLE, THEME, WEATHER, WEEK, type FormSchema, type SectionDef } from './sections';
 
 const SECTIONS = [WEEK, HEADER, WEATHER, MOON, PERIOD, THEME, STYLE];
 
@@ -13,7 +13,6 @@ const SECTIONS = [WEEK, HEADER, WEATHER, MOON, PERIOD, THEME, STYLE];
 interface View {
   error: string | null;
   days: number;
-  calendars: Raw;
   forms: Map<SectionDef, { data: Raw; schema: FormSchema[] }>;
 }
 
@@ -60,16 +59,14 @@ export class WallCalCardEditor extends LitElement {
   render() {
     if (!this._available) return html`<p class="note">Loading the editor…</p>`;
     if (!this._available['ha-form']) return html`<p class="note">${CODE_EDITOR_NOTE}</p>`;
-    const { error, days, calendars } = this._view;
+    const { error, days } = this._view;
     return html`
       ${error ? html`<ha-alert alert-type="error">${error}</ha-alert>` : nothing}
-      ${this._panel('Calendars', 'mdi:calendar-multiple', true, html`<ha-form
+      ${this._panel('Calendars', 'mdi:calendar-multiple', true, html`<wallcal-calendar-list
           .hass=${this.hass}
-          .data=${calendars}
-          .schema=${CALENDARS_SCHEMA}
-          .computeLabel=${computeLabel}
-          @value-changed=${this._calendars}
-        ></ha-form>`)}
+          .entities=${this._raw.entities}
+          @entities-changed=${this._calendars}
+        ></wallcal-calendar-list>`)}
       ${[WEEK, HEADER, WEATHER, MOON, PERIOD].map((s) => this._panel(s.title, s.icon, false, this._form(s)))}
       ${this._panel('Floating cards', 'mdi:card-multiple-outline', false, html`<wallcal-overlay-list
           .hass=${this.hass}
@@ -96,7 +93,7 @@ export class WallCalCardEditor extends LitElement {
       .hass=${this.hass}
       .data=${data}
       .schema=${schema}
-      .computeLabel=${computeLabel}
+      .computeLabel=${labelsFor(section)}
       .computeHelper=${computeHelper}
       @value-changed=${(e: CustomEvent) => this._section(section, data, e)}
     ></ha-form>`;
@@ -109,9 +106,7 @@ export class WallCalCardEditor extends LitElement {
   }
 
   private _calendars = (e: CustomEvent) => {
-    e.stopPropagation();
-    const entities = fromCalendarItems((e.detail.value as Raw).entities, this._raw.entities);
-    this._commit(setAt(this._raw, ['entities'], entities));
+    this._commit(setAt(this._raw, ['entities'], e.detail.entities as unknown[]));
   };
 
   private _overlays = (e: CustomEvent) => {
@@ -133,7 +128,7 @@ function buildView(raw: Raw): View {
     const data = formData(section, raw);
     forms.set(section, { data, schema: section.schema(data, { days }) });
   }
-  return { error: validate(raw), days, calendars: { entities: toCalendarItems(raw.entities) }, forms };
+  return { error: validate(raw), days, forms };
 }
 
 function validate(raw: Raw): string | null {
@@ -146,6 +141,7 @@ function validate(raw: Raw): string | null {
 }
 
 export function defineEditor(): void {
+  if (!customElements.get('wallcal-calendar-list')) customElements.define('wallcal-calendar-list', WallCalCalendarList);
   if (!customElements.get('wallcal-overlay-list')) customElements.define('wallcal-overlay-list', WallCalOverlayList);
   if (!customElements.get('wallcal-card-editor')) customElements.define('wallcal-card-editor', WallCalCardEditor);
 }

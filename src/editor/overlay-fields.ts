@@ -15,6 +15,14 @@ export const OVERLAY: SectionDef = {
     fromForm: (f) => ({ ...f, width: typeof f.width === 'number' ? `${f.width}%` : f.width }),
   },
   lowercase: ['position', 'toggle', 'pill'],
+  labels: {
+    toggle: 'Show and hide with',
+    pill: 'Pill style',
+    visible: 'Shown on a new device',
+    span: 'Day columns',
+    max_height: 'Max height (% or px)',
+    offset: 'Distance from the bottom',
+  },
   toForm: (v: Raw) => ({
     ...v,
     toggle: v.toggle === true ? 'header' : v.toggle === false ? 'none' : v.toggle,

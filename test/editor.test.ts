@@ -42,7 +42,6 @@ describe('wallcal-card-editor', () => {
   it('emits nothing when a form reports its own data back', async () => {
     const { el, events } = await mount(base);
     change(form(el, 'days'), {});
-    change(form(el, 'entities'), {});
     expect(events).toEqual([]);
   });
 
@@ -68,17 +67,19 @@ describe('wallcal-card-editor', () => {
 
   it('removing the last calendar shows the error and emits nothing', async () => {
     const { el, events } = await mount(base);
-    change(form(el, 'entities'), { entities: [] });
+    el.shadowRoot!.querySelector('wallcal-calendar-list')!.dispatchEvent(new CustomEvent('entities-changed', { detail: { entities: [] } }));
     await el.updateComplete;
     expect(events).toEqual([]);
     expect(el.shadowRoot!.querySelector('ha-alert')!.textContent).toContain('at least one calendar');
   });
 
-  it('writes calendar colours as hex and keeps untouched calendars as written', async () => {
+  it('writes calendar edits from the calendar list and keeps the rest', async () => {
     const config = { ...base, entities: ['calendar.family', { entity: 'calendar.work', color: '#7F77DD' }] };
     const { el, events } = await mount(config);
-    const items = form(el, 'entities').data!.entities as Record<string, unknown>[];
-    change(form(el, 'entities'), { entities: [items[0], { ...items[1], color: [255, 0, 0] }] });
+    const list = el.shadowRoot!.querySelector('wallcal-calendar-list') as HTMLElement & { updateComplete: Promise<boolean> };
+    list.shadowRoot!.querySelectorAll<HTMLButtonElement>('.expand')[1].click();
+    await list.updateComplete;
+    change(list.shadowRoot!.querySelector<Stub>('ha-form')!, { color: [255, 0, 0] });
     expect(events).toEqual([{ ...config, entities: ['calendar.family', { entity: 'calendar.work', color: '#FF0000' }] }]);
   });
 
@@ -143,10 +144,14 @@ describe('wallcal-card-editor', () => {
     const list = el.shadowRoot!.querySelector('wallcal-overlay-list') as HTMLElement & { updateComplete: Promise<boolean> };
     list.shadowRoot!.querySelector<HTMLButtonElement>('.expand')!.click();
     await list.updateComplete;
+    const calendars = el.shadowRoot!.querySelector('wallcal-calendar-list') as HTMLElement & { updateComplete: Promise<boolean> };
+    calendars.shadowRoot!.querySelectorAll<HTMLButtonElement>('.expand')[1].click();
+    await calendars.updateComplete;
 
     const forms = [
       ...el.shadowRoot!.querySelectorAll<Stub>('ha-form'),
       ...list.shadowRoot!.querySelectorAll<Stub>('ha-form'),
+      ...calendars.shadowRoot!.querySelectorAll<Stub>('ha-form'),
     ];
     expect(forms).toHaveLength(9);
     const hasNaN = (v: unknown): boolean =>

@@ -17,7 +17,7 @@ export interface GridSchema {
 }
 export type FormSchema = FieldSchema | GridSchema;
 
-interface SchemaContext {
+export interface SchemaContext {
   days: number;
   /** Lowercased positions held by other overlays. */
   taken?: readonly string[];
@@ -31,6 +31,8 @@ export interface SectionDef {
   rules: FieldRules;
   /** Enum fields shown lowercased, as the card reads them; the YAML keeps its own case until edited. */
   lowercase?: readonly string[];
+  /** Field labels for this section; they win over the shared ones. */
+  labels?: Record<string, string>;
   toForm?: (values: Raw) => Raw;
   schema: (form: Raw, ctx: SchemaContext) => FormSchema[];
   finalize?: (root: Raw) => Raw;
@@ -83,6 +85,10 @@ export const number = (name: string, min: number, max: number, unit?: string): F
   name,
   selector: { number: { min, max, step: 1, mode: 'box', ...(unit ? { unit_of_measurement: unit } : {}) } },
 });
+
+/** HA's colour picker for hex or unset values; anything it can't show (rgba, var(--…)) stays editable as text. */
+export const colorField = (name: string, value: unknown): FieldSchema =>
+  typeof value === 'string' ? text(name) : { name, selector: { color_rgb: {} } };
 
 // HA hands an unquoted YAML date over as UTC midnight, so the UTC date is the one the user typed.
 const toIsoDate = (value: unknown): unknown => {
@@ -223,11 +229,9 @@ export const STYLE: SectionDef = {
     return out;
   },
   schema: (f) => {
-    const color = (token: string): FieldSchema =>
-      typeof f[token] === 'string' ? text(token) : { name: token, selector: { color_rgb: {} } };
     const size = (token: string): FieldSchema => (typeof f[token] === 'string' ? text(token) : number(token, 0, 200, 'px'));
     return [
-      grid(...COLOR_TOKENS.map(color)),
+      grid(...COLOR_TOKENS.map((token) => colorField(token, f[token]))),
       grid(...SIZE_TOKENS.map(size)),
       text('font_url'),
       grid(...TEXT_TOKENS.map(text)),
@@ -263,16 +267,6 @@ const LABELS: Record<string, string> = {
   show_ovulation: 'Show ovulation',
   theme: 'Theme',
   font_url: 'Font stylesheet URL',
-  position: 'Position',
-  toggle: 'Show and hide with',
-  pill: 'Pill style',
-  visible: 'Shown on a new device',
-  icon: 'Icon',
-  name: 'Name',
-  span: 'Day columns',
-  width: 'Width',
-  max_height: 'Max height (% or px)',
-  offset: 'Distance from the bottom',
 };
 
 const HELPERS: Record<string, string> = {
@@ -282,8 +276,20 @@ const HELPERS: Record<string, string> = {
   last_period: 'Stored in the dashboard configuration: anyone who can open this dashboard can read it.',
 };
 
-export function computeLabel(schema: { name: string }): string {
+function computeLabel(schema: { name: string }): string {
   return LABELS[schema.name] ?? humanize(schema.name);
+}
+
+const sectionLabels = new WeakMap<SectionDef, (schema: { name: string }) => string>();
+
+/** One stable label function per section, so ha-form isn't handed a new one on every render. */
+export function labelsFor(section: SectionDef): (schema: { name: string }) => string {
+  let fn = sectionLabels.get(section);
+  if (!fn) {
+    fn = (schema) => section.labels?.[schema.name] ?? computeLabel(schema);
+    sectionLabels.set(section, fn);
+  }
+  return fn;
 }
 
 export function computeHelper(schema: { name: string }): string | undefined {
