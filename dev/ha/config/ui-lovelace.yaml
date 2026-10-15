@@ -31,7 +31,7 @@ views:
           enabled: true
         period:
           enabled: true
-          last_period: 2026-10-04
+          last_period: 2026-10-04  # fictional fixture date
         overlays:
           - position: bottom-right
             icon: mdi:format-list-checks
