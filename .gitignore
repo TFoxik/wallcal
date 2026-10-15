@@ -9,3 +9,8 @@ dev/ha/config/*
 dev/ha/config/custom_components/**/__pycache__/
 .claude/
 .superpowers/
+docs/superpowers/
+.env
+.vscode/
+.idea/
+coverage/
