@@ -510,7 +510,7 @@ if (!window.customCards.some((card) => card.type === 'wallcal-card')) {
     name: 'WallCal',
     description: 'Week wall calendar with moon phase and cycle overlays',
     preview: true,
-    documentationURL: 'https://github.com/TFoxik/wallcal/blob/main/docs/guide.md',
+    documentationURL: 'https://tfoxik.github.io/wallcal/docs/',
     getEntitySuggestion: suggestCard,
   });
 }

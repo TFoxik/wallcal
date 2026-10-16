@@ -910,7 +910,7 @@ describe('editor wiring', () => {
   it('registers a previewable picker entry with docs and calendar suggestions', () => {
     const entry = window.customCards!.find((c) => c.type === 'wallcal-card')!;
     expect(entry.preview).toBe(true);
-    expect(entry.documentationURL).toBe('https://github.com/TFoxik/wallcal/blob/main/docs/guide.md');
+    expect(entry.documentationURL).toBe('https://tfoxik.github.io/wallcal/docs/');
     expect(entry.getEntitySuggestion).toBe(suggestCard);
     expect(suggestCard({}, 'calendar.family')).toEqual({ config: { type: 'custom:wallcal-card', entities: ['calendar.family'] } });
     expect(suggestCard({}, 'light.kitchen')).toBeNull();
