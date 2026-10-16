@@ -19,7 +19,10 @@
     "typecheck": "tsc --noEmit",
     "test": "TZ=Europe/Prague vitest run",
     "test:watch": "TZ=Europe/Prague vitest",
-    "screenshots": "node dev/screenshots.mjs"
+    "screenshots": "node dev/screenshots.mjs",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
   },
   "dependencies": {
     "lit": "^3.3.3"
@@ -29,6 +32,8 @@
     "playwright": "1.63.0",
     "typescript": "^7.0.2",
     "vite": "^8.3.4",
-    "vitest": "^5.0.4"
+    "vitepress": "1.6.4",
+    "vitest": "^5.0.4",
+    "yaml": "2.9.1"
   }
 }

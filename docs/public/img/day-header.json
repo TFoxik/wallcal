@@ -1,0 +1,58 @@
+{
+  "dark": "day-header-dark.webp",
+  "light": "day-header-light.webp",
+  "alt": "Today's day header with numbered dots on the date, weekday, cycle ring, weather, name days and moon",
+  "width": 141,
+  "height": 174,
+  "dots": [
+    {
+      "n": 1,
+      "label": "Date",
+      "href": "/parts/day-header#date-and-weekday",
+      "x": 28.5,
+      "y": 22
+    },
+    {
+      "n": 2,
+      "label": "Weekday",
+      "href": "/parts/day-header#date-and-weekday",
+      "x": 50,
+      "y": 48.3
+    },
+    {
+      "n": 3,
+      "label": "Cycle ring",
+      "href": "/parts/day-header#cycle-tracking",
+      "x": 42.4,
+      "y": 11.7
+    },
+    {
+      "n": 4,
+      "label": "Weather",
+      "href": "/parts/day-header#weather",
+      "x": 50,
+      "y": 63.8
+    },
+    {
+      "n": 5,
+      "label": "Name days",
+      "href": "/parts/day-header#name-days-and-holidays",
+      "x": 27.9,
+      "y": 82.8
+    },
+    {
+      "n": 6,
+      "label": "Moon",
+      "href": "/parts/day-header#moon",
+      "x": 85.1,
+      "y": 77.6
+    },
+    {
+      "n": 7,
+      "label": "Fertile tint",
+      "href": "/parts/day-header#cycle-tracking",
+      "x": 81,
+      "y": 22.8
+    }
+  ]
+}

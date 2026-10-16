@@ -1,0 +1,86 @@
+{
+  "dark": "card-map-dark.webp",
+  "light": "card-map-light.webp",
+  "alt": "A WallCal week with numbered dots on its parts: the top bar, a day header, events and a floating card",
+  "width": 1024,
+  "height": 744,
+  "dots": [
+    {
+      "n": 1,
+      "label": "Title",
+      "href": "/parts/top-bar#title-and-subtitle",
+      "x": 18.4,
+      "y": 4
+    },
+    {
+      "n": 2,
+      "label": "Calendar chips",
+      "href": "/parts/top-bar#calendar-chips",
+      "x": 72.4,
+      "y": 4
+    },
+    {
+      "n": 3,
+      "label": "Week arrows & Today",
+      "href": "/parts/top-bar#week-arrows-and-today",
+      "x": 90.8,
+      "y": 4
+    },
+    {
+      "n": 4,
+      "label": "Day header",
+      "href": "/parts/day-header",
+      "x": 10.7,
+      "y": 16
+    },
+    {
+      "n": 5,
+      "label": "Weather",
+      "href": "/parts/day-header#weather",
+      "x": 50,
+      "y": 22.4
+    },
+    {
+      "n": 6,
+      "label": "Name days & holidays",
+      "href": "/parts/day-header#name-days-and-holidays",
+      "x": 34.6,
+      "y": 26.9
+    },
+    {
+      "n": 7,
+      "label": "Moon",
+      "href": "/parts/day-header#moon",
+      "x": 83,
+      "y": 25.7
+    },
+    {
+      "n": 8,
+      "label": "All-day events",
+      "href": "/parts/events#all-day-events",
+      "x": 78.2,
+      "y": 32.6
+    },
+    {
+      "n": 9,
+      "label": "Events & colours",
+      "href": "/parts/events#calendars-and-colours",
+      "x": 92.4,
+      "y": 34.8
+    },
+    {
+      "n": 10,
+      "label": "\"+N more\"",
+      "href": "/parts/events#more-events-than-fit",
+      "x": 90.8,
+      "y": 96.5
+    },
+    {
+      "n": 11,
+      "label": "Floating card",
+      "href": "/parts/floating-cards",
+      "x": 83.8,
+      "y": 91.9
+    }
+  ]
+}
