@@ -5,6 +5,8 @@
 A week-at-a-glance calendar card for a Home Assistant wall tablet. Everyone's calendars side by
 side, with the weather and the moon, readable from across the room.
 
+**[See WallCal on the web →](https://tfoxik.github.io/wallcal/)**
+
 ![WallCal week view on a Home Assistant dashboard](docs/screenshot.png)
 
 ## What it does
