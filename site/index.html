@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WallCal — a wall-tablet calendar for Home Assistant</title>
+  <meta name="description" content="A Home Assistant calendar card for wall tablets — with the moon, the weather and cycle tracking built in.">
+  <link rel="icon" href="img/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+  <script id="theme-init">try{if(localStorage.getItem('wallcal-site-theme')==='light')document.documentElement.dataset.theme='light'}catch(e){}</script>
+  <script src="site.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#top"><img src="img/logo.svg" alt="" width="28" height="28">WallCal</a>
+    <nav>
+      <a href="#features">Features</a>
+      <a href="#install">Install</a>
+      <a href="https://github.com/TFoxik/wallcal/blob/main/docs/guide.md">Guide</a>
+      <a href="https://github.com/TFoxik/wallcal">GitHub</a>
+      <button id="theme-toggle" type="button" aria-label="Switch to light mode">☾</button>
+    </nav>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <h1>Your family's week,<br> <span class="accent">on the wall.</span></h1>
+      <p class="lede">A Home Assistant calendar card for wall tablets — with the moon, the weather and cycle tracking built in.</p>
+      <div class="ctas">
+        <a class="btn btn--primary" href="#install">Install with HACS</a>
+        <a class="btn btn--secondary" href="https://github.com/TFoxik/wallcal/blob/main/docs/guide.md">Read the guide</a>
+      </div>
+      <div class="tablet">
+        <img class="shot shot-dark" src="img/hero-dark.webp" width="2000" height="1454" alt="WallCal showing a whole week on a dark dashboard: seven day columns with weather, moon phases, name days and colour-coded events, today highlighted.">
+        <img class="shot shot-light" src="img/hero-light.webp" width="2000" height="1454" loading="lazy" alt="The same week in WallCal's warm Paper theme.">
+      </div>
+    </section>
+
+    <section id="features" class="tiles" aria-label="What only WallCal does">
+      <div class="tile tile--moon">
+        <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M14.5 3.2a8.8 8.8 0 1 0 6.3 14.6A7.2 7.2 0 0 1 14.5 3.2Z"/></svg></span>
+        <h2>Moon on every day</h2>
+        <p>The phase for each day, right next to the weather.</p>
+      </div>
+      <div class="tile tile--cycle">
+        <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3c3.2 4.3 6 7.7 6 11a6 6 0 0 1-12 0c0-3.3 2.8-6.7 6-11Z"/></svg></span>
+        <h2>Cycle tracking</h2>
+        <p>Period, fertile window and ovulation as a quiet ring around the date.</p>
+      </div>
+      <div class="tile tile--cards">
+        <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="3" opacity=".45"/><rect x="8" y="10" width="13" height="10" rx="3"/></svg></span>
+        <h2>Floating cards</h2>
+        <p>Keep the shopping list over the bottom of the week.</p>
+      </div>
+    </section>
+
+    <section class="features">
+      <article id="moon" class="feature">
+        <div class="feature__shot">
+          <img class="shot shot-dark" src="img/moon-dark.webp" width="858" height="348" loading="lazy" alt="Three day headers, each with a weather icon, high and low temperature and a small moon phase drawing.">
+          <img class="shot shot-light" src="img/moon-light.webp" width="858" height="348" loading="lazy" alt="The same day headers with weather and moon in the Paper theme.">
+        </div>
+        <div class="feature__text">
+          <h2>The moon and the weather, every day</h2>
+          <p>Each day shows the forecast's icon with the high and low, and the moon's phase beside it. Living south of the equator? Flip the drawing with one option.</p>
+        </div>
+      </article>
+
+      <article id="cycle" class="feature">
+        <div class="feature__shot">
+          <img class="shot shot-dark" src="img/cycle-dark.webp" width="1148" height="348" loading="lazy" alt="Four day headers with a pink ring around each date showing the cycle day, a soft green tint on fertile days and an egg icon on the expected ovulation day.">
+          <img class="shot shot-light" src="img/cycle-light.webp" width="1148" height="348" loading="lazy" alt="The same cycle ring, fertile tint and ovulation icon in the Paper theme.">
+        </div>
+        <div class="feature__text">
+          <h2>Cycle tracking, quietly</h2>
+          <p>Turn it on and a ring around each date shows where the day sits in the cycle. A drop marks expected period days, a soft tint the fertile window, and an egg the ovulation day.</p>
+          <p class="note">Off by default. Predictions use a fixed cycle length: a calendar hint, not medical advice and not contraception.</p>
+        </div>
+      </article>
+
+      <article id="floating" class="feature">
+        <div class="feature__shot">
+          <img class="shot shot-dark" src="img/overlay-dark.webp" width="858" height="896" loading="lazy" alt="A shopping list floating over the bottom of the last three day columns, with an add-item field and unticked items.">
+          <img class="shot shot-light" src="img/overlay-light.webp" width="858" height="896" loading="lazy" alt="The floating shopping list over the week in the Paper theme.">
+        </div>
+        <div class="feature__text">
+          <h2>Your shopping list, floating over the week</h2>
+          <p>Put any Home Assistant card over the bottom of the week: a to-do list, a thermostat, a media player. Shrink it to a small pill when you don't need it. Each tablet remembers whether it's open.</p>
+        </div>
+      </article>
+
+      <article id="calendars" class="feature">
+        <div class="feature__shot">
+          <img class="shot shot-dark" src="img/chips-dark.webp" width="858" height="460" loading="lazy" alt="Round calendar chips in the top bar next to the week arrows, above day headers with Czech and Slovak name days under each date.">
+          <img class="shot shot-light" src="img/chips-light.webp" width="858" height="460" loading="lazy" alt="The calendar chips and name-day lines in the Paper theme.">
+        </div>
+        <div class="feature__text">
+          <h2>Everyone's calendar, one tap to hide</h2>
+          <p>Any Home Assistant calendar works, each in its own colour. Tap a chip in the top bar to hide work on the kitchen tablet. Name days and holidays sit as a small line under the date instead of crowding the day.</p>
+        </div>
+      </article>
+
+      <article id="themes" class="feature feature--wide">
+        <div class="feature__text">
+          <h2>Three looks, and every colour yours</h2>
+          <p>Follow your Home Assistant theme, or pick Paper or Midnight. Then change any colour, font or size.</p>
+        </div>
+        <div class="themes">
+          <figure><img src="img/theme-default.webp" width="1000" height="727" loading="lazy" alt="WallCal in the default theme, following a dark Home Assistant theme."><figcaption>Default</figcaption></figure>
+          <figure><img src="img/theme-paper.webp" width="1000" height="727" loading="lazy" alt="WallCal in the Paper theme: warm off-white with a serif title."><figcaption>Paper</figcaption></figure>
+          <figure><img src="img/theme-midnight.webp" width="1000" height="727" loading="lazy" alt="WallCal in the Midnight theme: near-black and low-glare."><figcaption>Midnight</figcaption></figure>
+        </div>
+      </article>
+    </section>
+
+    <section id="wall" class="band">
+      <h2>Made for the wall</h2>
+      <ul class="checks">
+        <li><strong>The whole week at once.</strong> Seven or five day columns, today highlighted.</li>
+        <li><strong>Today scrolls to what's next,</strong> so the next event is always in view.</li>
+        <li><strong>Comes back to this week</strong> a minute after someone browses ahead.</li>
+        <li><strong>Readable across the room,</strong> with sizes you can raise.</li>
+        <li><strong>Runs on old tablets:</strong> Android WebView 87+ and iOS 14.5+, with no animations.</li>
+      </ul>
+    </section>
+
+    <section id="install" class="install">
+      <h2>Install</h2>
+      <ol class="steps">
+        <li>
+          <h3>Add it with HACS</h3>
+          <p><a class="btn btn--primary" href="https://my.home-assistant.io/redirect/hacs_repository/?owner=TFoxik&amp;repository=wallcal&amp;category=plugin">Open WallCal in HACS</a></p>
+          <p>Or in HACS open ⋮ → <strong>Custom repositories</strong> and add <code>https://github.com/TFoxik/wallcal</code> with type <strong>Dashboard</strong>. Then open WallCal, click <strong>Download</strong>, and reload the browser and the wall tablet.</p>
+        </li>
+        <li>
+          <h3>Add the card</h3>
+          <p>Edit a dashboard → <strong>Add card</strong> → search for <strong>WallCal</strong> and pick your calendars in the visual editor (Home Assistant 2026.10 or newer). Or paste this into the code editor:</p>
+          <div class="code">
+            <button class="copy" type="button" data-copy="install-yaml">Copy</button>
+            <pre><code id="install-yaml">type: custom:wallcal-card
+entities:
+  - calendar.family
+  - entity: calendar.work
+    color: "#7F77DD"</code></pre>
+          </div>
+        </li>
+        <li>
+          <h3>Fill the tablet</h3>
+          <p>Put the card in its own view with the <strong>Panel</strong> layout so it fills the screen.</p>
+        </li>
+      </ol>
+      <details>
+        <summary>Install without HACS</summary>
+        <ol>
+          <li>Download <code>wallcal-card.js</code> from the <a href="https://github.com/TFoxik/wallcal/releases/latest">latest release</a> into <code>/config/www/</code>.</li>
+          <li>Under Settings → Dashboards → ⋮ → <strong>Resources</strong>, add <code>/local/wallcal-card.js?v=1</code> as a JavaScript module.</li>
+          <li>Reload the browser. After each update, raise the number after <code>?v=</code> so tablets drop the cached copy.</li>
+        </ol>
+      </details>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <a href="https://github.com/TFoxik/wallcal/blob/main/docs/guide.md">User guide</a>
+    <a href="https://github.com/TFoxik/wallcal/blob/main/docs/configuration.md">Configuration reference</a>
+    <a href="https://github.com/TFoxik/wallcal">GitHub</a>
+    <a href="https://github.com/TFoxik/wallcal/issues">Report an issue</a>
+    <a href="https://github.com/TFoxik/wallcal/blob/main/LICENSE">MIT licence</a>
+  </footer>
+</body>
+</html>
