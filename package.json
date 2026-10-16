@@ -1,6 +1,6 @@
 {
   "name": "wallcal-card",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Week-view wall calendar card for Home Assistant, with moon phase and cycle overlays",
   "type": "module",
   "license": "MIT",
