@@ -170,6 +170,22 @@
   ],
   "namedays": [
     {
+      "summary": "Svátek: Marcela",
+      "day": -6
+    },
+    {
+      "summary": "Svátek: Renáta",
+      "day": -5
+    },
+    {
+      "summary": "Svátek: Agáta",
+      "day": -4
+    },
+    {
+      "summary": "Svátek: Monika",
+      "day": -3
+    },
+    {
       "summary": "Svátek: Sabina",
       "day": -2
     },
@@ -203,6 +219,22 @@
     }
   ],
   "namedays_sk": [
+    {
+      "summary": "Eduard",
+      "day": -6
+    },
+    {
+      "summary": "Edita",
+      "day": -5
+    },
+    {
+      "summary": "Kalinka",
+      "day": -4
+    },
+    {
+      "summary": "Brigita",
+      "day": -3
+    },
     {
       "summary": "Horst",
       "day": -2

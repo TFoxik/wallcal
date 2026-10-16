@@ -4,7 +4,8 @@ views:
     path: wall
     panel: true
     cards:
-      - type: custom:wallcal-card
+      - &wall_card
+        type: custom:wallcal-card
         entities:
           - entity: calendar.family
             color: "#7F77DD"
@@ -50,6 +51,19 @@ views:
             card:
               type: tile
               entity: weather.home
+  # Paper and Midnight copies of the Wall card, for the landing page's screenshots.
+  - title: Paper week
+    path: paper-week
+    panel: true
+    cards:
+      - <<: *wall_card
+        theme: paper
+  - title: Midnight week
+    path: midnight-week
+    panel: true
+    cards:
+      - <<: *wall_card
+        theme: midnight
   - title: Paper 5 days
     path: paper
     panel: true
