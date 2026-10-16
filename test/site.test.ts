@@ -9,6 +9,9 @@ const HTML = read('index.html');
 const SITE_JS = read('site.js');
 const CSS = read('style.css');
 
+// Shared with the VitePress docs on the same origin, so one light/dark choice covers both.
+const THEME_KEY = 'vitepress-theme-appearance';
+
 const YAML = `type: custom:wallcal-card
 entities:
   - calendar.family
@@ -16,7 +19,8 @@ entities:
     color: "#7F77DD"`;
 
 interface PageOptions {
-  stored?: 'light' | 'dark';
+  stored?: 'light' | 'dark' | 'auto';
+  systemLight?: boolean;
   storageThrows?: boolean;
   clipboard?: 'missing' | 'rejects';
   runSiteJs?: boolean;
@@ -39,11 +43,15 @@ afterEach(async () => {
 function loadPage(opts: PageOptions = {}): Page {
   const window = new Window({
     url: 'http://localhost:5174/',
-    settings: { disableJavaScriptFileLoading: true, disableCSSFileLoading: true },
+    settings: {
+      disableJavaScriptFileLoading: true,
+      disableCSSFileLoading: true,
+      device: { prefersColorScheme: opts.systemLight ? 'light' : 'dark' },
+    },
   });
   windows.push(window);
   const data = new Map<string, string>();
-  if (opts.stored) data.set('wallcal-site-theme', opts.stored);
+  if (opts.stored) data.set(THEME_KEY, opts.stored);
   const storage = {
     getItem: (k: string) => data.get(k) ?? null,
     setItem: (k: string, v: string) => void data.set(k, v),
@@ -80,7 +88,7 @@ function loadPage(opts: PageOptions = {}): Page {
     style.textContent = CSS;
     window.document.head.append(style);
   }
-  return { window, document: window.document, stored: () => data.get('wallcal-site-theme') ?? null, writeText, timers };
+  return { window, document: window.document, stored: () => data.get(THEME_KEY) ?? null, writeText, timers };
 }
 
 const toggle = (page: Page) => page.document.querySelector('#theme-toggle') as unknown as HTMLButtonElement;
@@ -114,6 +122,11 @@ describe('landing page: theme', () => {
   it('applies a stored light theme before site.js runs', () => {
     const page = loadPage({ stored: 'light', runSiteJs: false });
     expect(page.document.documentElement.dataset.theme).toBe('light');
+  });
+
+  it('follows the system for a stored "auto" from the docs', () => {
+    expect(loadPage({ stored: 'auto', systemLight: true }).document.documentElement.dataset.theme).toBe('light');
+    expect(loadPage({ stored: 'auto', systemLight: false }).document.documentElement.dataset.theme).toBe('dark');
   });
 
   it('stays dark when storage throws', () => {
@@ -154,6 +167,13 @@ describe('landing page: theme', () => {
 });
 
 describe('landing page: copy button', () => {
+  it('copy button is labelled and announces the copy', () => {
+    const page = loadPage();
+    const button = page.document.querySelector('button.copy')!;
+    expect(button.getAttribute('aria-label')).toBe('Copy the YAML');
+    expect(button.getAttribute('aria-live')).toBe('polite');
+  });
+
   const copyButton = (page: Page) =>
     page.document.querySelector('button.copy[data-copy="install-yaml"]') as unknown as HTMLButtonElement;
 
@@ -197,8 +217,8 @@ describe('landing page: content', () => {
   const doc = () => loadPage({ runSiteJs: false }).document;
   const URLS = [
     'https://my.home-assistant.io/redirect/hacs_repository/?owner=TFoxik&repository=wallcal&category=plugin',
-    'https://github.com/TFoxik/wallcal/blob/main/docs/guide.md',
-    'https://github.com/TFoxik/wallcal/blob/main/docs/configuration.md',
+    'https://tfoxik.github.io/wallcal/docs/',
+    'https://tfoxik.github.io/wallcal/docs/reference/options',
     'https://github.com/TFoxik/wallcal/issues',
   ];
 
@@ -236,6 +256,13 @@ describe('landing page: content', () => {
   it('install and guide links use the pinned URLs', () => {
     const hrefs = [...doc().querySelectorAll('a')].map((a) => a.getAttribute('href'));
     for (const url of URLS) expect(hrefs, url).toContain(url);
+  });
+
+  it('guide links go to the docs site', () => {
+    const d = doc();
+    const hrefOf = (text: string) => [...d.querySelectorAll('a')].filter((a) => a.textContent!.trim() === text).map((a) => a.getAttribute('href'));
+    for (const text of ['Guide', 'Read the guide', 'User guide']) expect(hrefOf(text), text).toEqual(['https://tfoxik.github.io/wallcal/docs/']);
+    expect(hrefOf('Configuration reference')).toEqual(['https://tfoxik.github.io/wallcal/docs/reference/options']);
   });
 
   it('every picture has a light twin', () => {

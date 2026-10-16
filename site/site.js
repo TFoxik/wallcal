@@ -1,6 +1,7 @@
 (function () {
   var root = document.documentElement;
-  var KEY = 'wallcal-site-theme';
+  // The VitePress docs on the same origin use this key too, so one choice covers both.
+  var KEY = 'vitepress-theme-appearance';
   root.classList.add('js');
 
   var toggle = document.getElementById('theme-toggle');

@@ -57,8 +57,8 @@ side, with the weather and the moon, readable from across the room.
 
 3. On a wall tablet, put the card in its own view with the **Panel** layout so it fills the screen.
 
-The **[user guide](docs/guide.md)** walks through everything WallCal can do, with examples. The
-**[configuration reference](docs/configuration.md)** lists every option.
+The **[user guide](https://tfoxik.github.io/wallcal/docs/)** walks through everything WallCal can do, with examples and a map of
+the card. **[All options](https://tfoxik.github.io/wallcal/docs/reference/options)** lists every option with its default.
 
 ## Good to know
 

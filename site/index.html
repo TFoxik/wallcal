@@ -7,7 +7,7 @@
   <meta name="description" content="A Home Assistant calendar card for wall tablets — with the moon, the weather and cycle tracking built in.">
   <link rel="icon" href="img/logo.svg" type="image/svg+xml">
   <link rel="stylesheet" href="style.css">
-  <script id="theme-init">try{if(localStorage.getItem('wallcal-site-theme')==='light')document.documentElement.dataset.theme='light'}catch(e){}</script>
+  <script id="theme-init">try{var t=localStorage.getItem('vitepress-theme-appearance');if(t==='light'||(t==='auto'&&matchMedia('(prefers-color-scheme: light)').matches))document.documentElement.dataset.theme='light'}catch(e){}</script>
   <script src="site.js" defer></script>
 </head>
 <body>
@@ -16,7 +16,7 @@
     <nav>
       <a href="#features">Features</a>
       <a href="#install">Install</a>
-      <a href="https://github.com/TFoxik/wallcal/blob/main/docs/guide.md">Guide</a>
+      <a href="https://tfoxik.github.io/wallcal/docs/">Guide</a>
       <a href="https://github.com/TFoxik/wallcal">GitHub</a>
       <button id="theme-toggle" type="button" aria-label="Switch to light mode">☾</button>
     </nav>
@@ -28,7 +28,7 @@
       <p class="lede">A Home Assistant calendar card for wall tablets — with the moon, the weather and cycle tracking built in.</p>
       <div class="ctas">
         <a class="btn btn--primary" href="#install">Install with HACS</a>
-        <a class="btn btn--secondary" href="https://github.com/TFoxik/wallcal/blob/main/docs/guide.md">Read the guide</a>
+        <a class="btn btn--secondary" href="https://tfoxik.github.io/wallcal/docs/">Read the guide</a>
       </div>
       <div class="tablet">
         <img class="shot shot-dark" src="img/hero-dark.webp" width="2000" height="1454" alt="WallCal showing a whole week on a dark dashboard: seven day columns with weather, moon phases, name days and colour-coded events, today highlighted.">
@@ -136,7 +136,7 @@
           <h3>Add the card</h3>
           <p>Edit a dashboard → <strong>Add card</strong> → search for <strong>WallCal</strong> and pick your calendars in the visual editor (Home Assistant 2026.10 or newer). Or paste this into the code editor:</p>
           <div class="code">
-            <button class="copy" type="button" data-copy="install-yaml">Copy</button>
+            <button class="copy" type="button" data-copy="install-yaml" aria-label="Copy the YAML" aria-live="polite">Copy</button>
             <pre><code id="install-yaml">type: custom:wallcal-card
 entities:
   - calendar.family
@@ -161,8 +161,8 @@ entities:
   </main>
 
   <footer class="footer">
-    <a href="https://github.com/TFoxik/wallcal/blob/main/docs/guide.md">User guide</a>
-    <a href="https://github.com/TFoxik/wallcal/blob/main/docs/configuration.md">Configuration reference</a>
+    <a href="https://tfoxik.github.io/wallcal/docs/">User guide</a>
+    <a href="https://tfoxik.github.io/wallcal/docs/reference/options">Configuration reference</a>
     <a href="https://github.com/TFoxik/wallcal">GitHub</a>
     <a href="https://github.com/TFoxik/wallcal/issues">Report an issue</a>
     <a href="https://github.com/TFoxik/wallcal/blob/main/LICENSE">MIT licence</a>
