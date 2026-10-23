@@ -125,12 +125,21 @@ function writeMap(name, dark, light, alt, clip, dots) {
   console.log(`docs/public/img/${name}.json`);
 }
 
+// The link-preview picture (og:image): the top of the week at 1200×630, as JPEG since not every preview reader takes WebP.
+async function linkPreview(card) {
+  const png = join(tmp, 'og.png');
+  await page.screenshot({ path: png, clip: { ...card, height: card.width / (1200 / 630) } });
+  execFileSync('sips', ['-s', 'format', 'jpeg', '-s', 'formatOptions', '82', '-z', '630', '1200', png, '--out', join(SITE, 'og-image.jpg')], { stdio: 'ignore' });
+  console.log('site/img/og-image.jpg');
+}
+
 // Dots measured on the dark wall view; the light pass checks its layout against them.
 let darkCardDots = [];
 
 async function weekShots(view, suffix, theme) {
   await open(view);
   const card = await box('ha-card');
+  if (suffix === 'dark') await linkPreview(card);
   await shot(card, [join(SITE, `hero-${suffix}`), 2000], [join(SITE, `theme-${theme}`), 1000], [join(DOCS, `theme-${theme}`), 1000], [join(DOCS, `card-map-${suffix}`), 2000]);
 
   const today = await todayIndex();
