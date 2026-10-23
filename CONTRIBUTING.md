@@ -47,10 +47,11 @@ the page: HA's browser cache keeps the old card otherwise.
 `site/` is the landing page: plain HTML, CSS and JS with no build step. Preview it with
 `python3 -m http.server 5174 -d site`. `docs/` is the user guide, a VitePress site: `npm run docs:dev`
 serves it under `/wallcal/docs/` on the port it prints, and `npm run docs:build` checks it (CI runs it too).
-Keep `docs:dev` on localhost and stop it when you're done: VitePress 1.6 ships a Vite 5 dev server with
-known advisories, so the config refuses `dev/ha/config/` and other local state, but the rest of the repo
-stays readable while it runs. Pushing changes under `site/` or `docs/` to `main` publishes both to
-GitHub Pages.
+Keep `docs:dev` on localhost and stop it when you're done: VitePress lets its dev server read the whole
+repo, so the config refuses `dev/ha/config/` and other local state, but the rest of the repo stays
+readable while it runs. VitePress 1.6 asks for Vite 5, which has unpatched dev-server advisories;
+`overrides` in `package.json` gives it Vite 6 instead. Drop the override once VitePress 2 is stable.
+Pushing changes under `site/` or `docs/` to `main` publishes both to GitHub Pages.
 
 ### Screenshots
 

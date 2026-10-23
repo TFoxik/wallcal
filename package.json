@@ -35,5 +35,10 @@
     "vitepress": "1.6.4",
     "vitest": "^5.0.4",
     "yaml": "2.9.1"
+  },
+  "overrides": {
+    "vitepress": {
+      "vite": "^6.4.4"
+    }
   }
 }

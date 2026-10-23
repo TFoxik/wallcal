@@ -10,8 +10,8 @@ export default defineConfig({
   markdown: { image: { lazyLoading: true } },
   appearance: 'dark',
   srcExclude: ['superpowers/**', 'guide.md', 'configuration.md'],
-  // vitepress 1.6 runs Vite 5, whose dev server other websites can read from (esbuild/vite advisories). VitePress
-  // allow-lists the whole repo, so deny the dev Home Assistant config (its .storage holds auth tokens) and local tool state.
+  // VitePress allow-lists the whole repo for its dev server, so deny the dev Home Assistant config (its .storage holds
+  // auth tokens) and local tool state. package.json overrides vitepress 1.6's Vite 5 (unpatched dev-server advisories) with Vite 6.
   vite: { server: { fs: { deny: ['.env', '.env.*', '*.{crt,pem}', '**/.git/**', '**/dev/ha/config/**', '**/.claude/**', '**/.superpowers/**'] } } },
   head: [['link', { rel: 'icon', type: 'image/svg+xml', href: '/wallcal/docs/logo.svg' }]],
   themeConfig: {
