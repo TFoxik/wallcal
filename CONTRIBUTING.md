@@ -73,7 +73,7 @@ a weekend clamps two days together.
 Bump `version` in `package.json`, commit, then tag and push:
 
 ```bash
-git tag v0.3.2 && git push origin v0.3.2
+git tag v0.3.3 && git push origin v0.3.3
 ```
 
 The release workflow checks the tag matches `package.json`, runs the tests, builds and attaches
