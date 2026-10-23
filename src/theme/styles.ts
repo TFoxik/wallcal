@@ -6,9 +6,10 @@ export const cardStyles = css`
     height: 100%;
   }
   /* The panel view wraps the card in an auto-height element, so 100% would grow with the events
-     instead of fitting the screen and letting busy days scroll. */
+     instead of fitting the screen and letting busy days scroll. kiosk-mode sets --kiosk-header-height
+     on the view only while it hides the header, and leaves --header-height at the hidden header's size. */
   :host([layout='panel']) {
-    height: calc(100vh - var(--header-height, 56px));
+    height: calc(100vh - var(--kiosk-header-height, var(--header-height, 56px)));
   }
   /* The panel view squares every card's corners but keeps the theme's radius here; the default
      radius token reads --ha-card-border-radius, so restoring it rounds the card, days and headers. */

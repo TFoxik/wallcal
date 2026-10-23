@@ -28,3 +28,12 @@ describe('overlay theming', () => {
     }
   });
 });
+
+describe('panel layout height', () => {
+  it('subtracts the kiosk-mode header height when set, else the HA header height', () => {
+    const css = cardStyles.cssText.replace(/\s+/g, ' ');
+    expect(css).toContain(
+      ":host([layout='panel']) { height: calc(100vh - var(--kiosk-header-height, var(--header-height, 56px))); }",
+    );
+  });
+});
