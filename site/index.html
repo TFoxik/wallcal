@@ -5,9 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>WallCal — a wall-tablet calendar for Home Assistant</title>
   <meta name="description" content="A Home Assistant calendar card for wall tablets — with the moon, the weather and cycle tracking built in.">
+  <meta property="og:title" content="WallCal">
+  <meta property="og:description" content="A Home Assistant calendar card for wall tablets — with the moon, the weather and cycle tracking built in.">
+  <meta property="og:url" content="https://tfoxik.github.io/wallcal/">
+  <meta property="og:image" content="https://tfoxik.github.io/wallcal/img/og-image.jpg">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="img/logo.svg" type="image/svg+xml">
   <link rel="stylesheet" href="style.css">
-  <script id="theme-init">try{var t=localStorage.getItem('vitepress-theme-appearance');if(t==='light'||(t==='auto'&&matchMedia('(prefers-color-scheme: light)').matches))document.documentElement.dataset.theme='light'}catch(e){}</script>
+  <script id="theme-init">try{var t=localStorage.getItem('vitepress-theme-appearance');if(t==='light'||(t==='auto'&&matchMedia('(prefers-color-scheme: light)').matches))document.documentElement.dataset.theme='light'}catch(e){}var l=document.createElement('link');l.rel='preload';l.as='image';l.href='img/hero-'+(document.documentElement.dataset.theme==='light'?'light':'dark')+'.webp';l.setAttribute('fetchpriority','high');document.head.appendChild(l)</script>
   <script src="site.js" defer></script>
 </head>
 <body>
@@ -31,8 +37,8 @@
         <a class="btn btn--secondary" href="https://tfoxik.github.io/wallcal/docs/">Read the guide</a>
       </div>
       <div class="tablet">
-        <img class="shot shot-dark" src="img/hero-dark.webp" width="2000" height="1454" alt="WallCal showing a whole week on a dark dashboard: seven day columns with weather, moon phases, name days and colour-coded events, today highlighted.">
-        <img class="shot shot-light" src="img/hero-light.webp" width="2000" height="1454" loading="lazy" alt="The same week in WallCal's warm Paper theme.">
+        <img class="shot shot-dark" src="img/hero-dark.webp" width="2000" height="1454" loading="lazy" fetchpriority="high" alt="WallCal showing a whole week on a dark dashboard: seven day columns with weather, moon phases, name days and colour-coded events, today highlighted.">
+        <img class="shot shot-light" src="img/hero-light.webp" width="2000" height="1454" loading="lazy" fetchpriority="high" alt="The same week in WallCal's warm Paper theme.">
       </div>
     </section>
 

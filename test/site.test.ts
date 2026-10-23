@@ -202,6 +202,11 @@ describe('landing page: copy button', () => {
 });
 
 describe('landing page: colours', () => {
+  it('buttons darken on hover instead of using a brightness filter', () => {
+    expect(CSS).not.toMatch(/filter:\s*brightness/);
+    expect(CSS).toMatch(/\.btn--primary:hover\s*\{\s*background:\s*var\(--brand-hover\)/);
+  });
+
   it('text colours meet WCAG AA in both themes', () => {
     for (const selector of [':root', ':root[data-theme="light"]']) {
       const t = tokens(CSS, selector);
@@ -209,6 +214,10 @@ describe('landing page: colours', () => {
       expect(contrast(t.muted, t.bg), `${selector} muted`).toBeGreaterThanOrEqual(4.5);
       expect(contrast('#FFFFFF', t.brand), `${selector} button`).toBeGreaterThanOrEqual(4.5);
       expect(contrast(t.accent, t.bg), `${selector} accent`).toBeGreaterThanOrEqual(3);
+      for (const surface of ['band', 'tile']) {
+        expect(contrast(t.muted, t[surface]), `${selector} muted on ${surface}`).toBeGreaterThanOrEqual(4.5);
+      }
+      expect(contrast('#FFFFFF', t['brand-hover']), `${selector} button hover`).toBeGreaterThanOrEqual(4.5);
     }
   });
 });
@@ -289,6 +298,51 @@ describe('landing page: content', () => {
   it('never names another calendar card', () => {
     const text = doc().body.textContent!;
     expect(text).not.toMatch(/Atomic|Week Planner|Calendar Card Pro|Daylight|Skylight|Wall Clock Card/i);
+  });
+});
+
+describe('landing page: without JavaScript', () => {
+  it('hides the theme switch and the copy button', () => {
+    const page = loadPage({ runSiteJs: false, styled: true });
+    for (const selector of ['#theme-toggle', 'button.copy']) {
+      expect(page.window.getComputedStyle(page.document.querySelector(selector) as never).display, selector).toBe('none');
+    }
+  });
+});
+
+describe('landing page: loading and sharing', () => {
+  it('loads only the hero picture for the current theme', () => {
+    for (const img of loadPage({ runSiteJs: false }).document.querySelectorAll('.tablet img')) {
+      expect(img.getAttribute('loading'), img.getAttribute('src')!).toBe('lazy');
+      expect(img.getAttribute('fetchpriority'), img.getAttribute('src')!).toBe('high');
+    }
+  });
+
+  it.each(['dark', 'light'] as const)('preloads the %s hero at high priority', (theme) => {
+    const links = [...loadPage({ stored: theme, runSiteJs: false }).document.querySelectorAll('link[rel="preload"][as="image"]')];
+    expect(links.map((l) => l.getAttribute('href'))).toEqual([`img/hero-${theme}.webp`]);
+    expect(links[0].getAttribute('fetchpriority')).toBe('high');
+  });
+
+  it('still preloads the dark hero when storage is blocked', () => {
+    const links = [...loadPage({ storageThrows: true, runSiteJs: false }).document.querySelectorAll('link[rel="preload"][as="image"]')];
+    expect(links.map((l) => l.getAttribute('href'))).toEqual(['img/hero-dark.webp']);
+  });
+
+  it('has a link preview with an absolute image that exists', () => {
+    const d = loadPage({ runSiteJs: false }).document;
+    const meta = (key: string) => d.querySelector(`meta[property="${key}"], meta[name="${key}"]`)?.getAttribute('content');
+    expect(meta('og:title')).toBe('WallCal');
+    expect(meta('og:description')).toBe(d.querySelector('meta[name="description"]')!.getAttribute('content'));
+    expect(meta('og:url')).toBe('https://tfoxik.github.io/wallcal/');
+    expect(meta('og:image')).toBe('https://tfoxik.github.io/wallcal/img/og-image.jpg');
+    expect(meta('twitter:card')).toBe('summary_large_image');
+    expect(existsSync(join(SITE, 'img/og-image.jpg'))).toBe(true);
+  });
+
+  it('CONTRIBUTING explains how to regenerate the pictures', () => {
+    const contributing = readFileSync(join(SITE, '..', 'CONTRIBUTING.md'), 'utf8');
+    for (const text of ['npm run screenshots', 'npx playwright install chromium', 'cwebp', 'npm run docs:dev']) expect(contributing).toContain(text);
   });
 });
 

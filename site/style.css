@@ -6,6 +6,7 @@
   --text: #EEEDF7;
   --muted: #a6a3c2;
   --brand: #5B53C9;
+  --brand-hover: #4C44B5;
   --accent: #7F77DD;
   --glow: rgba(127, 119, 221, 0.26);
   --moon: #FFD67A;
@@ -26,6 +27,7 @@
   --text: #2C2C2A;
   --muted: #6B665D;
   --brand: #B4543A;
+  --brand-hover: #9A452F;
   --accent: #B4543A;
   --glow: rgba(244, 162, 122, 0.12);
   --moon: #B8862B;
@@ -79,7 +81,8 @@ p code { overflow-wrap: anywhere; }
 .btn { display: inline-block; padding: 11px 22px; border-radius: 999px; font-weight: 600; text-decoration: none; }
 .btn--primary { background: var(--brand); color: #fff; }
 .btn--secondary { border: 1px solid var(--line); color: var(--text); }
-.btn:hover { filter: brightness(1.1); }
+.btn--primary:hover { background: var(--brand-hover); }
+.btn--secondary:hover { border-color: var(--muted); }
 .tablet { margin: 0 auto; max-width: 960px; padding: 12px 12px 0; border-radius: 22px 22px 0 0; background: var(--frame); }
 .tablet img { border-radius: 10px 10px 0 0; }
 
