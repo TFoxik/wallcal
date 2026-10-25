@@ -33,7 +33,9 @@ describe('normalizeConfig', () => {
 
   it('parses the agenda style and height', () => {
     const config = normalizeConfig({ ...minimal, agenda: { style: 'Cards', height: '75vh' } });
-    expect(config.agenda).toEqual({ style: 'cards', height: '75vh' });
+    expect(config.agenda).toEqual({ style: 'cards', height: '75vh', show: 'week' });
+    expect(normalizeConfig({ ...minimal, agenda: { show: 'Day' } }).agenda.show).toBe('day');
+    expect(() => normalizeConfig({ ...minimal, agenda: { show: 'month' } })).toThrow(/agenda.show must be one of: week, day/);
     for (const height of ['600px', '80%', 'calc(100vh - 120px)', '70dvh']) {
       expect(normalizeConfig({ ...minimal, agenda: { height } }).agenda.height).toBe(height);
     }
@@ -77,7 +79,7 @@ describe('normalizeConfig', () => {
       },
       view: 'week',
       upcoming: { count: 3, navigation_path: null },
-      agenda: { style: 'list', height: null },
+      agenda: { style: 'list', height: null, show: 'week' },
       theme: 'default',
       style: {},
       font_url: null,

@@ -1,7 +1,7 @@
 import { html, nothing, type TemplateResult } from 'lit';
 import { classMap } from 'lit/directives/class-map.js';
 import { styleMap } from 'lit/directives/style-map.js';
-import type { AgendaStyle, MoonConfig, PastEvents } from '../config';
+import type { AgendaShow, AgendaStyle, MoonConfig, PastEvents } from '../config';
 import type { CycleDay } from '../cycle/predict';
 import { isEnded, type DayEvent } from '../data/events';
 import { daysBetween } from '../date';
@@ -31,6 +31,7 @@ export interface AgendaProps {
   warning: string | null;
   status: LoadStatus;
   style: AgendaStyle;
+  show: AgendaShow;
   labelCalendars: string[];
   language: string;
   hourCycle: HourCycle;
@@ -53,6 +54,7 @@ export function stripDots(events: DayEvent[], labelCalendars: readonly string[])
 }
 
 export function renderAgenda(p: AgendaProps): TemplateResult {
+  const shown = p.show === 'day' ? [p.days.find((d) => d.key === p.activeKey) ?? p.days[0]] : p.days;
   return html`<div class="agenda agenda--${p.style}">
     <div class="agenda__strip">${p.days.map((day) => renderCell(day, p))}</div>
     <div
@@ -64,7 +66,7 @@ export function renderAgenda(p: AgendaProps): TemplateResult {
       ${renderHeaderToggles(p.toggles)}
       ${p.warning ? html`<div class="agenda__warning">${icon(warningIcon)}<span>${p.warning}</span></div>` : nothing}
       ${p.status === 'failed' ? html`<div class="agenda__failed">Couldn't load calendars</div>` : nothing}
-      ${p.days.map((day) => renderDay(day, p))}
+      ${shown.map((day) => renderDay(day, p))}
     </div>
     ${p.activeKey !== p.days[0]?.key
       ? html`<button class="agenda__today" type="button" @click=${() => p.onJump(p.days[0].key)}>Today</button>`

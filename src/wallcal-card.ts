@@ -248,6 +248,7 @@ export class WallCalCard extends LitElement {
           warning: this._warning,
           status,
           style: config.agenda.style,
+          show: config.agenda.show,
           labelCalendars,
           language,
           hourCycle,
@@ -354,6 +355,13 @@ export class WallCalCard extends LitElement {
   }
 
   private _jumpTo(key: string): void {
+    if (this._config?.agenda.show === 'day') {
+      this._lastListTouch = Date.now();
+      this._activeKey = key;
+      const list = this.renderRoot.querySelector<HTMLElement>('.agenda__list');
+      if (list) list.scrollTop = 0;
+      return;
+    }
     const list = this.renderRoot.querySelector<HTMLElement>('.agenda__list');
     const section = list?.querySelector<HTMLElement>(`.agenda__day[data-day="${key}"]`);
     if (!list || !section) return;
@@ -373,6 +381,8 @@ export class WallCalCard extends LitElement {
   }
 
   private _readAgendaScroll(list: HTMLElement): void {
+    // With one day shown, the day is what was picked on the strip, not what the scroll reaches.
+    if (this._config?.agenda.show === 'day') return;
     const sections = [...list.querySelectorAll<HTMLElement>('.agenda__day')];
     if (!sections.length) return;
     // 1px of slack: layout positions are fractional and these offsets are rounded.

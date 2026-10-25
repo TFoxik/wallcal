@@ -490,3 +490,54 @@ describe('upcoming opening a pop-up', () => {
     push.mockRestore();
   });
 });
+
+describe('agenda showing one day', () => {
+  const dayConfig = { ...agendaConfig, agenda: { show: 'day' } };
+  const shownDays = (el: WallCalCard) => [...root(el).querySelectorAll<HTMLElement>('.agenda__day')].map((d) => d.dataset.day);
+
+  it('shows only today at first, with the whole week on the strip', async () => {
+    const { hass } = calendars({});
+    const el = await mount(dayConfig, hass);
+    expect(shownDays(el)).toEqual(['2026-10-13']);
+    expect(root(el).querySelectorAll('.agenda__cell')).toHaveLength(7);
+    expect(root(el).querySelector('.agenda__today')).toBeNull();
+  });
+
+  it('shows the day tapped on the strip, and Today goes back', async () => {
+    const { hass } = calendars({ 'calendar.family': [timed('Dentist', '2026-10-16T08:00:00+02:00', '2026-10-16T09:00:00+02:00')] });
+    const el = await mount(dayConfig, hass);
+    cell(el, '2026-10-16').click();
+    await flush(el);
+    expect(shownDays(el)).toEqual(['2026-10-16']);
+    expect(sectionTitles(el, '2026-10-16')).toEqual(['Dentist']);
+    expect(cell(el, '2026-10-16').classList.contains('agenda__cell--active')).toBe(true);
+    root(el).querySelector<HTMLButtonElement>('.agenda__today')!.click();
+    await flush(el);
+    expect(shownDays(el)).toEqual(['2026-10-13']);
+  });
+
+  it('keeps the chosen day while the list scrolls', async () => {
+    const { hass } = calendars({});
+    const el = await mount(dayConfig, hass);
+    cell(el, '2026-10-17').click();
+    await flush(el);
+    list(el).dispatchEvent(new Event('scroll'));
+    await flush(el, 16);
+    expect(shownDays(el)).toEqual(['2026-10-17']);
+  });
+
+  it('goes back to today on a tick after a minute left alone', async () => {
+    const { hass } = calendars({});
+    const el = await mount(dayConfig, hass);
+    cell(el, '2026-10-15').click();
+    await flush(el);
+    await vi.advanceTimersByTimeAsync(30_000);
+    document.dispatchEvent(new Event('visibilitychange'));
+    await flush(el);
+    expect(shownDays(el)).toEqual(['2026-10-15']);
+    await vi.advanceTimersByTimeAsync(40_000);
+    document.dispatchEvent(new Event('visibilitychange'));
+    await flush(el);
+    expect(shownDays(el)).toEqual(['2026-10-13']);
+  });
+});

@@ -120,3 +120,6 @@ upcoming:
 `agenda.style` picks how days look: `list` (the default) puts the date in a column on the left with a line between
 days; `cards` gives each day its own card, with today outlined.
 
+For a shorter pop-up, `agenda.show: day` shows only today; tap another date on the strip to see that day, and
+**Today** brings you back. After a minute left alone it returns to today by itself.
+

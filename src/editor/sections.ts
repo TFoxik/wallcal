@@ -1,4 +1,4 @@
-import { AGENDA_STYLES, PAST_DAYS, PAST_EVENTS, VIEWS, WEEKDAYS } from '../config';
+import { AGENDA_SHOWS, AGENDA_STYLES, PAST_DAYS, PAST_EVENTS, VIEWS, WEEKDAYS } from '../config';
 import { TIME_FORMATS, TITLE_MODES, WEEKDAY_FORMATS } from '../format';
 import { THEME_NAMES } from '../theme/presets';
 import { hexToRgb, isHex, rgbToHex } from './colors';
@@ -148,9 +148,13 @@ export const AGENDA: SectionDef = {
   title: 'Calendar tab',
   icon: 'mdi:view-agenda-outline',
   prefix: ['agenda'],
-  rules: { defaults: { style: 'list', height: '' } },
-  lowercase: ['style'],
-  schema: () => [{ name: 'style', selector: select(AGENDA_STYLES) }, text('height')],
+  rules: { defaults: { style: 'list', height: '', show: 'week' } },
+  lowercase: ['style', 'show'],
+  labels: { show: 'Days shown' },
+  schema: () => [
+    grid({ name: 'style', selector: select(AGENDA_STYLES) }, { name: 'show', selector: select(AGENDA_SHOWS) }),
+    text('height'),
+  ],
 };
 
 const titleSelector = select([...TITLE_MODES, 'none'], { custom_value: true });

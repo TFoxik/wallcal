@@ -61,3 +61,17 @@ views:
           enabled: true
         agenda:
           style: cards
+  - title: Calendar (one day)
+    path: calendar-day
+    icon: mdi:calendar-today
+    panel: true
+    cards:
+      - type: custom:wallcal-card
+        view: agenda
+        entities: *phone_calendars
+        past_events: dim
+        moon:
+          enabled: true
+        agenda:
+          style: cards
+          show: day

@@ -53,6 +53,7 @@ upcoming:                         # only for view: upcoming
 agenda:                           # only for view: agenda
   style: list                     # list (date column, a line between days) | cards (each day its own card)
   height: 75vh                    # a length or calc(); omitted, the dashboard sizes the card. Set it inside a pop-up
+  show: week                      # week (all seven days, scroll or tap to jump) | day (only the day tapped on the strip, today at first)
 theme: default                    # default | paper | midnight
 style: {}                         # any token below, plus font_url
 overlays:                         # cards floating over the bottom of the week, one per position

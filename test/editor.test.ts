@@ -193,7 +193,7 @@ describe('wallcal-card-editor: view', () => {
     const week = await mount(base);
     expect(() => form(week.el, 'height')).toThrow();
     const agenda = await mount({ ...base, view: 'agenda' });
-    expect(form(agenda.el, 'height').data).toEqual({ style: 'list', height: '' });
+    expect(form(agenda.el, 'height').data).toEqual({ style: 'list', height: '', show: 'week' });
     change(form(agenda.el, 'height'), { style: 'cards', height: '75vh' });
     expect(agenda.events.at(-1)).toEqual({ ...base, view: 'agenda', agenda: { style: 'cards', height: '75vh' } });
   });

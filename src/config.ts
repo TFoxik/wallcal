@@ -96,8 +96,13 @@ export interface UpcomingConfig {
 export const AGENDA_STYLES = ['list', 'cards'] as const;
 export type AgendaStyle = (typeof AGENDA_STYLES)[number];
 
+export const AGENDA_SHOWS = ['week', 'day'] as const;
+export type AgendaShow = (typeof AGENDA_SHOWS)[number];
+
 export interface AgendaConfig {
   style: AgendaStyle;
+  /** day: only the day picked on the strip, today at first. */
+  show: AgendaShow;
   /** CSS length; null lets the dashboard size the card. */
   height: string | null;
 }
@@ -207,6 +212,7 @@ export function normalizeConfig(input: unknown): WallCalConfig {
     agenda: {
       style: oneOf(agenda.style, AGENDA_STYLES, 'list', 'agenda.style'),
       height: agendaHeight(agenda.height),
+      show: oneOf(agenda.show, AGENDA_SHOWS, 'week', 'agenda.show'),
     },
     theme: oneOf(raw.theme, THEME_NAMES, 'default', 'theme'),
     style,
