@@ -25,6 +25,12 @@ Start servers with `preview_start` and the names in `.claude/launch.json`, not f
 
 `npm run screenshots` needs `ha` running; it rewrites `site/img/` and `docs/public/img/`, which are committed.
 
+On the maintainer's Mac there is no `hass` install, so `ha` won't start. A shared Docker Home Assistant at
+`http://localhost:8123` serves this repo instead. It reads `dev/ha/config` (fixture integration, `wallcal_fixture.json`,
+dashboards "WallCal tablet", "WallCal phone" and "WallCal recipes") and `dist/` read-only, so `npm run build` plus a
+hard refresh is all a change needs. Screenshots against it:
+`WALLCAL_HA_URL=http://localhost:8123 WALLCAL_TABLET_DASHBOARD=wallcal-tablet npm run screenshots`.
+
 ## Committing
 
 Straight to `main` with conventional prefixes (`feat:`, `fix:`, `docs:`, `chore:`…). The repo is public

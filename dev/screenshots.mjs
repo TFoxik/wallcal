@@ -1,4 +1,6 @@
 // Landing-page and docs screenshots from the dev harness (./dev/ha/start.sh must be running on :8124).
+// Another HA serving the same dev/ha/config dashboards works too: point WALLCAL_HA_URL at it, and set
+// WALLCAL_TABLET_DASHBOARD when ui-lovelace.yaml is not its default dashboard there.
 // Writes site/img/*.webp, docs/public/img/*.webp and the docs' card-map/day-header dot maps.
 // Needs `npx playwright install chromium` once and `cwebp` on PATH.
 import { execFileSync } from 'node:child_process';
@@ -9,6 +11,7 @@ import { chromium } from 'playwright';
 import YAML from 'yaml';
 
 const BASE = process.env.WALLCAL_HA_URL ?? 'http://localhost:8124';
+const TABLET = process.env.WALLCAL_TABLET_DASHBOARD ?? 'lovelace';
 const ROOT = join(import.meta.dirname, '..');
 const SITE = join(ROOT, 'site', 'img');
 const DOCS = join(ROOT, 'docs', 'public', 'img');
@@ -23,7 +26,7 @@ const page = await browser.newPage({
 });
 
 // HA sometimes reloads the whole page right after it loads (sign-in, a changed dashboard), so wait until it stays put.
-async function open(view, dashboard = 'lovelace', ready = '.day__events') {
+async function open(view, dashboard = TABLET, ready = '.day__events') {
   await page.goto(`${BASE}/${dashboard}/${view}`);
   for (let attempt = 0; attempt < 4; attempt++) {
     await page.locator(`wallcal-card ${ready}`).first().waitFor();
