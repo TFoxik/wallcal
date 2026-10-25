@@ -72,12 +72,17 @@ a weekend clamps two days together.
 
 ## Release
 
-Bump `version` in `package.json`, commit, then tag and push:
+Bump `version` in `package.json` and commit. Write the release notes to a file (sections: Breaking
+changes, What's new, Bug fixes, Security, Upgrade notes; leave out empty ones), then create an
+annotated tag from it and push:
 
 ```bash
-git tag v0.7.0 && git push origin v0.7.0
+git tag -a v0.7.0 --cleanup=verbatim -F release-notes.md && git push origin v0.7.0
 ```
 
-The release workflow checks the tag matches `package.json`, runs the tests, builds and attaches
-`wallcal-card.js` to a GitHub release, which is what HACS installs. Release tags are protected:
-a pushed `v*` tag cannot be moved or deleted.
+`--cleanup=verbatim` matters: without it git drops every line starting with `#`, so the notes lose
+their headings. The release workflow refuses a lightweight tag, checks the tag matches
+`package.json`, runs the tests, builds and attaches `wallcal-card.js` to a GitHub release whose
+notes are the tag's message. That release is what HACS installs. Release tags are protected: a
+pushed `v*` tag cannot be moved or deleted, but the notes can still be fixed with
+`gh release edit`.

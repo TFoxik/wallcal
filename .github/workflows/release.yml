@@ -23,10 +23,19 @@ jobs:
             echo "::error::tag $GITHUB_REF_NAME does not match package.json $version"
             exit 1
           fi
+      - name: Tag carries the release notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          type=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$GITHUB_REF_NAME" --jq .object.type)
+          if [ "$type" != "tag" ]; then
+            echo "::error::$GITHUB_REF_NAME is a lightweight tag; create it with git tag -a $GITHUB_REF_NAME --cleanup=verbatim -F <notes file>"
+            exit 1
+          fi
       - run: npm ci
       - run: npm test
       - run: npm run build
       - name: Publish release with the built card
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" dist/wallcal-card.js --title "$GITHUB_REF_NAME" --generate-notes
+        run: gh release create "$GITHUB_REF_NAME" dist/wallcal-card.js --title "$GITHUB_REF_NAME" --notes-from-tag
