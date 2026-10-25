@@ -98,3 +98,25 @@ views:
             entities:
               - calendar.family
             theme: midnight
+  # The Wall card reading its cycle from the helpers in configuration.yaml; change them in the floating card.
+  - title: Cycle helpers
+    path: cycle-helpers
+    panel: true
+    cards:
+      - <<: *wall_card
+        period:
+          enabled: true
+          last_period: input_datetime.last_period
+          cycle_length: input_number.cycle_length
+          period_length: input_number.period_length
+        overlays:
+          - position: bottom-left
+            span: 3
+            visible: true
+            icon: mdi:water-outline
+            card:
+              type: entities
+              entities:
+                - input_datetime.last_period
+                - input_number.cycle_length
+                - input_number.period_length

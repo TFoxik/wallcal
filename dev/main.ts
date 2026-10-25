@@ -104,6 +104,9 @@ const hass = {
     'calendar.namedays': { last_changed: today.toISOString(), attributes: { friendly_name: 'Svátky' } },
     'calendar.namedays_sk': { last_changed: today.toISOString(), attributes: { friendly_name: 'Meniny' } },
     'weather.home': { last_changed: today.toISOString(), attributes: { supported_features: 1 } },
+    'input_datetime.last_period': { state: ymd(addDays(today, -9)), last_changed: today.toISOString() },
+    'input_number.cycle_length': { state: '28.0', last_changed: today.toISOString() },
+    'input_number.period_length': { state: '5.0', last_changed: today.toISOString() },
   },
   connection: {
     subscribeMessage: async (callback: (message: unknown) => void) => {
@@ -153,6 +156,18 @@ const VARIANTS: Array<[string, Record<string, unknown>]> = [
   ],
   ['Moon with names', { ...base, moon: { enabled: true, show_name: true } }],
   ['Period', { ...base, period: { enabled: true, last_period: lastPeriod } }],
+  [
+    'Period from helpers',
+    {
+      ...base,
+      period: {
+        enabled: true,
+        last_period: 'input_datetime.last_period',
+        cycle_length: 'input_number.cycle_length',
+        period_length: 'input_number.period_length',
+      },
+    },
+  ],
   [
     'Moon + period, paper, 12h',
     { ...base, theme: 'paper', time_format: 12, moon: { enabled: true }, period: { enabled: true, last_period: lastPeriod } },
