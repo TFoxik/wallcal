@@ -1,7 +1,7 @@
 import { html, nothing, type TemplateResult } from 'lit';
 import { classMap } from 'lit/directives/class-map.js';
 import { styleMap } from 'lit/directives/style-map.js';
-import type { AgendaShow, AgendaStyle, MoonConfig, PastEvents } from '../config';
+import type { AgendaConfig, MoonConfig, PastEvents } from '../config';
 import type { CycleDay } from '../cycle/predict';
 import { isEnded, type DayEvent } from '../data/events';
 import { daysBetween } from '../date';
@@ -30,8 +30,7 @@ export interface AgendaProps {
   toggles: HeaderToggle[];
   warning: string | null;
   status: LoadStatus;
-  style: AgendaStyle;
-  show: AgendaShow;
+  agenda: AgendaConfig;
   labelCalendars: string[];
   language: string;
   hourCycle: HourCycle;
@@ -54,8 +53,8 @@ export function stripDots(events: DayEvent[], labelCalendars: readonly string[])
 }
 
 export function renderAgenda(p: AgendaProps): TemplateResult {
-  const shown = p.show === 'day' ? [p.days.find((d) => d.key === p.activeKey) ?? p.days[0]] : p.days;
-  return html`<div class="agenda agenda--${p.style}">
+  const shown = p.agenda.show === 'day' ? [p.days.find((d) => d.key === p.activeKey) ?? p.days[0]] : p.days;
+  return html`<div class="agenda agenda--${p.agenda.style}">
     <div class="agenda__strip">${p.days.map((day) => renderCell(day, p))}</div>
     <div
       class="agenda__list agenda__list--events-${p.pastEvents}"
@@ -109,7 +108,7 @@ function renderDay(day: AgendaDay, p: AgendaProps): TemplateResult {
       ? html`<div class="agenda__empty">Nothing planned</div>`
       : nothing;
   return html`<section class=${classMap({ agenda__day: true, 'agenda__day--today': offset === 0 })} data-day=${day.key}>
-    ${p.style === 'cards'
+    ${p.agenda.style === 'cards'
       ? html`<header class="agenda__head">${date}${labels}</header>${events}`
       : html`<div class="agenda__datecol">${date}</div>
           <div class="agenda__body"><div class="agenda__head">${labels}</div>${events}</div>`}

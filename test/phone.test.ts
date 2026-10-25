@@ -4,7 +4,7 @@ import '../src/wallcal-card';
 import type { WallCalCard } from '../src/wallcal-card';
 import type { HomeAssistant } from '../src/ha-types';
 import type { HaCalendarEvent } from '../src/data/events';
-import { allDay, calendars, makeHass, timed } from './fixtures';
+import { allDay, calendars, makeHass, stubCardHelpers, timed } from './fixtures';
 
 async function mount(config: Record<string, unknown>, hass: HomeAssistant): Promise<WallCalCard> {
   const el = document.createElement('wallcal-card') as WallCalCard;
@@ -402,14 +402,7 @@ describe('agenda floating cards', () => {
   const todo = { type: 'todo-list', entity: 'todo.shopping' };
 
   beforeEach(() => {
-    window.loadCardHelpers = async () => ({
-      createCardElement: (cardConfig: Record<string, unknown>) => {
-        const el = document.createElement('div');
-        el.className = 'hosted';
-        el.dataset.type = String(cardConfig.type);
-        return el;
-      },
-    });
+    stubCardHelpers();
   });
 
   afterEach(() => {

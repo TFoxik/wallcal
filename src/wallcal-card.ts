@@ -146,7 +146,7 @@ export class WallCalCard extends LitElement {
     }
     loadFont(this._config.font_url);
     // An explicit height lets the agenda fit a pop-up or any screen instead of the dashboard's grid rows.
-    this.style.height = this._config.view === 'agenda' && this._config.agenda.height ? this._config.agenda.height : '';
+    this.style.height = this._fixedHeight ?? '';
     if (this.isConnected) {
       this._tick(!sameEvents);
       this._subscribeWeather();
@@ -168,12 +168,16 @@ export class WallCalCard extends LitElement {
     return this._hass;
   }
 
+  private get _fixedHeight(): string | null {
+    return this._config?.view === 'agenda' ? this._config.agenda.height : null;
+  }
+
   getCardSize(): number {
     return this._config?.view === 'upcoming' ? this._config.upcoming.count + 1 : 8;
   }
 
   getGridOptions(): Record<string, unknown> {
-    if (this._config?.view === 'agenda' && this._config.agenda.height) return { columns: 'full', rows: 'auto' };
+    if (this._fixedHeight) return { columns: 'full', rows: 'auto' };
     if (this._config?.view === 'upcoming') {
       // Two 56px grid rows hold the header and up to three events at the default sizes.
       const rows = this._config.upcoming.count <= 3 ? 2 : 3;
@@ -243,12 +247,11 @@ export class WallCalCard extends LitElement {
           })),
           today: this._today,
           activeKey: this._activeKey,
-          toggles: [...this._toggles(config, hidden), ...this._overlayToggles(config)],
-          overlays: repeat(config.overlays, (o) => o.key, (o) => this._renderOverlay(o)),
+          toggles: this._allToggles(config, hidden),
+          overlays: this._renderOverlays(config),
           warning: this._warning,
           status,
-          style: config.agenda.style,
-          show: config.agenda.show,
+          agenda: config.agenda,
           labelCalendars,
           language,
           hourCycle,
@@ -287,7 +290,7 @@ export class WallCalCard extends LitElement {
         subtitle: headerText(config.header.subtitle, days, language),
         isCurrentWeek: this._isCurrentWeek(),
         warning: [this._warning, this._weatherWarning].filter(Boolean).join('\n') || null,
-        toggles: [...this._toggles(config, hidden), ...this._overlayToggles(config)],
+        toggles: this._allToggles(config, hidden),
         onPrev: () => this._show(addDays(this._anchor, -7)),
         onToday: () => this._show(this._today),
         onNext: () => this._show(addDays(this._anchor, 7)),
@@ -322,7 +325,7 @@ export class WallCalCard extends LitElement {
             more: this._more.get(dayKey(date)) ?? 0,
           });
         })}
-        ${repeat(config.overlays, (o) => o.key, (o) => this._renderOverlay(o))}
+        ${this._renderOverlays(config)}
       </div>
     </ha-card>`;
   }
@@ -355,24 +358,24 @@ export class WallCalCard extends LitElement {
   }
 
   private _jumpTo(key: string): void {
+    const list = this.renderRoot.querySelector<HTMLElement>('.agenda__list');
+    if (!list) return;
+    this._lastListTouch = Date.now();
+    // With one day shown, the tap picks the day; with the week, it scrolls there and the scroll picks it.
     if (this._config?.agenda.show === 'day') {
-      this._lastListTouch = Date.now();
       this._activeKey = key;
-      const list = this.renderRoot.querySelector<HTMLElement>('.agenda__list');
-      if (list) list.scrollTop = 0;
+      list.scrollTop = 0;
       return;
     }
-    const list = this.renderRoot.querySelector<HTMLElement>('.agenda__list');
-    const section = list?.querySelector<HTMLElement>(`.agenda__day[data-day="${key}"]`);
-    if (!list || !section) return;
-    this._lastListTouch = Date.now();
+    const section = list.querySelector<HTMLElement>(`.agenda__day[data-day="${key}"]`);
+    if (!section) return;
     this._jumpTarget = key;
     list.scrollTop = key === dayKey(this._today) ? 0 : section.offsetTop;
     this._readAgendaScroll(list);
   }
 
   private _scheduleAgendaScroll(): void {
-    if (this._agendaFrame !== undefined) return;
+    if (this._agendaFrame !== undefined || this._config?.agenda.show === 'day') return;
     this._agendaFrame = requestAnimationFrame(() => {
       this._agendaFrame = undefined;
       const list = this.renderRoot.querySelector<HTMLElement>('.agenda__list');
@@ -381,8 +384,6 @@ export class WallCalCard extends LitElement {
   }
 
   private _readAgendaScroll(list: HTMLElement): void {
-    // With one day shown, the day is what was picked on the strip, not what the scroll reaches.
-    if (this._config?.agenda.show === 'day') return;
     const sections = [...list.querySelectorAll<HTMLElement>('.agenda__day')];
     if (!sections.length) return;
     // 1px of slack: layout positions are fractional and these offsets are rounded.
@@ -406,6 +407,14 @@ export class WallCalCard extends LitElement {
       }
       if (JSON.stringify([...more]) !== JSON.stringify([...this._more])) this._more = more;
     });
+  }
+
+  private _allToggles(config: WallCalConfig, hidden: Set<string>): HeaderToggle[] {
+    return [...this._toggles(config, hidden), ...this._overlayToggles(config)];
+  }
+
+  private _renderOverlays(config: WallCalConfig) {
+    return repeat(config.overlays, (o) => o.key, (o) => this._renderOverlay(o));
   }
 
   private _toggles(config: WallCalConfig, hidden: Set<string>): HeaderToggle[] {

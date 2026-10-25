@@ -59,3 +59,19 @@ export function calendars(byEntity: Record<string, HaCalendarEvent[] | Error>) {
     return answer;
   });
 }
+
+// Stand-in for HA's card factory: each hosted card is a div.hosted carrying its config's type and entity.
+export function stubCardHelpers(): Array<HTMLElement & { hass?: unknown }> {
+  const created: Array<HTMLElement & { hass?: unknown }> = [];
+  window.loadCardHelpers = async () => ({
+    createCardElement: (cardConfig: Record<string, unknown>) => {
+      const el = document.createElement('div') as HTMLElement & { hass?: unknown };
+      el.className = 'hosted';
+      el.dataset.type = String(cardConfig.type);
+      el.dataset.entity = String(cardConfig.entity);
+      created.push(el);
+      return el;
+    },
+  });
+  return created;
+}

@@ -4,7 +4,7 @@ import { suggestCard, WallCalCard } from '../src/wallcal-card';
 import type { HaCalendarEvent } from '../src/data/events';
 import type { HomeAssistant } from '../src/ha-types';
 import { dayKey } from '../src/date';
-import { layOut, makeHass, timed } from './fixtures';
+import { layOut, makeHass, stubCardHelpers, timed } from './fixtures';
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -718,16 +718,7 @@ describe('wallcal-card', () => {
     };
 
     beforeEach(() => {
-      created = [];
-      window.loadCardHelpers = async () => ({
-        createCardElement: (cardConfig: Record<string, unknown>) => {
-          const el = document.createElement('div') as HTMLElement & { hass?: unknown };
-          el.className = 'hosted';
-          el.dataset.entity = String(cardConfig.entity);
-          created.push(el);
-          return el;
-        },
-      });
+      created = stubCardHelpers();
     });
 
     afterEach(() => {

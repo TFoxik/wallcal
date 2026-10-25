@@ -762,9 +762,6 @@ export const cardStyles = css`
     flex: 1;
     min-width: 0;
   }
-  .agenda--list .agenda__head:empty {
-    display: none;
-  }
   .agenda--cards .agenda__day {
     margin-top: 8px;
     padding: 10px 12px;
