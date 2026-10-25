@@ -39,7 +39,7 @@ side, with the weather and the moon, readable from across the room.
 
 1. Download `wallcal-card.js` from the
    [latest release](https://github.com/TFoxik/wallcal/releases/latest) into `/config/www/`.
-2. Under Settings → Dashboards → ⋮ → **Resources**, add `/local/wallcal-card.js?v=0.5.0` as a
+2. Under Settings → Dashboards → ⋮ → **Resources**, add `/local/wallcal-card.js?v=0.6.0` as a
    JavaScript module.
 3. Reload the browser. After each update, raise the `?v=` number so tablets drop the cached copy.
 
