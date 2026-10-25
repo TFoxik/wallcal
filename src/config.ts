@@ -37,11 +37,12 @@ export interface MoonConfig {
   hemisphere: Hemisphere;
 }
 
+/** A string value is the id of an entity whose state holds the value (isPeriodEntity), read at render time. */
 export interface PeriodConfig {
   enabled: boolean;
-  last_period: Date | null;
-  cycle_length: number;
-  period_length: number;
+  last_period: Date | string | null;
+  cycle_length: number | string;
+  period_length: number | string;
   show_fertile: boolean;
   show_ovulation: boolean;
 }
@@ -147,6 +148,14 @@ const NAV_PATH = /^(?:\/(?![/\\])|#[\w-]+$)/;
 const LENGTH = '\\d+(?:\\.\\d+)?(?:px|%|vh|dvh|svh|lvh|em|rem)';
 const HEIGHT = new RegExp(`^(?:${LENGTH}|calc\\(\\s*${LENGTH}(?:\\s*[-+]\\s*${LENGTH})*\\s*\\))$`);
 export const PERCENT = /^\d+(\.\d+)?%$/;
+const PERIOD_ENTITY = /^(input_datetime|input_number|sensor)\.[a-z0-9_]+$/;
+export interface LengthRange {
+  min: number;
+  max: number;
+  fallback: number;
+}
+export const CYCLE_LENGTH: LengthRange = { min: 20, max: 45, fallback: 28 };
+export const PERIOD_LENGTH: LengthRange = { min: 1, max: 10, fallback: 5 };
 
 type Raw = Record<string, unknown>;
 
@@ -162,9 +171,9 @@ export function normalizeConfig(input: unknown): WallCalConfig {
   const agenda = section(raw.agenda, 'agenda');
 
   const periodEnabled = bool(period.enabled, false, 'period.enabled');
-  const lastPeriod = toLocalDate(period.last_period, 'period.last_period');
+  const lastPeriod = isPeriodEntity(period.last_period) ? period.last_period : toLocalDate(period.last_period, 'period.last_period');
   if (periodEnabled && !lastPeriod) {
-    throw new Error('period.last_period is required when period.enabled is true (format YYYY-MM-DD)');
+    throw new Error('period.last_period is required when period.enabled is true (a date like 2026-10-02 or an entity id)');
   }
 
   const { style, fontUrl } = parseStyle(section(raw.style, 'style'));
@@ -198,8 +207,8 @@ export function normalizeConfig(input: unknown): WallCalConfig {
     period: {
       enabled: periodEnabled,
       last_period: lastPeriod,
-      cycle_length: int(period.cycle_length, 28, 20, 45, 'period.cycle_length'),
-      period_length: int(period.period_length, 5, 1, 10, 'period.period_length'),
+      cycle_length: periodLength(period.cycle_length, CYCLE_LENGTH, 'period.cycle_length'),
+      period_length: periodLength(period.period_length, PERIOD_LENGTH, 'period.period_length'),
       show_fertile: bool(period.show_fertile, true, 'period.show_fertile'),
       show_ovulation: bool(period.show_ovulation, true, 'period.show_ovulation'),
     },
@@ -241,13 +250,20 @@ function bool(value: unknown, fallback: boolean, path: string): boolean {
   throw new Error(`${path} must be true or false`);
 }
 
-function int(value: unknown, fallback: number, min: number, max: number, path: string): number {
+function int(value: unknown, fallback: number, min: number, max: number, path: string, hint = ''): number {
   if (value === undefined || value === null || value === '') return fallback;
   const n = typeof value === 'number' ? value : Number(value);
   if (!Number.isInteger(n) || n < min || n > max) {
-    throw new Error(`${path} must be a whole number from ${min} to ${max}`);
+    throw new Error(`${path} must be a whole number from ${min} to ${max}${hint}`);
   }
   return n;
+}
+
+export const isPeriodEntity = (value: unknown): value is string => typeof value === 'string' && PERIOD_ENTITY.test(value);
+
+function periodLength(value: unknown, range: LengthRange, path: string): number | string {
+  if (isPeriodEntity(value)) return value;
+  return int(value, range.fallback, range.min, range.max, path, ' or an entity id');
 }
 
 function choice<T extends number>(value: unknown, options: readonly T[], fallback: T, path: string): T {
@@ -275,7 +291,7 @@ function toLocalDate(value: unknown, path: string): Date | null {
     const parsed = parseLocalDate(value.slice(0, 10));
     if (parsed) return parsed;
   }
-  throw new Error(`${path} must be a date like 2026-10-02`);
+  throw new Error(`${path} must be a date like 2026-10-02 or an entity id`);
 }
 
 function parseEntities(value: unknown): EntityConfig[] {

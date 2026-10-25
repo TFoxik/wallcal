@@ -1,4 +1,4 @@
-import { AGENDA_SHOWS, AGENDA_STYLES, PAST_DAYS, PAST_EVENTS, VIEWS, WEEKDAYS } from '../config';
+import { AGENDA_SHOWS, AGENDA_STYLES, CYCLE_LENGTH, isPeriodEntity, PAST_DAYS, PAST_EVENTS, PERIOD_LENGTH, VIEWS, WEEKDAYS, type LengthRange } from '../config';
 import { TIME_FORMATS, TITLE_MODES, WEEKDAY_FORMATS } from '../format';
 import { THEME_NAMES } from '../theme/presets';
 import { hexToRgb, isHex, rgbToHex } from './colors';
@@ -9,6 +9,8 @@ export interface FieldSchema {
   name: string;
   selector: Selector;
   required?: boolean;
+  /** Help text for this field only; otherwise the shared text for its name. */
+  helper?: string;
 }
 export interface GridSchema {
   type: 'grid';
@@ -33,7 +35,11 @@ export interface SectionDef {
   lowercase?: readonly string[];
   /** Field labels for this section; they win over the shared ones. */
   labels?: Record<string, string>;
-  toForm?: (values: Raw) => Raw;
+  /** Form-only fields the editor remembers itself; they never reach the YAML. */
+  kept?: readonly string[];
+  toForm?: (values: Raw, kept: Raw) => Raw;
+  /** Runs on each form change before it is applied, to change other fields along with the one edited. */
+  adjust?: (before: Raw, after: Raw) => Raw;
   schema: (form: Raw, ctx: SchemaContext) => FormSchema[];
   finalize?: (root: Raw) => Raw;
 }
@@ -50,7 +56,7 @@ export const TEXT_TOKENS = ['font_family', 'title_font'] as const;
 
 const PX = /^\d+(\.\d+)?(px)?$/;
 
-export function formData(section: SectionDef, root: unknown): Raw {
+export function formData(section: SectionDef, root: unknown, kept: Raw = {}): Raw {
   const stored = getAt(root, section.prefix);
   const current = isPlainObject(stored) ? stored : {};
   const merged: Raw = {};
@@ -61,7 +67,7 @@ export function formData(section: SectionDef, root: unknown): Raw {
   for (const key of section.lowercase ?? []) {
     if (typeof merged[key] === 'string') merged[key] = (merged[key] as string).toLowerCase();
   }
-  return section.toForm ? section.toForm(merged) : merged;
+  return section.toForm ? section.toForm(merged, kept) : merged;
 }
 
 export function fieldNames(schema: FormSchema[]): string[] {
@@ -205,23 +211,58 @@ export const MOON: SectionDef = {
   schema: (f) => (f.enabled ? [bool('enabled'), bool('show_name'), { name: 'hemisphere', selector: select(['north', 'south']) }] : [bool('enabled')]),
 };
 
+const CYCLE_VALUES = ['last_period', 'cycle_length', 'period_length'] as const;
+const HELPER_DATE = 'Stored in Home Assistant: every Home Assistant user can read this helper, and its history keeps past dates.';
+const helperPicker = (name: string, domain: string[], helper?: string): FieldSchema => ({
+  name,
+  selector: { entity: { filter: { domain } } },
+  ...(helper ? { helper } : {}),
+});
+const SOURCE: FieldSchema = {
+  name: 'source',
+  selector: { select: { mode: 'list', options: [{ value: 'fixed', label: 'Fixed values' }, { value: 'helpers', label: 'Helpers' }] } },
+};
+
 export const PERIOD: SectionDef = {
   id: 'period',
   title: 'Cycle',
   icon: 'mdi:water-outline',
   prefix: ['period'],
-  rules: { defaults: { enabled: false, last_period: undefined, cycle_length: 28, period_length: 5, show_fertile: true, show_ovulation: true } },
-  toForm: (v) => (v.last_period === undefined ? v : { ...v, last_period: toIsoDate(v.last_period) }),
+  rules: {
+    defaults: {
+      enabled: false, last_period: undefined, cycle_length: CYCLE_LENGTH.fallback, period_length: PERIOD_LENGTH.fallback,
+      show_fertile: true, show_ovulation: true,
+    },
+  },
+  // Before anything is picked, the YAML can't tell which source the user chose.
+  kept: ['source'],
+  toForm: (v, kept) => {
+    if (!CYCLE_VALUES.some((key) => isPeriodEntity(v[key])) && kept.source !== 'helpers') {
+      return { ...v, source: 'fixed', ...(v.last_period === undefined ? {} : { last_period: toIsoDate(v.last_period) }) };
+    }
+    const form: Raw = { ...v, source: 'helpers' };
+    for (const key of CYCLE_VALUES) if (!isPeriodEntity(form[key])) delete form[key];
+    return form;
+  },
+  // A date never fits an entity picker, nor an entity id a date field.
+  adjust: (before, after) =>
+    after.source === before.source ? after : { ...after, last_period: undefined, cycle_length: undefined, period_length: undefined },
   schema: (f) => {
-    const lastPeriod: FieldSchema = { name: 'last_period', selector: { date: {} } };
+    const helpers = f.source === 'helpers';
+    const lastPeriod: FieldSchema = helpers
+      ? helperPicker('last_period', ['input_datetime', 'sensor'], HELPER_DATE)
+      : { name: 'last_period', selector: { date: {} } };
+    const length = (name: string, range: LengthRange) =>
+      helpers ? helperPicker(name, ['input_number', 'sensor']) : number(name, range.min, range.max, 'days');
     return f.enabled
       ? [
           bool('enabled'),
+          SOURCE,
           { ...lastPeriod, required: true },
-          grid(number('cycle_length', 20, 45, 'days'), number('period_length', 1, 10, 'days')),
+          grid(length('cycle_length', CYCLE_LENGTH), length('period_length', PERIOD_LENGTH)),
           grid(bool('show_fertile'), bool('show_ovulation')),
         ]
-      : [bool('enabled'), lastPeriod];
+      : [bool('enabled'), SOURCE, lastPeriod];
   },
 };
 
@@ -298,6 +339,7 @@ const LABELS: Record<string, string> = {
   enabled: 'Enabled',
   show_name: 'Show the phase name',
   hemisphere: 'Hemisphere',
+  source: 'Values from',
   last_period: 'Last period started',
   cycle_length: 'Cycle length',
   period_length: 'Period length',
@@ -314,6 +356,7 @@ const HELPERS: Record<string, string> = {
   title: 'month, range, none, or your own text',
   idle_return: '0 never jumps back',
   font_url: 'Must start with https:// or /',
+  source: 'Helpers keep one start date in Home Assistant for every dashboard',
   last_period: 'Stored in the dashboard configuration: anyone who can open this dashboard can read it.',
 };
 
@@ -333,6 +376,6 @@ export function labelsFor(section: SectionDef): (schema: { name: string }) => st
   return fn;
 }
 
-export function computeHelper(schema: { name: string }): string | undefined {
-  return HELPERS[schema.name];
+export function computeHelper(schema: { name: string; helper?: string }): string | undefined {
+  return schema.helper ?? HELPERS[schema.name];
 }

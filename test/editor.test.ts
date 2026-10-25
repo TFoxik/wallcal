@@ -164,6 +164,32 @@ describe('wallcal-card-editor', () => {
   });
 });
 
+describe('wallcal-card-editor: cycle source', () => {
+  const selectorOf = (el: WallCalCardEditor, name: string) =>
+    (form(el, 'source').schema as { name?: string; selector?: Record<string, unknown> }[]).find((s) => s.name === name)!.selector;
+
+  it('switches to helpers and writes the picked entity', async () => {
+    const { el, events } = await mount({ ...base, period: { enabled: true, last_period: '2026-10-02', cycle_length: 30 } });
+    change(form(el, 'source'), { source: 'helpers' });
+    await el.updateComplete;
+    expect(selectorOf(el, 'last_period')).toHaveProperty('entity');
+    change(form(el, 'source'), { last_period: 'input_datetime.last_period' });
+    await el.updateComplete;
+    expect(events.at(-1)).toEqual({ ...base, period: { enabled: true, last_period: 'input_datetime.last_period' } });
+  });
+
+  it('switching back to fixed drops the entity ids', async () => {
+    const { el, events } = await mount({ ...base, period: { enabled: true, last_period: 'input_datetime.x', cycle_length: 'input_number.y' } });
+    change(form(el, 'source'), { source: 'fixed' });
+    await el.updateComplete;
+    expect(selectorOf(el, 'last_period')).toEqual({ date: {} });
+    expect(JSON.stringify(events)).not.toContain('input_');
+    change(form(el, 'source'), { last_period: '2026-10-20' });
+    await el.updateComplete;
+    expect(events.at(-1)).toEqual({ ...base, period: { enabled: true, last_period: '2026-10-20' } });
+  });
+});
+
 const panels = (el: WallCalCardEditor) =>
   [...el.shadowRoot!.querySelectorAll<HTMLElement & { header: string }>('ha-expansion-panel')].map((p) => p.header);
 

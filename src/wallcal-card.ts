@@ -8,7 +8,8 @@ import { OverlayCards, renderOverlay, renderPill } from './components/overlay-ho
 import { renderTopBar } from './components/top-bar';
 import { renderUpcoming } from './components/upcoming';
 import { isCalendarEntityId, normalizeConfig, type HeaderTitle, type OverlayConfig, type WallCalConfig } from './config';
-import { cycleInfo, type CycleInput } from './cycle/predict';
+import { cycleInfo } from './cycle/predict';
+import { cycleInputFrom, periodEntities } from './cycle/source';
 import {
   cachedEvents,
   errorMessage,
@@ -47,6 +48,7 @@ export class WallCalCard extends LitElement {
     _hidden: { state: true },
     _overlayState: { state: true },
     _pillCounts: { state: true },
+    _periodStates: { state: true },
     _forecast: { state: true },
     _weatherWarning: { state: true },
     _more: { state: true },
@@ -66,6 +68,7 @@ export class WallCalCard extends LitElement {
   declare _hidden: Set<string>;
   declare _overlayState: OverlayState;
   declare _pillCounts: string;
+  declare _periodStates: string;
   declare _forecast: Map<string, DayForecast> | null;
   declare _weatherWarning: string | null;
   /** Per day key, how many timed events are below the visible part of that day's list. */
@@ -104,6 +107,7 @@ export class WallCalCard extends LitElement {
     this._hidden = loadHidden();
     this._overlayState = loadOverlayState();
     this._pillCounts = '';
+    this._periodStates = '';
     this._forecast = null;
     this._weatherWarning = null;
     this._more = new Map();
@@ -157,8 +161,9 @@ export class WallCalCard extends LitElement {
     const previous = this._hass;
     this._hass = hass;
     this._overlayCards.hass = hass;
-    // Collapsed pills show their entity's count: the one hass change besides calendars that re-renders.
+    // Besides calendars, only these hass changes re-render: collapsed pills' counts and the cycle's helpers.
     this._pillCounts = this._pillCountsOf(hass);
+    this._periodStates = this._config ? periodEntities(this._config.period).map((id) => hass.states[id]?.state ?? '').join('|') : '';
     if (!previous || previous.locale !== hass.locale) this.requestUpdate();
     if (previous && this._calendarsChanged(hass)) void this._fetch();
     this._subscribeWeather();
@@ -228,10 +233,7 @@ export class WallCalCard extends LitElement {
     const hidden = new Set(config.entities.filter((e) => e.toggle && this._hidden.has(e.entity)).map((e) => e.entity));
     const events = cachedEvents(this._cache).filter((e) => !hidden.has(e.entity));
     const { period } = config;
-    const cycleInput: CycleInput | null =
-      period.enabled && period.last_period
-        ? { starts: [period.last_period], cycleLength: period.cycle_length, periodLength: period.period_length }
-        : null;
+    const cycleInput = cycleInputFrom(period, hass.states);
     const tokens = { ...resolveTokens(config.theme, config.style), '--wallcal-days': String(days.length) };
     const labelCalendars = config.entities.filter((e) => e.display === 'label' && !hidden.has(e.entity)).map((e) => e.entity);
     const status = this._allFailed ? 'failed' : this._cache ? 'ready' : 'loading';

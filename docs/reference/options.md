@@ -39,11 +39,11 @@ moon:
   enabled: false
   show_name: false
   hemisphere: north               # north | south
-period:
+period:                           # each of the next three: a value, or an input_datetime / input_number / sensor entity id
   enabled: false
-  last_period: 2026-10-02         # required when enabled, YYYY-MM-DD
-  cycle_length: 28
-  period_length: 5
+  last_period: 2026-10-02         # required when enabled, YYYY-MM-DD or e.g. input_datetime.last_period
+  cycle_length: 28                # 20 – 45; a helper's value is rounded and kept in this range
+  period_length: 5                # 1 – 10; same for a helper. A missing or unknown helper hides the cycle
   show_fertile: true
   show_ovulation: true
 view: week                        # week | agenda (a phone tab: 7 days from today) | upcoming (a next-up card)

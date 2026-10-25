@@ -187,23 +187,25 @@ describe('normalizeConfig', () => {
   });
 
   it('requires last_period when period is enabled', () => {
-    expect(() => normalizeConfig({ ...minimal, period: { enabled: true } })).toThrow(/last_period is required/);
+    expect(() => normalizeConfig({ ...minimal, period: { enabled: true } })).toThrow(
+      /last_period is required when period.enabled is true \(a date like 2026-10-02 or an entity id\)/,
+    );
   });
 
   it('reads last_period from a YYYY-MM-DD string as a local date', () => {
-    const d = normalizeConfig({ ...minimal, period: { enabled: true, last_period: '2026-10-02' } }).period.last_period;
+    const d = normalizeConfig({ ...minimal, period: { enabled: true, last_period: '2026-10-02' } }).period.last_period as Date;
     expect(d && [d.getFullYear(), d.getMonth(), d.getDate(), d.getHours()]).toEqual([2026, 9, 2, 0]);
   });
 
   it('reads last_period from a Date at UTC midnight (YAML timestamp) as that calendar date', () => {
     const d = normalizeConfig({ ...minimal, period: { enabled: true, last_period: new Date(Date.UTC(2026, 9, 2)) } })
-      .period.last_period;
+      .period.last_period as Date;
     expect(d && [d.getMonth(), d.getDate(), d.getHours()]).toEqual([9, 2, 0]);
   });
 
   it('reads last_period from an ISO datetime string', () => {
     const d = normalizeConfig({ ...minimal, period: { enabled: true, last_period: '2026-10-02T00:00:00.000Z' } })
-      .period.last_period;
+      .period.last_period as Date;
     expect(d && [d.getMonth(), d.getDate()]).toEqual([9, 2]);
   });
 
@@ -216,6 +218,39 @@ describe('normalizeConfig', () => {
   it('bounds cycle and period length', () => {
     expect(() => normalizeConfig({ ...minimal, period: { cycle_length: 50 } })).toThrow(/cycle_length/);
     expect(() => normalizeConfig({ ...minimal, period: { period_length: 0 } })).toThrow(/period_length/);
+  });
+
+  it('keeps entity ids for the cycle values as references', () => {
+    const { period } = normalizeConfig({
+      ...minimal,
+      period: {
+        enabled: true,
+        last_period: 'input_datetime.last_period',
+        cycle_length: 'input_number.cycle',
+        period_length: 'sensor.period_days',
+      },
+    });
+    expect(period).toMatchObject({
+      enabled: true,
+      last_period: 'input_datetime.last_period',
+      cycle_length: 'input_number.cycle',
+      period_length: 'sensor.period_days',
+    });
+    expect(normalizeConfig({ ...minimal, period: { enabled: true, last_period: 'sensor.cycle_start' } }).period.last_period).toBe(
+      'sensor.cycle_start',
+    );
+  });
+
+  it('rejects entity ids from other domains or with capitals', () => {
+    expect(() => normalizeConfig({ ...minimal, period: { enabled: true, last_period: 'light.kitchen' } })).toThrow(
+      /last_period must be a date like 2026-10-02 or an entity id/,
+    );
+    expect(() => normalizeConfig({ ...minimal, period: { cycle_length: 'input_number.Cycle' } })).toThrow(
+      /cycle_length must be a whole number from 20 to 45 or an entity id/,
+    );
+    expect(() => normalizeConfig({ ...minimal, period: { period_length: 'counter.days' } })).toThrow(
+      /period_length must be a whole number from 1 to 10 or an entity id/,
+    );
   });
 
   it('rejects non-boolean flags', () => {

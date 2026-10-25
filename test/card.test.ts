@@ -332,6 +332,65 @@ describe('wallcal-card', () => {
     expect(root(el).querySelectorAll('.marker--period')).toHaveLength(5);
   });
 
+  describe('cycle from helpers', () => {
+    const helpers = {
+      ...config,
+      period: {
+        enabled: true,
+        last_period: 'input_datetime.last_period',
+        cycle_length: 'input_number.cycle',
+        period_length: 'input_number.period',
+      },
+    };
+    const withStates = (hass: HomeAssistant, values: Record<string, string>): HomeAssistant => ({
+      ...hass,
+      states: {
+        ...hass.states,
+        ...Object.fromEntries(Object.entries(values).map(([id, state]) => [id, { state, last_changed: '2026-10-13T08:00:00Z' }])),
+      },
+    });
+    const valid = { 'input_datetime.last_period': '2026-10-12', 'input_number.cycle': '28.0', 'input_number.period': '5.0' };
+
+    it('shows the cycle from helper states', async () => {
+      const { hass } = makeHass(async () => []);
+      const el = await mount(helpers, withStates(hass, valid));
+      expect(root(el).querySelectorAll('.ring')).toHaveLength(7);
+      expect(root(el).querySelectorAll('.marker--period')).toHaveLength(5);
+    });
+
+    it('shows no cycle markers when a helper is missing or unusable', async () => {
+      const { hass } = makeHass(async () => []);
+      const cases = [
+        { ...valid, 'input_datetime.last_period': 'unknown' },
+        { ...valid, 'input_number.period': 'unavailable' },
+        { 'input_number.cycle': '28.0', 'input_number.period': '5.0' },
+      ];
+      for (const states of cases) {
+        const el = await mount(helpers, withStates(hass, states));
+        expect(root(el).querySelector('.ring, .marker'), JSON.stringify(states)).toBeNull();
+        el.remove();
+      }
+    });
+
+    it('redraws when a helper changes', async () => {
+      const { hass } = makeHass(async () => []);
+      const el = await mount(helpers, withStates(hass, valid));
+      el.hass = withStates(hass, { ...valid, 'input_datetime.last_period': '2026-10-15' });
+      await flush(el);
+      expect(root(el).querySelectorAll('.ring')).toHaveLength(4);
+      el.hass = withStates(hass, { ...valid, 'input_datetime.last_period': 'unknown' });
+      await flush(el);
+      expect(root(el).querySelector('.ring, .marker')).toBeNull();
+    });
+
+    it('does not redraw for an unrelated state change', async () => {
+      const { hass } = makeHass(async () => []);
+      const el = await mount(helpers, withStates(hass, valid));
+      el.hass = withStates(hass, { ...valid, 'sensor.other': '1' });
+      expect(el.isUpdatePending).toBe(false);
+    });
+  });
+
   it('applies theme tokens as CSS custom properties', async () => {
     const { hass } = makeHass(async () => []);
     const el = await mount({ ...config, theme: 'paper', style: { date_size: 40 } }, hass);

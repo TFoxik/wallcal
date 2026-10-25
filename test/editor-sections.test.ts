@@ -3,6 +3,7 @@ import { normalizeConfig } from '../src/config';
 import { applyFormChange } from '../src/editor/raw-config';
 import {
   COLOR_TOKENS,
+  computeHelper,
   fieldNames,
   formData,
   HEADER,
@@ -78,7 +79,7 @@ describe('conditional fields', () => {
   it('shows moon, cycle, weather and header options only when they apply', () => {
     expect(fieldNames(MOON.schema(formData(MOON, {}), ctx))).toEqual(['enabled']);
     expect(fieldNames(MOON.schema(formData(MOON, { moon: { enabled: true } }), ctx))).toEqual(['enabled', 'show_name', 'hemisphere']);
-    expect(fieldNames(PERIOD.schema(formData(PERIOD, {}), ctx))).toEqual(['enabled', 'last_period']);
+    expect(fieldNames(PERIOD.schema(formData(PERIOD, {}), ctx))).toEqual(['enabled', 'source', 'last_period']);
     expect(fieldNames(WEATHER.schema(formData(WEATHER, {}), ctx))).toEqual(['entity']);
     expect(fieldNames(HEADER.schema(formData(HEADER, { header: { show: false } }), ctx))).toEqual(['show']);
   });
@@ -89,7 +90,7 @@ describe('cycle date with tracking off', () => {
   const fields = (r: Record<string, unknown>) => PERIOD.schema(formData(PERIOD, r), ctx).flatMap((s) => ('schema' in s ? s.schema : [s]));
 
   it('keeps the date field, optional, so it can be cleared', () => {
-    expect(fieldNames(PERIOD.schema(formData(PERIOD, root), ctx))).toEqual(['enabled', 'last_period']);
+    expect(fieldNames(PERIOD.schema(formData(PERIOD, root), ctx))).toEqual(['enabled', 'source', 'last_period']);
     expect(fields(root).find((f) => f.name === 'last_period')!.required).toBeFalsy();
   });
 
@@ -100,6 +101,65 @@ describe('cycle date with tracking off', () => {
 
   it('removes the period block when the date is cleared', () => {
     expect(edit(PERIOD, root, { last_period: undefined })).toEqual(base);
+  });
+});
+
+describe('cycle values from helpers', () => {
+  const helpers = { ...base, period: { enabled: true, last_period: 'input_datetime.x' } };
+  const fields = (r: Record<string, unknown>, kept = {}) =>
+    PERIOD.schema(formData(PERIOD, r, kept), ctx).flatMap((s) => ('schema' in s ? s.schema : [s]));
+  const field = (r: Record<string, unknown>, name: string, kept = {}) => fields(r, kept).find((f) => f.name === name)!;
+
+  it('reads the source from the YAML, else from what the editor kept', () => {
+    expect(formData(PERIOD, helpers).source).toBe('helpers');
+    expect(formData(PERIOD, { ...base, period: { cycle_length: 'input_number.y' } }).source).toBe('helpers');
+    expect(formData(PERIOD, { ...base, period: { enabled: true, last_period: '2026-10-02' } }).source).toBe('fixed');
+    expect(formData(PERIOD, base, { source: 'helpers' }).source).toBe('helpers');
+    expect(formData(PERIOD, helpers, { source: 'fixed' }).source).toBe('helpers');
+  });
+
+  it('shows entity pickers for helpers', () => {
+    expect(fieldNames(PERIOD.schema(formData(PERIOD, helpers), ctx))).toEqual([
+      'enabled', 'source', 'last_period', 'cycle_length', 'period_length', 'show_fertile', 'show_ovulation',
+    ]);
+    expect(field(helpers, 'last_period')).toEqual({
+      name: 'last_period',
+      required: true,
+      selector: { entity: { filter: { domain: ['input_datetime', 'sensor'] } } },
+      helper: expect.stringContaining('every Home Assistant user'),
+    });
+    for (const name of ['cycle_length', 'period_length']) {
+      expect(field(helpers, name).selector).toEqual({ entity: { filter: { domain: ['input_number', 'sensor'] } } });
+    }
+    expect(field(base, 'last_period', { source: 'helpers' }).selector).toHaveProperty('entity');
+  });
+
+  it('hides fixed values behind helper pickers', () => {
+    const mixed = { ...base, period: { enabled: true, last_period: 'input_datetime.x', cycle_length: 30 } };
+    expect(formData(PERIOD, mixed)).not.toHaveProperty('cycle_length');
+    expect(formData(PERIOD, mixed)).not.toHaveProperty('period_length');
+  });
+
+  it('clears all three values when the source changes', () => {
+    const fixed = { ...base, period: { enabled: true, last_period: '2026-10-02', cycle_length: 30 } };
+    const before = formData(PERIOD, fixed);
+    const after = PERIOD.adjust!(before, { ...before, source: 'helpers' });
+    expect(applyFormChange(fixed, PERIOD.prefix, before, after, PERIOD.rules)).toEqual({ ...base, period: { enabled: true } });
+    const back = formData(PERIOD, helpers);
+    const toFixed = PERIOD.adjust!(back, { ...back, source: 'fixed' });
+    expect(applyFormChange(helpers, PERIOD.prefix, back, toFixed, PERIOD.rules)).toEqual({ ...base, period: { enabled: true } });
+  });
+
+  it('never writes the source to the YAML', () => {
+    expect(edit(PERIOD, helpers, { source: 'helpers', cycle_length: 'input_number.y' })).toEqual({
+      ...base,
+      period: { enabled: true, last_period: 'input_datetime.x', cycle_length: 'input_number.y' },
+    });
+  });
+
+  it('explains where a helper date is readable', () => {
+    expect(computeHelper(field(helpers, 'last_period'))).toContain('every Home Assistant user');
+    expect(computeHelper(field({ ...base, period: { enabled: true } }, 'last_period'))).toContain('dashboard configuration');
   });
 });
 

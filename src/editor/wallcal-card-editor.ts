@@ -24,14 +24,17 @@ export class WallCalCardEditor extends LitElement {
     hass: { attribute: false },
     lovelace: { attribute: false },
     _raw: { state: true },
+    _ui: { state: true },
     _available: { state: true },
   };
 
   declare hass?: HomeAssistant;
   declare lovelace?: unknown;
   declare _raw: Raw;
+  /** Form-only fields (SectionDef.kept): what the user chose that the YAML can't show. */
+  declare _ui: Raw;
   declare _available: HaEditorAvailability | null;
-  private _cached?: { raw: Raw; view: View };
+  private _cached?: { raw: Raw; ui: Raw; view: View };
 
   static styles = css`
     :host { display: grid; gap: 12px; }
@@ -42,6 +45,7 @@ export class WallCalCardEditor extends LitElement {
   constructor() {
     super();
     this._raw = {};
+    this._ui = {};
     this._available = null;
   }
 
@@ -55,7 +59,9 @@ export class WallCalCardEditor extends LitElement {
   }
 
   private get _view(): View {
-    if (this._cached?.raw !== this._raw) this._cached = { raw: this._raw, view: buildView(this._raw) };
+    if (this._cached?.raw !== this._raw || this._cached.ui !== this._ui) {
+      this._cached = { raw: this._raw, ui: this._ui, view: buildView(this._raw, this._ui) };
+    }
     return this._cached.view;
   }
 
@@ -109,7 +115,12 @@ export class WallCalCardEditor extends LitElement {
 
   private _section(section: SectionDef, before: Raw, e: CustomEvent) {
     e.stopPropagation();
-    const next = applyFormChange(this._raw, section.prefix, before, e.detail.value as Raw, section.rules);
+    const value = e.detail.value as Raw;
+    const after = section.adjust ? section.adjust(before, value) : value;
+    const ui = { ...this._ui };
+    for (const key of section.kept ?? []) ui[key] = after[key];
+    if (!deepEqual(ui, this._ui)) this._ui = ui;
+    const next = applyFormChange(this._raw, section.prefix, before, after, section.rules);
     this._commit(section.finalize && next !== this._raw ? section.finalize(next) : next);
   }
 
@@ -129,11 +140,11 @@ export class WallCalCardEditor extends LitElement {
   }
 }
 
-function buildView(raw: Raw): View {
+function buildView(raw: Raw, ui: Raw): View {
   const days = raw.days === 5 || raw.days === '5' ? 5 : 7;
   const forms = new Map<SectionDef, { data: Raw; schema: FormSchema[] }>();
   for (const section of SECTIONS) {
-    const data = formData(section, raw);
+    const data = formData(section, raw, ui);
     forms.set(section, { data, schema: section.schema(data, { days }) });
   }
   return { error: validate(raw), days, forms };

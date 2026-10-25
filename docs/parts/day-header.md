@@ -91,7 +91,7 @@ Optional, off by default. What you'll see on each day:
 - a soft **tint** on the fertile window,
 - an **egg** icon on the expected ovulation day.
 
-**In the visual editor:** Cycle → Enabled, Last period started, Cycle length, Period length, Show the fertile window, Show ovulation
+**In the visual editor:** Cycle → Enabled, Values from, Last period started, Cycle length, Period length, Show the fertile window, Show ovulation
 
 ![The Cycle panel in the visual editor](/img/editor-cycle-dark.webp){.editor-shot .dark-only}
 ![The Cycle panel in the visual editor](/img/editor-cycle-light.webp){.editor-shot .light-only}
@@ -110,9 +110,96 @@ period:
 
 Update the last period date when a new period starts.
 
+### From helpers {#cycle-helpers}
+
+To keep one start date for several dashboards, or to log a new period from a phone, store the values in Home Assistant
+helpers and point the card at them. Create them under Settings → Devices & services → Helpers:
+
+- **Date and time**, date only, for the start date,
+- **Number**, 20 – 45, for the cycle length, and **Number**, 1 – 10, for the period length (optional).
+
+Or define them in `configuration.yaml`. Leave out `initial`: with it, Home Assistant resets the helper on every restart.
+
+```yaml
+input_datetime:
+  last_period:
+    name: Last period
+    has_date: true
+    has_time: false
+
+input_number:
+  cycle_length:
+    name: Cycle length
+    min: 20
+    max: 45
+    step: 1
+    mode: box
+    unit_of_measurement: days
+  period_length:
+    name: Period length
+    min: 1
+    max: 10
+    step: 1
+    mode: box
+    unit_of_measurement: days
+```
+
+In the visual editor, set **Values from** to **Helpers** and pick them. In YAML, use the entity ids instead of the values:
+
+```yaml
+period:
+  enabled: true
+  last_period: input_datetime.last_period
+  cycle_length: input_number.cycle_length
+  period_length: input_number.period_length
+```
+
+Each of the three can be a helper or a fixed value on its own. A sensor works too: a date sensor, or a timestamp sensor,
+which counts as its local date. The card redraws as soon as a helper changes. While a helper is missing, `unknown` or
+`unavailable`, the card shows no cycle at all rather than a guess.
+
+To log a new start in one tap, add a script that sets the date to today or a few days back:
+
+```yaml
+script:
+  period_started:
+    alias: Period started
+    mode: single
+    fields:
+      days_ago:
+        name: Days ago
+        default: 0
+        selector:
+          number:
+            min: 0
+            max: 7
+    sequence:
+      - action: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.last_period
+        data:
+          date: "{{ (now().date() - timedelta(days=days_ago | int(0))) | string }}"
+```
+
+and a button for it on any dashboard (`days_ago: 1` makes a "Started yesterday" button):
+
+```yaml
+type: button
+name: Started today
+icon: mdi:water
+tap_action:
+  action: perform-action
+  perform_action: script.period_started
+  data:
+    days_ago: 0
+  confirmation:
+    text: Set today as the start of a new period?
+```
+
 ::: warning Good to know
-- **Privacy:** these settings are stored in the dashboard configuration. Anyone who can open that dashboard in Home
-  Assistant can read them, and they are included in backups.
+- **Privacy:** fixed values are stored in the dashboard configuration. Anyone who can open that dashboard in Home
+  Assistant can read them, and they are included in backups. Helpers are readable by every Home Assistant user,
+  through the app and the API, and their history keeps past dates in the recorder database and in backups.
 - **Accuracy:** predictions use a fixed cycle length and the standard 14-day luteal phase. They are a calendar hint, not
   medical advice and not a contraception method.
 :::
