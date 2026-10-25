@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   cachedEvents,
+  errorMessage,
   eventsForDay,
   isEnded,
   nextEventEnd,
@@ -154,6 +155,21 @@ describe('fetchEvents', () => {
     expect(results[0].events?.map((e) => e.title)).toEqual(['X']);
     expect(results[1]).toEqual({ entity: 'calendar.broken', error: 'calendar.broken: not found' });
   });
+
+  it('names a failed calendar by its configured name, then its friendly name', async () => {
+    const { hass } = makeHass(async () => {
+      throw { error: 'Request error', status_code: undefined, body: undefined };
+    });
+    hass.states['calendar.work'] = { last_changed: '', attributes: { friendly_name: 'Work' } };
+    const chip = { color: '#000', toggle: false, display: 'chip' as const };
+    const results = await fetchEvents(
+      hass,
+      [{ entity: 'calendar.work', ...chip }, { entity: 'calendar.family', name: 'Our family', ...chip }, { entity: 'calendar.other', ...chip }],
+      new Date(2026, 9, 12),
+      new Date(2026, 9, 19),
+    );
+    expect(results.map((r) => r.error)).toEqual(['Work: Request error', 'Our family: Request error', 'calendar.other: Request error']);
+  });
 });
 
 describe('isEnded', () => {
@@ -188,5 +204,33 @@ describe('nextEventEnd', () => {
   it('ignores all-day events and ends after today', () => {
     const events = [ev('Trip', at(0), new Date(2026, 9, 14), true), ev('Late', at(23), new Date(2026, 9, 14, 1))];
     expect(nextEventEnd(events, now)).toBeNull();
+  });
+});
+
+// Shapes thrown by Home Assistant's frontend fetch helper (hass.callApi), copied from its bundle.
+describe('errorMessage', () => {
+  it('reads the error of a failed Home Assistant request', () => {
+    expect(errorMessage({ error: 'Request error', status_code: undefined, body: undefined })).toBe('Request error');
+    expect(errorMessage({ error: 'Unable to parse JSON response', status_code: undefined, body: null })).toBe(
+      'Unable to parse JSON response',
+    );
+  });
+
+  it("prefers the server's own message over the status line", () => {
+    expect(errorMessage({ error: 'Response error: 400', status_code: 400, body: { message: 'Invalid date' } })).toBe('Invalid date');
+    expect(errorMessage({ error: 'Response error: 500', status_code: 500, body: 'Internal Server Error' })).toBe(
+      'Response error: 500',
+    );
+  });
+
+  it('keeps Errors, messages and strings', () => {
+    expect(errorMessage(new Error('boom'))).toBe('boom');
+    expect(errorMessage({ message: 'unknown entity' })).toBe('unknown entity');
+    expect(errorMessage('offline')).toBe('offline');
+  });
+
+  it('never shows [object Object]', () => {
+    expect(errorMessage({ code: 42 })).toBe('Unknown error');
+    expect(errorMessage(null)).toBe('Unknown error');
   });
 });

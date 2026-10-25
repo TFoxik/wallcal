@@ -120,13 +120,18 @@ export async function fetchEvents(
   return settled.map((outcome, i) => {
     const source = entities[i];
     if (outcome.status === 'rejected') {
-      return { entity: source.entity, error: `${source.entity}: ${errorMessage(outcome.reason)}` };
+      return { entity: source.entity, error: `${calendarName(hass, source)}: ${errorMessage(outcome.reason)}` };
     }
     const events = outcome.value
       .map((raw) => normalizeEvent(raw, source))
       .filter((e): e is WallCalEvent => e !== null);
     return { entity: source.entity, events };
   });
+}
+
+function calendarName(hass: HomeAssistant, source: EntityConfig): string {
+  const friendly = hass.states[source.entity]?.attributes?.friendly_name;
+  return source.name ?? (typeof friendly === 'string' && friendly.trim() ? friendly : source.entity);
 }
 
 // Returns prev itself when a refetch changed nothing, so the card skips the render.
@@ -145,8 +150,17 @@ export function cachedEvents(cache: EventCache | null): WallCalEvent[] {
   return cache ? Object.values(cache.byEntity).flat() : [];
 }
 
+// hass.callApi rejects with { error, status_code, body } rather than an Error; the server's own message,
+// when its reply has one, says more than the status line.
 export function errorMessage(error: unknown): string {
   if (error instanceof Error) return error.message;
-  if (error && typeof error === 'object' && 'message' in error) return String(error.message);
-  return String(error);
+  if (typeof error === 'string') return error;
+  if (error && typeof error === 'object') {
+    const { message, error: status, body } = error as { message?: unknown; error?: unknown; body?: unknown };
+    if (typeof message === 'string') return message;
+    const reply = body && typeof body === 'object' ? (body as { message?: unknown }).message : undefined;
+    if (typeof reply === 'string' && reply) return reply;
+    if (typeof status === 'string') return status;
+  }
+  return 'Unknown error';
 }
