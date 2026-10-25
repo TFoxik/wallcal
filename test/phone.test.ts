@@ -396,3 +396,51 @@ describe('phone views: review fixes', () => {
     expect(root(el).querySelector('.upcoming__warning')).toBeNull();
   });
 });
+
+describe('agenda floating cards', () => {
+  const navbar = { type: 'custom:navbar-card', template: 'phone' };
+  const todo = { type: 'todo-list', entity: 'todo.shopping' };
+
+  beforeEach(() => {
+    window.loadCardHelpers = async () => ({
+      createCardElement: (cardConfig: Record<string, unknown>) => {
+        const el = document.createElement('div');
+        el.className = 'hosted';
+        el.dataset.type = String(cardConfig.type);
+        return el;
+      },
+    });
+  });
+
+  afterEach(() => {
+    delete window.loadCardHelpers;
+  });
+
+  const settle = async (el: WallCalCard) => {
+    await flush(el);
+    await flush(el);
+  };
+
+  it('hosts an always-shown card, such as the phone navbar', async () => {
+    const { hass } = calendars({});
+    const el = await mount({ ...agendaConfig, overlays: [{ position: 'bottom-right', toggle: 'none', card: navbar }] }, hass);
+    await settle(el);
+    expect(root(el).querySelector('.agenda .overlay--bottom-right .hosted')?.getAttribute('data-type')).toBe('custom:navbar-card');
+  });
+
+  it('shows a header-toggled card from a button in the chip row', async () => {
+    const { hass } = calendars({});
+    const el = await mount({ ...agendaConfig, overlays: [{ position: 'bottom-left', name: 'Shopping', card: todo }] }, hass);
+    expect(root(el).querySelector('.agenda .overlay')).toBeNull();
+    root(el).querySelector<HTMLButtonElement>('.agenda__list .toggle[aria-label="Show Shopping"]')!.click();
+    await settle(el);
+    expect(root(el).querySelector('.agenda .overlay--bottom-left .hosted')).not.toBeNull();
+  });
+
+  it('upcoming still leaves floating cards out', async () => {
+    const { hass } = calendars({});
+    const el = await mount({ ...upcomingConfig, overlays: [{ position: 'bottom-right', toggle: 'none', card: navbar }] }, hass);
+    await settle(el);
+    expect(root(el).querySelector('.overlay')).toBeNull();
+  });
+});

@@ -62,7 +62,7 @@ export class WallCalCardEditor extends LitElement {
     if (!this._available['ha-form']) return html`<p class="note">${CODE_EDITOR_NOTE}</p>`;
     const { error, days } = this._view;
     const view = this._view.forms.get(VIEW)!.data.view;
-    // The top bar, weather and floating cards belong to the week grid; the phone views ignore them.
+    // The top bar and weather belong to the week grid; the small upcoming card has no room for floating cards either.
     const week = view === 'week';
     return html`
       ${error ? html`<ha-alert alert-type="error">${error}</ha-alert>` : nothing}
@@ -73,7 +73,7 @@ export class WallCalCardEditor extends LitElement {
         ></wallcal-calendar-list>`)}
       ${this._panel('View', 'mdi:cellphone', false, html`${this._form(VIEW)}${view === 'upcoming' ? this._form(UPCOMING) : nothing}`)}
       ${[WEEK, HEADER, WEATHER, MOON, PERIOD].map((s) => this._panel(s.title, s.icon, false, this._form(s), week || !WEEK_ONLY.includes(s)))}
-      ${week ? this._panel('Floating cards', 'mdi:card-multiple-outline', false, html`<wallcal-overlay-list
+      ${view !== 'upcoming' ? this._panel('Floating cards', 'mdi:card-multiple-outline', false, html`<wallcal-overlay-list
           .hass=${this.hass}
           .lovelace=${this.lovelace}
           .overlays=${this._raw.overlays}

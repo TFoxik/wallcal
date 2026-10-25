@@ -37,3 +37,14 @@ views:
         past_events: dim
         moon:
           enabled: true
+        overlays:
+          - position: bottom-right
+            span: 7
+            toggle: pill
+            pill: compact
+            icon: mdi:format-list-checks
+            name: Shopping
+            card:
+              type: todo-list
+              entity: todo.shopping
+              hide_completed: true

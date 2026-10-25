@@ -225,7 +225,7 @@ export class WallCalCard extends LitElement {
       period.enabled && period.last_period
         ? { starts: [period.last_period], cycleLength: period.cycle_length, periodLength: period.period_length }
         : null;
-    const tokens = { ...resolveTokens(config.theme, config.style), '--wallcal-days': String(config.days) };
+    const tokens = { ...resolveTokens(config.theme, config.style), '--wallcal-days': String(days.length) };
     const labelCalendars = config.entities.filter((e) => e.display === 'label' && !hidden.has(e.entity)).map((e) => e.entity);
     const status = this._allFailed ? 'failed' : this._cache ? 'ready' : 'loading';
 
@@ -240,7 +240,8 @@ export class WallCalCard extends LitElement {
           })),
           today: this._today,
           activeKey: this._activeKey,
-          toggles: this._toggles(config, hidden),
+          toggles: [...this._toggles(config, hidden), ...this._overlayToggles(config)],
+          overlays: repeat(config.overlays, (o) => o.key, (o) => this._renderOverlay(o)),
           warning: this._warning,
           status,
           labelCalendars,

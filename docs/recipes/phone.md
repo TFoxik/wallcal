@@ -69,4 +69,21 @@ Calendars you hide with a chip on the Calendar tab stay hidden on the next-up ca
 - **In the visual editor:** Calendars → add Family and Work with their colours, Work with a chip, and the name-day calendar with Show as: label
 - **In the visual editor:** Moon → Enabled
 
-The phone views leave out the top bar, the weather and floating cards, so the editor hides those panels.
+The phone views leave out the top bar and the weather, so the editor hides those panels. The next-up card has no
+floating cards either.
+
+## A navbar on the Calendar tab
+
+A Panel view shows exactly one card, so a phone navbar can't sit next to the agenda. Host it as a floating card
+instead, always shown; a navbar that floats over the page (like navbar-card) places itself:
+
+```yaml
+overlays:
+  - position: bottom-right
+    toggle: none
+    card:
+      type: custom:navbar-card
+      template: phone
+```
+
+Floating cards in the agenda count its width as seven columns, so `span: 7` covers the whole width.

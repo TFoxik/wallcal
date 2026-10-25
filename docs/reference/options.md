@@ -1,8 +1,8 @@
 # All options
 
 Every option with its default. Only `type` and `entities` are required. Invalid config shows as an
-error card with a message naming the bad option. With `view: agenda` or `view: upcoming`, the week, `header`,
-`weather` and `overlays` options are ignored; see the [phone recipe](../recipes/phone).
+error card with a message naming the bad option. With `view: agenda` or `view: upcoming`, the week, `header` and
+`weather` options are ignored, and `overlays` work only in the agenda; see the [phone recipe](../recipes/phone).
 
 ```yaml
 type: custom:wallcal-card

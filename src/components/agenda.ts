@@ -38,6 +38,8 @@ export interface AgendaProps {
   now: Date;
   moon: MoonConfig;
   showOvulation: boolean;
+  /** Floating cards and pills, placed over the list like the week grid's. */
+  overlays: unknown;
   onJump(key: string): void;
   onScroll(): void;
   onTouch(event: Event): void;
@@ -66,6 +68,7 @@ export function renderAgenda(p: AgendaProps): TemplateResult {
     ${p.activeKey !== p.days[0]?.key
       ? html`<button class="agenda__today" type="button" @click=${() => p.onJump(p.days[0].key)}>Today</button>`
       : nothing}
+    ${p.overlays}
   </div>`;
 }
 

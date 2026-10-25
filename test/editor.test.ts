@@ -178,16 +178,20 @@ describe('wallcal-card-editor: view', () => {
     expect(upcoming.events).toEqual([]);
   });
 
-  it('hides the Top bar, Weather and Floating cards panels outside the week view', async () => {
+  it('hides the Top bar and Weather panels outside the week view', async () => {
     const week = await mount(base);
     expect(panels(week.el)).toEqual(expect.arrayContaining(['Top bar', 'Weather', 'Floating cards']));
     for (const view of ['agenda', 'upcoming']) {
       const { el } = await mount({ ...base, view });
       expect(panels(el)).not.toContain('Top bar');
       expect(panels(el)).not.toContain('Weather');
-      expect(panels(el)).not.toContain('Floating cards');
       expect(panels(el)).toContain('Week');
     }
+  });
+
+  it('offers floating cards in the agenda but not in the upcoming card', async () => {
+    expect(panels((await mount({ ...base, view: 'agenda' })).el)).toContain('Floating cards');
+    expect(panels((await mount({ ...base, view: 'upcoming' })).el)).not.toContain('Floating cards');
   });
 
   it('writes the chosen view', async () => {
