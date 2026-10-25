@@ -1,4 +1,4 @@
-import { PAST_DAYS, PAST_EVENTS, VIEWS, WEEKDAYS } from '../config';
+import { AGENDA_STYLES, PAST_DAYS, PAST_EVENTS, VIEWS, WEEKDAYS } from '../config';
 import { TIME_FORMATS, TITLE_MODES, WEEKDAY_FORMATS } from '../format';
 import { THEME_NAMES } from '../theme/presets';
 import { hexToRgb, isHex, rgbToHex } from './colors';
@@ -143,6 +143,16 @@ export const UPCOMING: SectionDef = {
   schema: () => [number('count', 1, 5), text('navigation_path')],
 };
 
+export const AGENDA: SectionDef = {
+  id: 'agenda',
+  title: 'Calendar tab',
+  icon: 'mdi:view-agenda-outline',
+  prefix: ['agenda'],
+  rules: { defaults: { style: 'list', height: '' } },
+  lowercase: ['style'],
+  schema: () => [{ name: 'style', selector: select(AGENDA_STYLES) }, text('height')],
+};
+
 const titleSelector = select([...TITLE_MODES, 'none'], { custom_value: true });
 
 export const HEADER: SectionDef = {
@@ -260,6 +270,8 @@ export const STYLE: SectionDef = {
 
 const LABELS: Record<string, string> = {
   view: 'Layout',
+  style: 'Day style',
+  height: 'Height',
   count: 'Events shown',
   navigation_path: 'Open on tap',
   days: 'Days shown',
@@ -293,7 +305,8 @@ const LABELS: Record<string, string> = {
 
 const HELPERS: Record<string, string> = {
   view: 'week for a wall tablet, agenda for a phone tab, upcoming for a small next-up card',
-  navigation_path: 'A dashboard path, for example /smart-home/calendar',
+  navigation_path: 'A dashboard path like /smart-home/calendar, or #name to open a pop-up',
+  height: 'Empty fits the dashboard; set it in a pop-up, for example 75vh',
   title: 'month, range, none, or your own text',
   idle_return: '0 never jumps back',
   font_url: 'Must start with https:// or /',

@@ -189,6 +189,15 @@ describe('wallcal-card-editor: view', () => {
     }
   });
 
+  it('shows the agenda style and height only for the agenda', async () => {
+    const week = await mount(base);
+    expect(() => form(week.el, 'height')).toThrow();
+    const agenda = await mount({ ...base, view: 'agenda' });
+    expect(form(agenda.el, 'height').data).toEqual({ style: 'list', height: '' });
+    change(form(agenda.el, 'height'), { style: 'cards', height: '75vh' });
+    expect(agenda.events.at(-1)).toEqual({ ...base, view: 'agenda', agenda: { style: 'cards', height: '75vh' } });
+  });
+
   it('offers floating cards in the agenda but not in the upcoming card', async () => {
     expect(panels((await mount({ ...base, view: 'agenda' })).el)).toContain('Floating cards');
     expect(panels((await mount({ ...base, view: 'upcoming' })).el)).not.toContain('Floating cards');

@@ -1,7 +1,7 @@
 import { html, nothing, type TemplateResult } from 'lit';
 import { classMap } from 'lit/directives/class-map.js';
 import { styleMap } from 'lit/directives/style-map.js';
-import type { MoonConfig, PastEvents } from '../config';
+import type { AgendaStyle, MoonConfig, PastEvents } from '../config';
 import type { CycleDay } from '../cycle/predict';
 import { isEnded, type DayEvent } from '../data/events';
 import { daysBetween } from '../date';
@@ -30,6 +30,7 @@ export interface AgendaProps {
   toggles: HeaderToggle[];
   warning: string | null;
   status: LoadStatus;
+  style: AgendaStyle;
   labelCalendars: string[];
   language: string;
   hourCycle: HourCycle;
@@ -52,7 +53,7 @@ export function stripDots(events: DayEvent[], labelCalendars: readonly string[])
 }
 
 export function renderAgenda(p: AgendaProps): TemplateResult {
-  return html`<div class="agenda">
+  return html`<div class="agenda agenda--${p.style}">
     <div class="agenda__strip">${p.days.map((day) => renderCell(day, p))}</div>
     <div
       class="agenda__list agenda__list--events-${p.pastEvents}"
@@ -95,19 +96,20 @@ function renderDay(day: AgendaDay, p: AgendaProps): TemplateResult {
   const lines = labelLines(day.events, p.labelCalendars).filter((line) => line.length);
   const chips = chipEvents(day.events, p.labelCalendars);
   const ended = (item: DayEvent) => offset === 0 && isEnded(item, p.now);
+  const date = html`<span class="agenda__date">${day.date.getDate()}</span><span class="agenda__name">${name}</span>`;
+  const labels = html`<span class="agenda__labels">${lines.map(renderLabelLine)}</span>
+    ${renderMarkers(day.date, day.cycle, p.showOvulation, p.moon, false)}`;
+  const events = chips.length
+    ? html`<div class="agenda__events">
+        ${chips.map((e) => renderEventChip(e, p.language, p.hourCycle, p.showEndTime, ended(e)))}
+      </div>`
+    : p.status === 'ready'
+      ? html`<div class="agenda__empty">Nothing planned</div>`
+      : nothing;
   return html`<section class=${classMap({ agenda__day: true, 'agenda__day--today': offset === 0 })} data-day=${day.key}>
-    <header class="agenda__head">
-      <span class="agenda__date">${day.date.getDate()}</span>
-      <span class="agenda__name">${name}</span>
-      <span class="agenda__labels">${lines.map(renderLabelLine)}</span>
-      ${renderMarkers(day.date, day.cycle, p.showOvulation, p.moon, false)}
-    </header>
-    ${chips.length
-      ? html`<div class="agenda__events">
-          ${chips.map((e) => renderEventChip(e, p.language, p.hourCycle, p.showEndTime, ended(e)))}
-        </div>`
-      : p.status === 'ready'
-        ? html`<div class="agenda__empty">Nothing planned</div>`
-        : nothing}
+    ${p.style === 'cards'
+      ? html`<header class="agenda__head">${date}${labels}</header>${events}`
+      : html`<div class="agenda__datecol">${date}</div>
+          <div class="agenda__body"><div class="agenda__head">${labels}</div>${events}</div>`}
   </section>`;
 }

@@ -48,3 +48,16 @@ views:
               type: todo-list
               entity: todo.shopping
               hide_completed: true
+  - title: Calendar (cards)
+    path: calendar-cards
+    icon: mdi:card-multiple-outline
+    panel: true
+    cards:
+      - type: custom:wallcal-card
+        view: agenda
+        entities: *phone_calendars
+        past_events: dim
+        moon:
+          enabled: true
+        agenda:
+          style: cards

@@ -444,3 +444,49 @@ describe('agenda floating cards', () => {
     expect(root(el).querySelector('.overlay')).toBeNull();
   });
 });
+
+describe('agenda style and height', () => {
+  it('sizes itself from agenda.height and leaves its rows to its content', async () => {
+    const { hass } = calendars({});
+    const el = await mount({ ...agendaConfig, agenda: { height: '75vh' } }, hass);
+    expect(el.style.height).toBe('75vh');
+    expect(el.getGridOptions()).toEqual({ columns: 'full', rows: 'auto' });
+    el.setConfig(agendaConfig);
+    await flush(el);
+    expect(el.style.height).toBe('');
+    expect(el.getGridOptions().rows).toBe(8);
+  });
+
+  it('draws days as a date column with the events beside it by default', async () => {
+    const { hass } = calendars({ 'calendar.family': [timed('Dentist', '2026-10-14T08:00:00+02:00', '2026-10-14T09:00:00+02:00')] });
+    const el = await mount(agendaConfig, hass);
+    expect(root(el).querySelector('.agenda')?.classList.contains('agenda--list')).toBe(true);
+    const day = root(el).querySelector('.agenda__day[data-day="2026-10-14"]')!;
+    expect(day.querySelector('.agenda__datecol .agenda__date')?.textContent).toBe('14');
+    expect(day.querySelector('.agenda__datecol .agenda__name')?.textContent).toBe('Tomorrow');
+    expect(day.querySelector('.agenda__body .chip__title')?.textContent).toBe('Dentist');
+  });
+
+  it('draws each day as its own card with agenda.style: cards', async () => {
+    const { hass } = calendars({});
+    const el = await mount({ ...agendaConfig, agenda: { style: 'cards' } }, hass);
+    expect(root(el).querySelector('.agenda')?.classList.contains('agenda--cards')).toBe(true);
+    expect(root(el).querySelector('.agenda__day .agenda__head .agenda__date')?.textContent).toBe('13');
+    expect(root(el).querySelector('.agenda__datecol')).toBeNull();
+  });
+});
+
+describe('upcoming opening a pop-up', () => {
+  it('sets the hash and tells HA the location changed', async () => {
+    const { hass } = calendars({});
+    const el = await mount({ ...upcomingConfig, upcoming: { navigation_path: '#calendar' } }, hass);
+    const push = vi.spyOn(history, 'pushState');
+    const changed = vi.fn();
+    window.addEventListener('location-changed', changed);
+    root(el).querySelector<HTMLElement>('ha-card')!.click();
+    window.removeEventListener('location-changed', changed);
+    expect(push).toHaveBeenCalledWith(null, '', '#calendar');
+    expect(changed).toHaveBeenCalledTimes(1);
+    push.mockRestore();
+  });
+});

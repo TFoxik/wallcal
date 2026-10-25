@@ -5,9 +5,9 @@ import { WallCalCalendarList } from './calendar-list';
 import { loadHaEditors, type HaEditorAvailability } from './ha-loader';
 import { CODE_EDITOR_NOTE, WallCalOverlayList } from './overlay-list';
 import { applyFormChange, clearAt, deepEqual, setAt, type Raw } from './raw-config';
-import { computeHelper, formData, labelsFor, HEADER, MOON, PERIOD, STYLE, THEME, UPCOMING, VIEW, WEATHER, WEEK, type FormSchema, type SectionDef } from './sections';
+import { computeHelper, formData, labelsFor, AGENDA, HEADER, MOON, PERIOD, STYLE, THEME, UPCOMING, VIEW, WEATHER, WEEK, type FormSchema, type SectionDef } from './sections';
 
-const SECTIONS = [VIEW, UPCOMING, WEEK, HEADER, WEATHER, MOON, PERIOD, THEME, STYLE];
+const SECTIONS = [VIEW, UPCOMING, AGENDA, WEEK, HEADER, WEATHER, MOON, PERIOD, THEME, STYLE];
 const WEEK_ONLY = [HEADER, WEATHER];
 
 /** What the forms show for one raw config; rebuilt only when the config changes, not on every hass update. */
@@ -71,7 +71,7 @@ export class WallCalCardEditor extends LitElement {
           .entities=${this._raw.entities}
           @entities-changed=${this._calendars}
         ></wallcal-calendar-list>`)}
-      ${this._panel('View', 'mdi:cellphone', false, html`${this._form(VIEW)}${view === 'upcoming' ? this._form(UPCOMING) : nothing}`)}
+      ${this._panel('View', 'mdi:cellphone', false, html`${this._form(VIEW)}${view === 'upcoming' ? this._form(UPCOMING) : view === 'agenda' ? this._form(AGENDA) : nothing}`)}
       ${[WEEK, HEADER, WEATHER, MOON, PERIOD].map((s) => this._panel(s.title, s.icon, false, this._form(s), week || !WEEK_ONLY.includes(s)))}
       ${view !== 'upcoming' ? this._panel('Floating cards', 'mdi:card-multiple-outline', false, html`<wallcal-overlay-list
           .hass=${this.hass}

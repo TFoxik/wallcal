@@ -728,8 +728,52 @@ export const cardStyles = css`
     color: var(--wallcal-muted);
     white-space: pre-line;
   }
-  .agenda__day {
-    padding-top: 10px;
+  .agenda--list .agenda__day {
+    display: flex;
+    gap: 12px;
+    padding: 10px 2px;
+    border-bottom: 1px solid var(--wallcal-divider);
+  }
+  .agenda--list .agenda__day:last-child {
+    border-bottom: none;
+  }
+  /* Wide enough for "Tomorrow" at the label size, so the column lines up on every day. */
+  .agenda__datecol {
+    flex: none;
+    width: calc(var(--wallcal-time-size) * 5);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .agenda--list .agenda__date {
+    font-size: calc(var(--wallcal-date-size) * 0.75);
+  }
+  .agenda--list .agenda__name {
+    white-space: nowrap;
+    font-size: var(--wallcal-time-size);
+    font-weight: 400;
+    color: var(--wallcal-muted);
+  }
+  .agenda--list .agenda__day--today .agenda__name {
+    color: var(--wallcal-accent);
+  }
+  .agenda__body {
+    flex: 1;
+    min-width: 0;
+  }
+  .agenda--list .agenda__head:empty {
+    display: none;
+  }
+  .agenda--cards .agenda__day {
+    margin-top: 8px;
+    padding: 10px 12px;
+    border: 1px solid transparent;
+    border-radius: var(--wallcal-day-radius);
+    background: var(--wallcal-surface);
+  }
+  .agenda--cards .agenda__day--today {
+    border-color: var(--wallcal-accent);
   }
   .agenda__head {
     display: flex;

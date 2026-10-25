@@ -93,6 +93,15 @@ export interface UpcomingConfig {
   navigation_path: string | null;
 }
 
+export const AGENDA_STYLES = ['list', 'cards'] as const;
+export type AgendaStyle = (typeof AGENDA_STYLES)[number];
+
+export interface AgendaConfig {
+  style: AgendaStyle;
+  /** CSS length; null lets the dashboard size the card. */
+  height: string | null;
+}
+
 export interface WallCalConfig {
   entities: EntityConfig[];
   days: DayCount;
@@ -111,6 +120,7 @@ export interface WallCalConfig {
   overlays: OverlayConfig[];
   view: View;
   upcoming: UpcomingConfig;
+  agenda: AgendaConfig;
   theme: ThemeName;
   style: Partial<Record<Token, string>>;
   font_url: string | null;
@@ -125,9 +135,12 @@ const ICON = /^[a-z0-9-]+:[a-z0-9-]+$/;
 // Each label calendar gets its own header line; more than two would crowd out the events.
 const MAX_LABEL_CALENDARS = 2;
 const FONT_URL = /^(https:\/\/|\/(?!\/))/;
-// A path inside Home Assistant only: a full or protocol-relative URL would send the tap to another site,
-// and browsers read a leading /\ as //.
-const NAV_PATH = /^\/(?![/\\])/;
+// A path inside Home Assistant, or a #hash that opens a pop-up. A full or protocol-relative URL would send
+// the tap to another site, and browsers read a leading /\ as //.
+const NAV_PATH = /^(?:\/(?![/\\])|#[\w-]+$)/;
+// Plain lengths and calc() sums of them: the value becomes an inline height, so nothing else may get in.
+const LENGTH = '\\d+(?:\\.\\d+)?(?:px|%|vh|dvh|svh|lvh|em|rem)';
+const HEIGHT = new RegExp(`^(?:${LENGTH}|calc\\(\\s*${LENGTH}(?:\\s*[-+]\\s*${LENGTH})*\\s*\\))$`);
 export const PERCENT = /^\d+(\.\d+)?%$/;
 
 type Raw = Record<string, unknown>;
@@ -141,6 +154,7 @@ export function normalizeConfig(input: unknown): WallCalConfig {
   const moon = section(raw.moon, 'moon');
   const period = section(raw.period, 'period');
   const upcoming = section(raw.upcoming, 'upcoming');
+  const agenda = section(raw.agenda, 'agenda');
 
   const periodEnabled = bool(period.enabled, false, 'period.enabled');
   const lastPeriod = toLocalDate(period.last_period, 'period.last_period');
@@ -189,6 +203,10 @@ export function normalizeConfig(input: unknown): WallCalConfig {
     upcoming: {
       count: int(upcoming.count, 3, 1, 5, 'upcoming.count'),
       navigation_path: navigationPath(upcoming.navigation_path),
+    },
+    agenda: {
+      style: oneOf(agenda.style, AGENDA_STYLES, 'list', 'agenda.style'),
+      height: agendaHeight(agenda.height),
     },
     theme: oneOf(raw.theme, THEME_NAMES, 'default', 'theme'),
     style,
@@ -351,8 +369,17 @@ function maxHeight(value: unknown, path: string): string {
 function navigationPath(value: unknown): string | null {
   if (value === undefined || value === null || value === '') return null;
   const path = String(value).trim();
-  if (!NAV_PATH.test(path)) throw new Error('upcoming.navigation_path must start with / (a path in Home Assistant)');
+  if (!NAV_PATH.test(path)) {
+    throw new Error('upcoming.navigation_path must start with / (a path in Home Assistant) or be #name (a pop-up)');
+  }
   return path;
+}
+
+function agendaHeight(value: unknown): string | null {
+  if (value === undefined || value === null || value === '') return null;
+  const height = String(value).trim();
+  if (!HEIGHT.test(height)) throw new Error('agenda.height must be a length like 75vh, 600px or calc(100vh - 120px)');
+  return height;
 }
 
 function icon(value: unknown, path: string): string {

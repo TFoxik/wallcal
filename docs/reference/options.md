@@ -49,7 +49,10 @@ period:
 view: week                        # week | agenda (a phone tab: 7 days from today) | upcoming (a next-up card)
 upcoming:                         # only for view: upcoming
   count: 3                        # events shown, 1 – 5
-  navigation_path: /dashboard-phone/calendar  # opened on tap, a path in Home Assistant; no tap when omitted
+  navigation_path: /dashboard-phone/calendar  # opened on tap: a path in Home Assistant, or #name for a pop-up; no tap when omitted
+agenda:                           # only for view: agenda
+  style: list                     # list (date column, a line between days) | cards (each day its own card)
+  height: 75vh                    # a length or calc(); omitted, the dashboard sizes the card. Set it inside a pop-up
 theme: default                    # default | paper | midnight
 style: {}                         # any token below, plus font_url
 overlays:                         # cards floating over the bottom of the week, one per position

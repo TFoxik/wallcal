@@ -87,3 +87,36 @@ overlays:
 ```
 
 Floating cards in the agenda count its width as seven columns, so `span: 7` covers the whole width.
+
+## As a pop-up instead of a tab
+
+With [Bubble Card](https://github.com/Clooos/Bubble-Card), the agenda can slide up from the bottom of your Home view
+instead of living on its own tab. Point the next-up card at the pop-up's hash and give the agenda a height, since a
+pop-up doesn't hand out a full screen the way a Panel view does:
+
+```yaml
+type: custom:bubble-card
+card_type: pop-up
+hash: "#calendar"
+name: Calendar
+icon: mdi:calendar-month
+cards:
+  - type: custom:wallcal-card
+    view: agenda
+    entities:
+      - calendar.family
+    agenda:
+      style: cards
+      height: 75vh
+```
+
+and on the next-up card:
+
+```yaml
+upcoming:
+  navigation_path: "#calendar"
+```
+
+`agenda.style` picks how days look: `list` (the default) puts the date in a column on the left with a line between
+days; `cards` gives each day its own card, with today outlined.
+

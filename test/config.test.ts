@@ -23,6 +23,29 @@ describe('normalizeConfig', () => {
     }
   });
 
+  it('navigation_path may open a pop-up by its hash', () => {
+    expect(normalizeConfig({ ...minimal, upcoming: { navigation_path: '#calendar' } }).upcoming.navigation_path).toBe('#calendar');
+    expect(normalizeConfig({ ...minimal, upcoming: { navigation_path: '#heating-timer_2' } }).upcoming.navigation_path).toBe('#heating-timer_2');
+    for (const path of ['#', '#a b', '#x/y', '#javascript:alert(1)', '#x"y']) {
+      expect(() => normalizeConfig({ ...minimal, upcoming: { navigation_path: path } }), path).toThrow(/upcoming.navigation_path/);
+    }
+  });
+
+  it('parses the agenda style and height', () => {
+    const config = normalizeConfig({ ...minimal, agenda: { style: 'Cards', height: '75vh' } });
+    expect(config.agenda).toEqual({ style: 'cards', height: '75vh' });
+    for (const height of ['600px', '80%', 'calc(100vh - 120px)', '70dvh']) {
+      expect(normalizeConfig({ ...minimal, agenda: { height } }).agenda.height).toBe(height);
+    }
+  });
+
+  it('rejects an agenda height that is not a plain length', () => {
+    expect(() => normalizeConfig({ ...minimal, agenda: { style: 'grid' } })).toThrow(/agenda.style must be one of: list, cards/);
+    for (const height of ['75', 'red', '1px; color: red', 'url(x)', 'var(--x)', '50vh}']) {
+      expect(() => normalizeConfig({ ...minimal, agenda: { height } }), height).toThrow(/agenda.height must be a length/);
+    }
+  });
+
   it('navigation_path must be an in-app path', () => {
     for (const path of ['https://x.test', '//x.test', '/\\x.test', 'smart-home']) {
       expect(() => normalizeConfig({ ...minimal, upcoming: { navigation_path: path } })).toThrow(/upcoming.navigation_path must start with \//);
@@ -54,6 +77,7 @@ describe('normalizeConfig', () => {
       },
       view: 'week',
       upcoming: { count: 3, navigation_path: null },
+      agenda: { style: 'list', height: null },
       theme: 'default',
       style: {},
       font_url: null,

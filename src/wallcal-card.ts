@@ -145,6 +145,8 @@ export class WallCalCard extends LitElement {
       this._weatherWarning = null;
     }
     loadFont(this._config.font_url);
+    // An explicit height lets the agenda fit a pop-up or any screen instead of the dashboard's grid rows.
+    this.style.height = this._config.view === 'agenda' && this._config.agenda.height ? this._config.agenda.height : '';
     if (this.isConnected) {
       this._tick(!sameEvents);
       this._subscribeWeather();
@@ -171,6 +173,7 @@ export class WallCalCard extends LitElement {
   }
 
   getGridOptions(): Record<string, unknown> {
+    if (this._config?.view === 'agenda' && this._config.agenda.height) return { columns: 'full', rows: 'auto' };
     if (this._config?.view === 'upcoming') {
       // Two 56px grid rows hold the header and up to three events at the default sizes.
       const rows = this._config.upcoming.count <= 3 ? 2 : 3;
@@ -244,6 +247,7 @@ export class WallCalCard extends LitElement {
           overlays: repeat(config.overlays, (o) => o.key, (o) => this._renderOverlay(o)),
           warning: this._warning,
           status,
+          style: config.agenda.style,
           labelCalendars,
           language,
           hourCycle,
