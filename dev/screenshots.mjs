@@ -23,10 +23,10 @@ const page = await browser.newPage({
 });
 
 // HA sometimes reloads the whole page right after it loads (sign-in, a changed dashboard), so wait until it stays put.
-async function open(view, dashboard = 'lovelace') {
+async function open(view, dashboard = 'lovelace', ready = '.day__events') {
   await page.goto(`${BASE}/${dashboard}/${view}`);
   for (let attempt = 0; attempt < 4; attempt++) {
-    await page.locator('wallcal-card .day__events').first().waitFor();
+    await page.locator(`wallcal-card ${ready}`).first().waitFor();
     await page.waitForFunction(() => !document.getElementById('ha-launch-screen'));
     await page.waitForLoadState('networkidle');
     const origin = await page.evaluate(() => performance.timeOrigin);
@@ -247,16 +247,22 @@ try {
   await weekShots('paper-week', 'light', 'paper');
   await open('midnight-week');
   await shot(await box('ha-card'), [join(SITE, 'theme-midnight'), 1000], [join(DOCS, 'theme-midnight'), 1000]);
-  await open('recipe-bedroom');
+  await open('recipe-bedroom', 'wallcal-recipes');
   await shot(await box('ha-card'), [join(DOCS, 'recipe-bedroom'), 1600]);
   // HA follows the browser's colour scheme, so the editor and default-theme recipes get a light twin this way.
   await saveEditorDashboard();
   for (const scheme of ['dark', 'light']) {
     await page.emulateMedia({ colorScheme: scheme });
     for (const recipe of ['kitchen', 'family']) {
-      await open(`recipe-${recipe}`);
+      await open(`recipe-${recipe}`, 'wallcal-recipes');
       await shot(await box('ha-card'), [join(DOCS, `recipe-${recipe}-${scheme}`), 1600]);
     }
+    await page.setViewportSize({ width: 375, height: 812 });
+    await open('recipe-phone', 'wallcal-recipes', '.agenda__day');
+    await shot(await box('ha-card'), [join(DOCS, `recipe-phone-${scheme}`), 750]);
+    await open('phone-home', 'wallcal-recipes', '.upcoming');
+    await shot(await box('ha-card'), [join(DOCS, `recipe-phone-home-${scheme}`), 750]);
+    await page.setViewportSize({ width: 1280, height: 800 });
     await editorShots(scheme);
   }
 } finally {

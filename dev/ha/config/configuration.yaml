@@ -30,6 +30,18 @@ lovelace:
   resources:
     - url: /local/wallcal-card.js
       type: module
+  # Overview (ui-lovelace.yaml) is the wall tablet; these two sit under it in the sidebar.
+  dashboards:
+    wallcal-phone:
+      mode: yaml
+      title: Phone
+      icon: mdi:cellphone
+      filename: dashboards/phone.yaml
+    wallcal-recipes:
+      mode: yaml
+      title: Docs recipes
+      icon: mdi:book-open-variant
+      filename: dashboards/recipes.yaml
 
 calendar:
   - platform: wallcal_fixture

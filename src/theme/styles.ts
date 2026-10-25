@@ -82,7 +82,9 @@ export const cardStyles = css`
     font-size: 15px;
   }
   .nav svg,
-  .bar__warning svg {
+  .bar__warning svg,
+  .upcoming__head svg,
+  .agenda__warning svg {
     width: 22px;
     height: 22px;
     fill: none;
@@ -91,7 +93,9 @@ export const cardStyles = css`
     stroke-linecap: round;
     stroke-linejoin: round;
   }
-  .bar__warning svg {
+  .bar__warning svg,
+  .upcoming__warning svg,
+  .agenda__warning svg {
     stroke: var(--wallcal-period-color);
   }
   .nav--current {
@@ -518,10 +522,12 @@ export const cardStyles = css`
     color: var(--wallcal-muted);
     cursor: pointer;
   }
-  .grid--events-dim .chip--ended {
+  .grid--events-dim .chip--ended,
+  .agenda__list--events-dim .chip--ended {
     opacity: 0.5;
   }
-  .grid--events-hide .chip--ended {
+  .grid--events-hide .chip--ended,
+  .agenda__list--events-hide .chip--ended {
     display: none;
   }
   .chip {
@@ -562,5 +568,231 @@ export const cardStyles = css`
   .chip--allday .chip__title {
     -webkit-line-clamp: 1;
     font-size: var(--wallcal-allday-size);
+  }
+  ha-card.navigable {
+    cursor: pointer;
+  }
+  .upcoming {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+  .upcoming__head {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    line-height: 1.3;
+    font-size: var(--wallcal-time-size);
+    color: var(--wallcal-muted);
+  }
+  .upcoming__labels,
+  .agenda__labels {
+    display: flex;
+    gap: 6px;
+    min-width: 0;
+  }
+  .upcoming__labels .day__label-line,
+  .agenda__labels .day__label-line {
+    height: auto;
+  }
+  .upcoming__warning {
+    display: inline-flex;
+  }
+  .upcoming__head svg,
+  .agenda__warning svg {
+    width: 16px;
+    height: 16px;
+    flex: none;
+  }
+  .upcoming__chevron {
+    margin-left: auto;
+  }
+  .upcoming__row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    min-width: 0;
+    padding: 2px 0;
+    line-height: 1.3;
+  }
+  .upcoming__bar {
+    flex: none;
+    align-self: stretch;
+    width: 3px;
+    border-radius: 2px;
+  }
+  .upcoming__when {
+    flex: none;
+    min-width: 3.4em;
+    font-size: var(--wallcal-time-size);
+    color: var(--wallcal-muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .upcoming__title {
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: var(--wallcal-event-size);
+  }
+  .upcoming__time {
+    color: var(--wallcal-muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .upcoming__empty {
+    padding: 3px 0;
+    font-size: var(--wallcal-event-size);
+    color: var(--wallcal-muted);
+  }
+  .agenda {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+  }
+  .agenda__strip {
+    flex: none;
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 2px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--wallcal-divider);
+  }
+  .agenda__cell {
+    all: unset;
+    cursor: pointer;
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 4px 0;
+    border-radius: var(--wallcal-chip-radius);
+  }
+  .agenda__cell--active::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: var(--wallcal-accent);
+    opacity: 0.16;
+    z-index: -1;
+  }
+  .agenda__weekday {
+    font-size: var(--wallcal-time-size);
+    color: var(--wallcal-muted);
+  }
+  .agenda__number {
+    font-size: var(--wallcal-event-size);
+    font-variant-numeric: tabular-nums;
+  }
+  .agenda__cell--today .agenda__number {
+    color: var(--wallcal-accent);
+    font-weight: 600;
+  }
+  .agenda__dots {
+    display: flex;
+    gap: 3px;
+    height: 5px;
+  }
+  .agenda__dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--dot-color);
+  }
+  /* Positioned so the day sections' offsetTop is measured from the list, which the jump and highlight use. */
+  .agenda__list {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    /* Room for the floating navbar and the home indicator, so the last event can be scrolled clear. */
+    padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+  }
+  .agenda__list .toggles {
+    flex-wrap: wrap;
+    margin-top: 2px;
+  }
+  .agenda__warning {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    margin: 6px 0;
+    font-size: var(--wallcal-time-size);
+    color: var(--wallcal-muted);
+    white-space: pre-line;
+  }
+  .agenda__day {
+    padding-top: 10px;
+  }
+  .agenda__head {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    min-width: 0;
+    margin-bottom: 4px;
+  }
+  .agenda__date {
+    font-size: calc(var(--wallcal-date-size) * 0.66);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .agenda__day--today .agenda__date {
+    color: var(--wallcal-accent);
+  }
+  .agenda__name {
+    font-size: var(--wallcal-weekday-size);
+    font-weight: 600;
+  }
+  .agenda__labels {
+    font-size: var(--wallcal-time-size);
+  }
+  .agenda__head .day__markers {
+    margin-left: auto;
+    align-self: center;
+  }
+  .agenda__events {
+    display: flex;
+    flex-direction: column;
+    gap: var(--wallcal-gap);
+  }
+  /* One line per event: the phone list is read top to bottom, so the time sits beside the title. */
+  .agenda__events .chip--timed {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 10px;
+    padding-block: 6px;
+  }
+  .agenda__events .chip__time {
+    flex: none;
+    min-width: 3.2em;
+  }
+  .agenda__events .chip__title {
+    -webkit-line-clamp: 1;
+  }
+  .agenda__failed,
+  .agenda__empty {
+    padding: 2px 0 2px 10px;
+    font-size: var(--wallcal-time-size);
+    color: var(--wallcal-muted);
+  }
+  .agenda__today {
+    all: unset;
+    cursor: pointer;
+    position: absolute;
+    right: 8px;
+    bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: var(--wallcal-time-size);
+    background: var(--wallcal-background);
+    color: var(--wallcal-accent);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25), inset 0 0 0 1px var(--wallcal-divider);
   }
 `;

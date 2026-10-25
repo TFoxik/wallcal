@@ -4,6 +4,31 @@ import { ENTITY_PALETTE, normalizeConfig } from '../src/config';
 const minimal = { entities: ['calendar.family'] };
 
 describe('normalizeConfig', () => {
+  it('defaults to the week view with three upcoming events', () => {
+    const config = normalizeConfig(minimal);
+    expect(config.view).toBe('week');
+    expect(config.upcoming).toEqual({ count: 3, navigation_path: null });
+  });
+
+  it('parses view and upcoming', () => {
+    const config = normalizeConfig({ ...minimal, view: 'Agenda', upcoming: { count: 5, navigation_path: '/smart-home/calendar' } });
+    expect(config.view).toBe('agenda');
+    expect(config.upcoming).toEqual({ count: 5, navigation_path: '/smart-home/calendar' });
+  });
+
+  it('rejects a bad view or count', () => {
+    expect(() => normalizeConfig({ ...minimal, view: 'month' })).toThrow(/view must be one of: week, agenda, upcoming/);
+    for (const count of [0, 6]) {
+      expect(() => normalizeConfig({ ...minimal, upcoming: { count } })).toThrow(/upcoming.count must be a whole number from 1 to 5/);
+    }
+  });
+
+  it('navigation_path must be an in-app path', () => {
+    for (const path of ['https://x.test', '//x.test', '/\\x.test', 'smart-home']) {
+      expect(() => normalizeConfig({ ...minimal, upcoming: { navigation_path: path } })).toThrow(/upcoming.navigation_path must start with \//);
+    }
+  });
+
   it('fills every default', () => {
     expect(normalizeConfig(minimal)).toEqual({
       entities: [{ entity: 'calendar.family', color: ENTITY_PALETTE[0], toggle: false, display: 'chip' }],
@@ -27,6 +52,8 @@ describe('normalizeConfig', () => {
         show_fertile: true,
         show_ovulation: true,
       },
+      view: 'week',
+      upcoming: { count: 3, navigation_path: null },
       theme: 'default',
       style: {},
       font_url: null,

@@ -55,6 +55,7 @@ export default defineConfig({
           { text: 'Kitchen tablet', link: '/recipes/kitchen-tablet' },
           { text: 'Bedroom (night)', link: '/recipes/bedroom-night' },
           { text: 'Family with name days', link: '/recipes/family-name-days' },
+          { text: 'Phone', link: '/recipes/phone' },
         ],
       },
       {

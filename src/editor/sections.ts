@@ -1,4 +1,4 @@
-import { PAST_DAYS, PAST_EVENTS, WEEKDAYS } from '../config';
+import { PAST_DAYS, PAST_EVENTS, VIEWS, WEEKDAYS } from '../config';
 import { TIME_FORMATS, TITLE_MODES, WEEKDAY_FORMATS } from '../format';
 import { THEME_NAMES } from '../theme/presets';
 import { hexToRgb, isHex, rgbToHex } from './colors';
@@ -124,6 +124,25 @@ export const WEEK: SectionDef = {
   ],
 };
 
+export const VIEW: SectionDef = {
+  id: 'view',
+  title: 'View',
+  icon: 'mdi:cellphone',
+  prefix: [],
+  rules: { defaults: { view: 'week' } },
+  lowercase: ['view'],
+  schema: () => [{ name: 'view', selector: select(VIEWS) }],
+};
+
+export const UPCOMING: SectionDef = {
+  id: 'upcoming',
+  title: 'Home strip',
+  icon: 'mdi:format-list-bulleted',
+  prefix: ['upcoming'],
+  rules: { defaults: { count: 3, navigation_path: '' } },
+  schema: () => [number('count', 1, 5), text('navigation_path')],
+};
+
 const titleSelector = select([...TITLE_MODES, 'none'], { custom_value: true });
 
 export const HEADER: SectionDef = {
@@ -240,6 +259,9 @@ export const STYLE: SectionDef = {
 };
 
 const LABELS: Record<string, string> = {
+  view: 'Layout',
+  count: 'Events shown',
+  navigation_path: 'Open on tap',
   days: 'Days shown',
   first_day: 'Week starts on',
   time_format: 'Time format',
@@ -270,6 +292,8 @@ const LABELS: Record<string, string> = {
 };
 
 const HELPERS: Record<string, string> = {
+  view: 'week for a wall tablet, agenda for a phone tab, upcoming for a small next-up card',
+  navigation_path: 'A dashboard path, for example /smart-home/calendar',
   title: 'month, range, none, or your own text',
   idle_return: '0 never jumps back',
   font_url: 'Must start with https:// or /',

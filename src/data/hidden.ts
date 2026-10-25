@@ -1,7 +1,7 @@
 import { readJson, writeJson } from './storage';
 
 // One list per device, shared by every card; a card only applies it to calendars it has a chip for.
-const HIDDEN_KEY = 'wallcal:hidden-calendars';
+export const HIDDEN_KEY = 'wallcal:hidden-calendars';
 
 function readStored(): Set<string> | undefined {
   const stored = readJson(HIDDEN_KEY);
@@ -11,6 +11,13 @@ function readStored(): Set<string> | undefined {
 
 export function loadHidden(): Set<string> {
   return readStored() ?? new Set();
+}
+
+// Picks up a choice another card or tab made; keeps the card's own set when storage is blocked.
+export function reloadHidden(current: Set<string>): Set<string> {
+  const stored = readStored();
+  if (!stored || (stored.size === current.size && [...stored].every((id) => current.has(id)))) return current;
+  return stored;
 }
 
 // Re-reads storage first so another card on the page that toggled a different calendar is kept;

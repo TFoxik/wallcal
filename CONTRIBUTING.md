@@ -20,7 +20,8 @@ npm run build
 
 `dev/ha/` holds a throwaway Home Assistant setup: two fixture calendars (`calendar.family`,
 `calendar.work`) whose events come from `dev/ha/config/wallcal_fixture.json` relative to today,
-and a YAML dashboard with three WallCal variants. Install Home Assistant once as a uv tool (puts
+and three YAML dashboards: Overview (the wall tablet in its themes and layouts), Phone (the next-up
+card and the Calendar tab) and Docs recipes (the cards the docs' recipes and pictures use). Install Home Assistant once as a uv tool (puts
 `hass` on PATH, kept apart from any project's environment), then start the harness:
 
 ```bash
@@ -74,7 +75,7 @@ a weekend clamps two days together.
 Bump `version` in `package.json`, commit, then tag and push:
 
 ```bash
-git tag v0.3.3 && git push origin v0.3.3
+git tag v0.4.0 && git push origin v0.4.0
 ```
 
 The release workflow checks the tag matches `package.json`, runs the tests, builds and attaches

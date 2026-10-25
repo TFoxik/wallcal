@@ -85,6 +85,14 @@ export interface OverlayConfig {
   card: Record<string, unknown>;
 }
 
+export const VIEWS = ['week', 'agenda', 'upcoming'] as const;
+export type View = (typeof VIEWS)[number];
+
+export interface UpcomingConfig {
+  count: number;
+  navigation_path: string | null;
+}
+
 export interface WallCalConfig {
   entities: EntityConfig[];
   days: DayCount;
@@ -101,6 +109,8 @@ export interface WallCalConfig {
   moon: MoonConfig;
   period: PeriodConfig;
   overlays: OverlayConfig[];
+  view: View;
+  upcoming: UpcomingConfig;
   theme: ThemeName;
   style: Partial<Record<Token, string>>;
   font_url: string | null;
@@ -115,6 +125,9 @@ const ICON = /^[a-z0-9-]+:[a-z0-9-]+$/;
 // Each label calendar gets its own header line; more than two would crowd out the events.
 const MAX_LABEL_CALENDARS = 2;
 const FONT_URL = /^(https:\/\/|\/(?!\/))/;
+// A path inside Home Assistant only: a full or protocol-relative URL would send the tap to another site,
+// and browsers read a leading /\ as //.
+const NAV_PATH = /^\/(?![/\\])/;
 export const PERCENT = /^\d+(\.\d+)?%$/;
 
 type Raw = Record<string, unknown>;
@@ -127,6 +140,7 @@ export function normalizeConfig(input: unknown): WallCalConfig {
   const header = section(raw.header, 'header');
   const moon = section(raw.moon, 'moon');
   const period = section(raw.period, 'period');
+  const upcoming = section(raw.upcoming, 'upcoming');
 
   const periodEnabled = bool(period.enabled, false, 'period.enabled');
   const lastPeriod = toLocalDate(period.last_period, 'period.last_period');
@@ -171,6 +185,11 @@ export function normalizeConfig(input: unknown): WallCalConfig {
       show_ovulation: bool(period.show_ovulation, true, 'period.show_ovulation'),
     },
     overlays: parseOverlays(raw.overlays, days),
+    view: oneOf(raw.view, VIEWS, 'week', 'view'),
+    upcoming: {
+      count: int(upcoming.count, 3, 1, 5, 'upcoming.count'),
+      navigation_path: navigationPath(upcoming.navigation_path),
+    },
     theme: oneOf(raw.theme, THEME_NAMES, 'default', 'theme'),
     style,
     font_url: fontUrl,
@@ -327,6 +346,13 @@ function maxHeight(value: unknown, path: string): string {
   const text = String(value).trim();
   if (text.endsWith('%')) return `${percent(text, 40, path)}%`;
   return `${int(text.replace(/px$/, ''), 0, 1, 2000, `${path} (pixels)`)}px`;
+}
+
+function navigationPath(value: unknown): string | null {
+  if (value === undefined || value === null || value === '') return null;
+  const path = String(value).trim();
+  if (!NAV_PATH.test(path)) throw new Error('upcoming.navigation_path must start with / (a path in Home Assistant)');
+  return path;
 }
 
 function icon(value: unknown, path: string): string {

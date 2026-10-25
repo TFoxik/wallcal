@@ -1,10 +1,12 @@
 import { LitElement, html, nothing } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
 import { styleMap } from 'lit/directives/style-map.js';
+import { renderAgenda } from './components/agenda';
 import type { HeaderToggle } from './components/header-toggles';
-import { chipsBelow, renderDayColumn } from './components/day-column';
+import { chipsBelow, labelLines, renderDayColumn } from './components/day-column';
 import { OverlayCards, renderOverlay, renderPill } from './components/overlay-host';
 import { renderTopBar } from './components/top-bar';
+import { renderUpcoming } from './components/upcoming';
 import { isCalendarEntityId, normalizeConfig, type HeaderTitle, type OverlayConfig, type WallCalConfig } from './config';
 import { cycleInfo, type CycleInput } from './cycle/predict';
 import {
@@ -16,17 +18,19 @@ import {
   nextEventEnd,
   type EventCache,
 } from './data/events';
-import { loadHidden, toggleHidden } from './data/hidden';
+import { HIDDEN_KEY, loadHidden, reloadHidden, toggleHidden } from './data/hidden';
+import { upcomingEvents } from './data/upcoming';
 import { isOverlayShown, loadOverlayState, pillCount, toggleOverlay, type OverlayState } from './data/overlays';
 import { forecastType, sameForecast, subscribeForecast, type DayForecast } from './data/weather';
 import { rangeKeyOf, WeekCache } from './data/weeks';
+import { rangeDates, rangeFor } from './range';
 import { addDays, dayKey, isSameDay, msUntilNextMidnight, startOfDay } from './date';
 import { defineEditor } from './editor/wallcal-card-editor';
 import { formatTitle, resolveHourCycle } from './format';
 import type { HomeAssistant } from './ha-types';
 import { resolveTokens } from './theme/presets';
 import { cardStyles } from './theme/styles';
-import { isSameWeek, weekDates, weekStart } from './week';
+import { isSameWeek } from './week';
 
 export class WallCalCard extends LitElement {
   static styles = cardStyles;
@@ -38,6 +42,7 @@ export class WallCalCard extends LitElement {
     _today: { state: true },
     _cache: { state: true },
     _warning: { state: true },
+    _allFailed: { state: true },
     _now: { state: true },
     _hidden: { state: true },
     _overlayState: { state: true },
@@ -45,6 +50,7 @@ export class WallCalCard extends LitElement {
     _forecast: { state: true },
     _weatherWarning: { state: true },
     _more: { state: true },
+    _activeKey: { state: true },
   };
 
   /** Set by HA: 'panel', 'grid' (sections) or 'masonry'. */
@@ -54,6 +60,8 @@ export class WallCalCard extends LitElement {
   declare _today: Date;
   declare _cache: EventCache | null;
   declare _warning: string | null;
+  /** Every calendar failed on the last fetch and nothing is cached: an empty list would be a wrong answer. */
+  declare _allFailed: boolean;
   declare _now: Date;
   declare _hidden: Set<string>;
   declare _overlayState: OverlayState;
@@ -62,6 +70,8 @@ export class WallCalCard extends LitElement {
   declare _weatherWarning: string | null;
   /** Per day key, how many timed events are below the visible part of that day's list. */
   declare _more: Map<string, number>;
+  /** Agenda view: the day at the top of the list, highlighted on the strip. */
+  declare _activeKey: string;
 
   private _hass?: HomeAssistant;
   private _seen = new Map<string, string>();
@@ -77,6 +87,9 @@ export class WallCalCard extends LitElement {
   private _weatherUnsub: Promise<() => Promise<void>> | null = null;
   private _overlayCards = new OverlayCards(() => this.requestUpdate());
   private _measureFrame?: number;
+  private _agendaFrame?: number;
+  /** The day last tapped on the strip, until the user scrolls the list themselves. */
+  private _jumpTarget: string | null = null;
   // A resize changes how many events fit; the lists do not change size on their own otherwise.
   private _resizeObserver = new ResizeObserver(() => this._scheduleMeasure());
 
@@ -87,12 +100,14 @@ export class WallCalCard extends LitElement {
     this._anchor = this._today;
     this._cache = null;
     this._warning = null;
+    this._allFailed = false;
     this._hidden = loadHidden();
     this._overlayState = loadOverlayState();
     this._pillCounts = '';
     this._forecast = null;
     this._weatherWarning = null;
     this._more = new Map();
+    this._activeKey = dayKey(this._today);
   }
 
   static getConfigElement(): HTMLElement {
@@ -113,6 +128,8 @@ export class WallCalCard extends LitElement {
     const sameEvents = previous !== undefined && eventSource(previous) === eventSource(this._config);
     if (!sameEvents) {
       this._cache = null;
+      this._allFailed = false;
+      this._warning = null;
       this._weeks.clear();
       // A request still in flight was made for the old config; its response must not fill the new cache.
       this._fetchSeq++;
@@ -150,16 +167,24 @@ export class WallCalCard extends LitElement {
   }
 
   getCardSize(): number {
-    return 8;
+    return this._config?.view === 'upcoming' ? this._config.upcoming.count + 1 : 8;
   }
 
   getGridOptions(): Record<string, unknown> {
+    if (this._config?.view === 'upcoming') {
+      // Two 56px grid rows hold the header and up to three events at the default sizes.
+      const rows = this._config.upcoming.count <= 3 ? 2 : 3;
+      return { columns: 'full', rows, min_rows: rows };
+    }
     return { columns: 'full', rows: 8, min_rows: 6 };
   }
 
   connectedCallback(): void {
     super.connectedCallback();
     document.addEventListener('visibilitychange', this._onVisibilityChange);
+    window.addEventListener('storage', this._onStorage);
+    // HA keeps a left view's cards alive, so a calendar hidden on another view only shows up here on return.
+    this._hidden = reloadHidden(this._hidden);
     this._resizeObserver.observe(this);
     this._tick();
     this._armIdleReturn();
@@ -169,12 +194,15 @@ export class WallCalCard extends LitElement {
   disconnectedCallback(): void {
     super.disconnectedCallback();
     document.removeEventListener('visibilitychange', this._onVisibilityChange);
+    window.removeEventListener('storage', this._onStorage);
     clearTimeout(this._tickTimer);
     clearTimeout(this._endTimer);
     clearTimeout(this._idleTimer);
     this._resizeObserver.disconnect();
     if (this._measureFrame !== undefined) cancelAnimationFrame(this._measureFrame);
     this._measureFrame = undefined;
+    if (this._agendaFrame !== undefined) cancelAnimationFrame(this._agendaFrame);
+    this._agendaFrame = undefined;
     this._unsubscribeWeather();
   }
 
@@ -189,7 +217,7 @@ export class WallCalCard extends LitElement {
 
     const { language } = hass.locale;
     const hourCycle = resolveHourCycle(config.time_format, hass.locale);
-    const days = weekDates(this._anchor, config.days, config.first_day);
+    const days = rangeDates(rangeFor(config, this._anchor, this._today));
     const hidden = new Set(config.entities.filter((e) => e.toggle && this._hidden.has(e.entity)).map((e) => e.entity));
     const events = cachedEvents(this._cache).filter((e) => !hidden.has(e.entity));
     const { period } = config;
@@ -199,6 +227,52 @@ export class WallCalCard extends LitElement {
         : null;
     const tokens = { ...resolveTokens(config.theme, config.style), '--wallcal-days': String(config.days) };
     const labelCalendars = config.entities.filter((e) => e.display === 'label' && !hidden.has(e.entity)).map((e) => e.entity);
+    const status = this._allFailed ? 'failed' : this._cache ? 'ready' : 'loading';
+
+    if (config.view === 'agenda') {
+      return html`<ha-card style=${styleMap(tokens)}>
+        ${renderAgenda({
+          days: days.map((date) => ({
+            date,
+            key: dayKey(date),
+            events: eventsForDay(events, date),
+            cycle: cycleInput ? cycleInfo(date, cycleInput) : null,
+          })),
+          today: this._today,
+          activeKey: this._activeKey,
+          toggles: this._toggles(config, hidden),
+          warning: this._warning,
+          status,
+          labelCalendars,
+          language,
+          hourCycle,
+          showEndTime: config.show_end_time,
+          pastEvents: config.past_events,
+          now: this._now,
+          moon: config.moon,
+          showOvulation: period.show_ovulation,
+          onJump: (key) => this._jumpTo(key),
+          onScroll: () => this._scheduleAgendaScroll(),
+          onTouch: (event) => this._touchList(event),
+        })}
+      </ha-card>`;
+    }
+
+    if (config.view === 'upcoming') {
+      const navigable = config.upcoming.navigation_path !== null;
+      return html`<ha-card class=${navigable ? 'navigable' : ''} style=${styleMap(tokens)} @click=${() => this._open()}>
+        ${renderUpcoming({
+          items: upcomingEvents(events, days, this._now, config.upcoming.count, new Set(labelCalendars)),
+          today: this._today,
+          labels: labelLines(eventsForDay(events, this._today), labelCalendars),
+          language,
+          hourCycle,
+          warning: this._warning,
+          status,
+          navigable,
+        })}
+      </ha-card>`;
+    }
 
     return html`<ha-card style=${styleMap(tokens)} @pointerdown=${() => this._touch()}>
       ${renderTopBar({
@@ -250,8 +324,10 @@ export class WallCalCard extends LitElement {
   // Brings today's next upcoming event to the top of its list. Waits until the lists have not been
   // touched for the idle time, so it never yanks a list the user is reading.
   protected updated(): void {
-    this._scheduleMeasure();
     const config = this._config;
+    if (config?.view === 'agenda') this._returnAgendaToToday();
+    if (config?.view !== 'week') return;
+    this._scheduleMeasure();
     if (!this._scrollPending || !config?.auto_scroll) return;
     if (Date.now() - this._lastListTouch < (config.header.idle_return || 60) * 1000) return;
     const list = this.renderRoot.querySelector<HTMLElement>('.day--today .day__events');
@@ -259,6 +335,47 @@ export class WallCalCard extends LitElement {
     this._scrollPending = false;
     const next = list.querySelector<HTMLElement>('.chip:not(.chip--ended)');
     list.scrollTop = next ? next.offsetTop : list.scrollHeight;
+  }
+
+  // Today is the top of the list. Like the week's auto-scroll, a tick only goes back there once the list
+  // has been left alone for a minute, so it never yanks a list the user is reading.
+  private _returnAgendaToToday(): void {
+    if (!this._scrollPending || Date.now() - this._lastListTouch < AGENDA_IDLE_MS) return;
+    const list = this.renderRoot.querySelector<HTMLElement>('.agenda__list');
+    if (!list) return;
+    this._scrollPending = false;
+    list.scrollTop = 0;
+    this._activeKey = dayKey(this._today);
+  }
+
+  private _jumpTo(key: string): void {
+    const list = this.renderRoot.querySelector<HTMLElement>('.agenda__list');
+    const section = list?.querySelector<HTMLElement>(`.agenda__day[data-day="${key}"]`);
+    if (!list || !section) return;
+    this._lastListTouch = Date.now();
+    this._jumpTarget = key;
+    list.scrollTop = key === dayKey(this._today) ? 0 : section.offsetTop;
+    this._readAgendaScroll(list);
+  }
+
+  private _scheduleAgendaScroll(): void {
+    if (this._agendaFrame !== undefined) return;
+    this._agendaFrame = requestAnimationFrame(() => {
+      this._agendaFrame = undefined;
+      const list = this.renderRoot.querySelector<HTMLElement>('.agenda__list');
+      if (list) this._readAgendaScroll(list);
+    });
+  }
+
+  private _readAgendaScroll(list: HTMLElement): void {
+    const sections = [...list.querySelectorAll<HTMLElement>('.agenda__day')];
+    if (!sections.length) return;
+    // 1px of slack: layout positions are fractional and these offsets are rounded.
+    const top = list.scrollTop + 1;
+    const active = sections.filter((s) => s.offsetTop <= top).pop() ?? sections[0];
+    // The last days can't reach the top of the list; a tapped one stays highlighted where the list stops.
+    const atEnd = list.scrollTop + list.clientHeight >= list.scrollHeight - 1;
+    this._activeKey = atEnd && this._jumpTarget ? this._jumpTarget : active.dataset.day!;
   }
 
   // Counts need layout, so they are measured after the render and on every scroll. Showing a count
@@ -356,12 +473,13 @@ export class WallCalCard extends LitElement {
   }
 
   private _rangeKey(config: WallCalConfig): string {
-    return rangeKeyOf(weekStart(this._anchor, config.days, config.first_day), config.days);
+    const { start, days } = rangeFor(config, this._anchor, this._today);
+    return rangeKeyOf(start, days);
   }
 
   private _isCurrentWeek(): boolean {
     const config = this._config;
-    return !config || isSameWeek(this._anchor, this._today, config.days, config.first_day);
+    return !config || config.view !== 'week' || isSameWeek(this._anchor, this._today, config.days, config.first_day);
   }
 
   private _calendarsChanged(hass: HomeAssistant): boolean {
@@ -378,14 +496,18 @@ export class WallCalCard extends LitElement {
     if (!config || !hass || !this.isConnected) return;
 
     const seq = ++this._fetchSeq;
-    const start = weekStart(this._anchor, config.days, config.first_day);
-    const rangeKey = rangeKeyOf(start, config.days);
+    const { start, days } = rangeFor(config, this._anchor, this._today);
+    const rangeKey = rangeKeyOf(start, days);
     this._requestedRange = rangeKey;
     // Runs from willUpdate on a week change, so the cached week lands in that same render.
-    if (this._cache?.rangeKey !== rangeKey) this._cache = this._weeks.get(rangeKey);
+    if (this._cache?.rangeKey !== rangeKey) {
+      this._cache = this._weeks.get(rangeKey);
+      // A failure in the old range says nothing about this one until it answers.
+      if (!this._cache) this._allFailed = false;
+    }
     for (const e of config.entities) this._seen.set(e.entity, hass.states[e.entity]?.last_changed ?? '');
 
-    const results = await fetchEvents(hass, config.entities, start, addDays(start, config.days));
+    const results = await fetchEvents(hass, config.entities, start, addDays(start, days));
     // A newer request (e.g. after a quick prev/next tap) supersedes this one.
     if (seq !== this._fetchSeq) return;
 
@@ -393,9 +515,10 @@ export class WallCalCard extends LitElement {
     this._weeks.put(rangeKey, this._cache);
     const errors = results.flatMap((r) => (r.error ? [r.error] : []));
     this._warning = errors.length ? errors.join('\n') : null;
+    this._allFailed = errors.length === results.length && cachedEvents(this._cache).length === 0;
     if (this.isConnected) {
       this._armEndTimer();
-      this._weeks.prefetchAround(hass, config.entities, start, config.days);
+      if (config.view === 'week') this._weeks.prefetchAround(hass, config.entities, start, days);
     }
   }
 
@@ -412,6 +535,7 @@ export class WallCalCard extends LitElement {
 
   // The overlays and pills sit inside the grid; using one must not pause auto-scroll of the day lists.
   private _touchList(event: Event): void {
+    this._jumpTarget = null;
     if (!(event.target as Element).closest('.overlay, .pill')) this._lastListTouch = Date.now();
     this._touch();
   }
@@ -460,13 +584,29 @@ export class WallCalCard extends LitElement {
   }
 
   private _onVisibilityChange = (): void => {
-    if (!document.hidden) this._tick();
+    if (document.hidden) return;
+    this._hidden = reloadHidden(this._hidden);
+    this._tick();
   };
+
+  private _onStorage = (event: StorageEvent): void => {
+    if (event.key === null || event.key === HIDDEN_KEY) this._hidden = reloadHidden(this._hidden);
+  };
+
+  // HA's own way to change view: push the path, then tell the app shell the location changed.
+  private _open(): void {
+    const path = this._config?.upcoming.navigation_path;
+    if (this._config?.view !== 'upcoming' || !path) return;
+    history.pushState(null, '', path);
+    window.dispatchEvent(new CustomEvent('location-changed', { detail: { replace: false } }));
+  }
 }
+
+const AGENDA_IDLE_MS = 60_000;
 
 // What cached events depend on: the range, the calendars, and the labels baked into each event.
 function eventSource(config: WallCalConfig): string {
-  return JSON.stringify([config.days, config.first_day, config.entities.map((e) => [e.entity, e.color, e.strip_prefix, e.suffix])]);
+  return JSON.stringify([config.view, config.days, config.first_day, config.entities.map((e) => [e.entity, e.color, e.strip_prefix, e.suffix])]);
 }
 
 function headerText(setting: HeaderTitle, days: Date[], language: string): string | null {

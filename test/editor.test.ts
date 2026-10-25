@@ -153,7 +153,7 @@ describe('wallcal-card-editor', () => {
       ...list.shadowRoot!.querySelectorAll<Stub>('ha-form'),
       ...calendars.shadowRoot!.querySelectorAll<Stub>('ha-form'),
     ];
-    expect(forms).toHaveLength(9);
+    expect(forms).toHaveLength(10);
     const hasNaN = (v: unknown): boolean =>
       typeof v === 'number' ? Number.isNaN(v) : v !== null && typeof v === 'object' ? Object.values(v).some(hasNaN) : false;
     for (const f of forms) {
@@ -161,5 +161,47 @@ describe('wallcal-card-editor', () => {
       f.dispatchEvent(new CustomEvent('value-changed', { detail: { value: f.data } }));
     }
     expect(events).toEqual([]);
+  });
+});
+
+const panels = (el: WallCalCardEditor) =>
+  [...el.shadowRoot!.querySelectorAll<HTMLElement & { header: string }>('ha-expansion-panel')].map((p) => p.header);
+
+describe('wallcal-card-editor: view', () => {
+  it('shows the View panel, with the Home strip fields only for upcoming', async () => {
+    const week = await mount(base);
+    expect(panels(week.el)).toContain('View');
+    expect(() => form(week.el, 'count')).toThrow();
+    const upcoming = await mount({ ...base, view: 'upcoming' });
+    expect(form(upcoming.el, 'count').data).toEqual({ count: 3, navigation_path: '' });
+    change(form(upcoming.el, 'count'), {});
+    expect(upcoming.events).toEqual([]);
+  });
+
+  it('hides the Top bar, Weather and Floating cards panels outside the week view', async () => {
+    const week = await mount(base);
+    expect(panels(week.el)).toEqual(expect.arrayContaining(['Top bar', 'Weather', 'Floating cards']));
+    for (const view of ['agenda', 'upcoming']) {
+      const { el } = await mount({ ...base, view });
+      expect(panels(el)).not.toContain('Top bar');
+      expect(panels(el)).not.toContain('Weather');
+      expect(panels(el)).not.toContain('Floating cards');
+      expect(panels(el)).toContain('Week');
+    }
+  });
+
+  it('writes the chosen view', async () => {
+    const { el, events } = await mount(base);
+    change(form(el, 'view'), { view: 'agenda' });
+    expect(events).toEqual([{ ...base, view: 'agenda' }]);
+  });
+
+  it('writes the Home strip fields and keeps an empty navigation_path out of the YAML', async () => {
+    const { el, events } = await mount({ ...base, view: 'upcoming' });
+    change(form(el, 'count'), { count: 2 });
+    expect(events.at(-1)).toEqual({ ...base, view: 'upcoming', upcoming: { count: 2 } });
+    const set = await mount({ ...base, view: 'upcoming', upcoming: { navigation_path: '/home/calendar' } });
+    change(form(set.el, 'navigation_path'), { navigation_path: '' });
+    expect(set.events.at(-1)).toEqual({ ...base, view: 'upcoming' });
   });
 });

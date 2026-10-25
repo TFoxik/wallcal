@@ -45,22 +45,17 @@ export interface DayColumnProps {
 export function renderDayColumn(p: DayColumnProps): TemplateResult {
   const { cycle } = p;
   const fertile = !!cycle && p.showFertile && cycle.isFertile;
-  const ovulation = !!cycle && p.showOvulation && cycle.isOvulation;
   const dateNumber = html`<span class="day__date">${p.date.getDate()}</span>`;
   const now = p.now;
   const ended = (item: DayEvent) => now !== null && isEnded(item, now);
-  const labelLines = p.labelCalendars.map((entity) => p.events.filter((e) => e.event.entity === entity));
-  const chips = p.events.filter((e) => !p.labelCalendars.includes(e.event.entity));
+  const lines = labelLines(p.events, p.labelCalendars);
+  const chips = chipEvents(p.events, p.labelCalendars);
   const allDay = chips.filter((e) => e.event.allDay);
   const timed = chips.filter((e) => !e.event.allDay);
   const { markersInInfo } = p;
   // Beside the name-day labels there is no room for the moon's name, only its icon.
   const moonName = p.moon.show_name && !markersInInfo;
-  const markers = html`<span class="day__markers">
-    ${cycle?.isPeriod ? icon(dropIcon, 'marker marker--period', 'Expected period') : nothing}
-    ${ovulation ? icon(eggIcon, 'marker marker--ovulation', 'Expected ovulation') : nothing}
-    ${p.moon.enabled ? renderMoonIcon(moonPhase(p.date), p.moon.hemisphere, moonName) : nothing}
-  </span>`;
+  const markers = renderMarkers(p.date, cycle, p.showOvulation, p.moon, moonName);
 
   return html`<section class=${classMap({
     day: true,
@@ -79,14 +74,10 @@ export function renderDayColumn(p: DayColumnProps): TemplateResult {
             : markers}
         </div>
       </div>
-      ${labelLines.length || markersInInfo
+      ${lines.length || markersInInfo
         ? html`<div class="day__info">
             <div class="day__labels">
-              ${labelLines.map(
-                (line) => html`<div class="day__label-line" style=${styleMap({ color: line[0]?.event.color })}>
-                  ${line.map((e, i) => html`${i ? ' · ' : ''}${renderTitle(e.event)}`)}
-                </div>`,
-              )}
+              ${lines.map(renderLabelLine)}
             </div>
             ${markersInInfo ? markers : nothing}
           </div>`
@@ -100,6 +91,36 @@ export function renderDayColumn(p: DayColumnProps): TemplateResult {
     </div>
     ${p.more ? html`<button class="day__more" type="button" @click=${showMore}>+${p.more} more</button>` : nothing}
   </section>`;
+}
+
+export function renderMarkers(
+  date: Date,
+  cycle: CycleDay | null,
+  showOvulation: boolean,
+  moon: MoonConfig,
+  moonName: boolean,
+): TemplateResult {
+  const ovulation = !!cycle && showOvulation && cycle.isOvulation;
+  return html`<span class="day__markers">
+    ${cycle?.isPeriod ? icon(dropIcon, 'marker marker--period', 'Expected period') : nothing}
+    ${ovulation ? icon(eggIcon, 'marker marker--ovulation', 'Expected ovulation') : nothing}
+    ${moon.enabled ? renderMoonIcon(moonPhase(date), moon.hemisphere, moonName) : nothing}
+  </span>`;
+}
+
+/** One entry per label calendar, in config order, with that calendar's events of the day (possibly none). */
+export function labelLines(events: DayEvent[], labelCalendars: string[]): DayEvent[][] {
+  return labelCalendars.map((entity) => events.filter((e) => e.event.entity === entity));
+}
+
+export function chipEvents(events: DayEvent[], labelCalendars: readonly string[]): DayEvent[] {
+  return events.filter((e) => !labelCalendars.includes(e.event.entity));
+}
+
+export function renderLabelLine(line: DayEvent[]): TemplateResult {
+  return html`<div class="day__label-line" style=${styleMap({ color: line[0]?.event.color })}>
+    ${line.map((e, i) => html`${i ? ' · ' : ''}${renderTitle(e.event)}`)}
+  </div>`;
 }
 
 /** Chips in a day list that are not fully in view below its scroll position; hidden chips have no height. */

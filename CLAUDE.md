@@ -16,7 +16,7 @@ npm run docs:build    # the docs site; CI runs it too
 Start servers with `preview_start` and the names in `.claude/launch.json`, not from Bash:
 
 - `ha` — the dev Home Assistant harness (`dev/ha/start.sh`): builds the card, then runs `hass -c dev/ha/config` on
-  port 8124 with fixture calendars and a three-variant dashboard. Loopback only, no login.
+  port 8124 with fixture calendars and three dashboards: Overview (tablet), Phone, Docs recipes. Loopback only, no login.
   `http://127.0.0.1:8124` always works; `localhost` works too unless `dev/ha/config/.storage/http` predates the
   `::1` bind (HA ignores the YAML `http:` block once that file exists — delete it to re-apply). Hard-refresh after
   a rebuild: HA caches the old card.

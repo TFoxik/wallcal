@@ -95,12 +95,12 @@ function editorPanels(): string[] {
 
 describe('docs site: content', () => {
   it('every recipe matches its dev-harness view', () => {
-    const views = YAML.parse(readFileSync(join(ROOT, 'dev/ha/config/ui-lovelace.yaml'), 'utf8'), { merge: true }).views as {
+    const views = YAML.parse(readFileSync(join(ROOT, 'dev/ha/config/dashboards/recipes.yaml'), 'utf8'), { merge: true }).views as {
       path?: string;
       cards?: unknown[];
     }[];
     const recipes = pagesIn('recipes');
-    expect(recipes).toHaveLength(3);
+    expect(recipes).toHaveLength(4);
     for (const file of recipes) {
       const md = readDoc(file);
       const view = views.find((v) => v.path === frontmatter(md).harnessView);
@@ -111,7 +111,7 @@ describe('docs site: content', () => {
 
   it('editor lines name real panels', () => {
     const panels = editorPanels();
-    expect([...panels].sort()).toEqual(['Calendars', 'Cycle', 'Floating cards', 'Moon', 'Theme & style', 'Top bar', 'Weather', 'Week']);
+    expect([...panels].sort()).toEqual(['Calendars', 'Cycle', 'Floating cards', 'Moon', 'Theme & style', 'Top bar', 'View', 'Weather', 'Week']);
     let count = 0;
     for (const file of docPages()) {
       for (const m of readDoc(file).matchAll(/\*\*In the visual editor:\*\* ([^→\n]+?)(?: →|\n|$)/g)) {

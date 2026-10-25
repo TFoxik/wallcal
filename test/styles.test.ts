@@ -36,4 +36,9 @@ describe('panel layout height', () => {
       ":host([layout='panel']) { height: calc(100vh - var(--kiosk-header-height, var(--header-height, 56px))); }",
     );
   });
+
+  it('measures agenda days from the scrolling list, not the card', () => {
+    const css = cardStyles.cssText.replace(/\s+/g, ' ');
+    expect(css).toMatch(/\.agenda__list \{[^}]*position: relative;/);
+  });
 });

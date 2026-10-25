@@ -1,0 +1,39 @@
+# A phone dashboard laid out like a real one: a Home view with the next-up card, and the Calendar tab it opens.
+title: WallCal phone
+views:
+  - title: Home
+    path: home
+    icon: mdi:home
+    type: sections
+    max_columns: 1
+    sections:
+      - cards:
+          - type: custom:wallcal-card
+            view: upcoming
+            entities: &phone_calendars
+              - entity: calendar.family
+                color: "#7F77DD"
+              - entity: calendar.work
+                color: "#5DCAA5"
+                toggle: true
+                icon: mdi:briefcase
+              - entity: calendar.namedays
+                color: "#F4A27A"
+                display: label
+                strip_prefix: "Svátek:"
+            upcoming:
+              navigation_path: /wallcal-phone/calendar
+          - type: todo-list
+            entity: todo.shopping
+            hide_completed: true
+  - title: Calendar
+    path: calendar
+    icon: mdi:calendar
+    panel: true
+    cards:
+      - type: custom:wallcal-card
+        view: agenda
+        entities: *phone_calendars
+        past_events: dim
+        moon:
+          enabled: true

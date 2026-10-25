@@ -1,7 +1,8 @@
 # All options
 
 Every option with its default. Only `type` and `entities` are required. Invalid config shows as an
-error card with a message naming the bad option.
+error card with a message naming the bad option. With `view: agenda` or `view: upcoming`, the week, `header`,
+`weather` and `overlays` options are ignored; see the [phone recipe](../recipes/phone).
 
 ```yaml
 type: custom:wallcal-card
@@ -45,6 +46,10 @@ period:
   period_length: 5
   show_fertile: true
   show_ovulation: true
+view: week                        # week | agenda (a phone tab: 7 days from today) | upcoming (a next-up card)
+upcoming:                         # only for view: upcoming
+  count: 3                        # events shown, 1 – 5
+  navigation_path: /dashboard-phone/calendar  # opened on tap, a path in Home Assistant; no tap when omitted
 theme: default                    # default | paper | midnight
 style: {}                         # any token below, plus font_url
 overlays:                         # cards floating over the bottom of the week, one per position

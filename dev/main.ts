@@ -170,9 +170,15 @@ const VARIANTS: Array<[string, Record<string, unknown>]> = [
   ],
 ];
 
+const PHONE_VARIANTS: Array<[string, Record<string, unknown>]> = [
+  ['Phone: agenda', { ...chips, view: 'agenda', past_events: 'dim', moon: { enabled: true } }],
+  ['Phone: upcoming', { ...chips, view: 'upcoming', upcoming: { navigation_path: '/wallcal-phone/calendar' } }],
+];
+
 const container = document.getElementById('variants') as HTMLElement;
-for (const [label, config] of VARIANTS) {
+for (const [label, config] of [...VARIANTS, ...PHONE_VARIANTS]) {
   const section = document.createElement('section');
+  if (PHONE_VARIANTS.some(([phone]) => phone === label)) section.className = 'phone';
   const heading = document.createElement('h2');
   heading.textContent = label;
   const card = document.createElement('wallcal-card') as WallCalCard;

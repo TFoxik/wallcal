@@ -1,0 +1,117 @@
+# Recipes from the docs site: docs/recipes/*.md must show exactly these cards (test/docs.test.ts), and
+# dev/screenshots.mjs takes the recipe pictures here.
+title: WallCal recipes
+views:
+  - title: Kitchen
+    path: recipe-kitchen
+    panel: true
+    cards:
+      - type: custom:wallcal-card
+        entities:
+          - entity: calendar.family
+            color: "#7F77DD"
+          - entity: calendar.work
+            color: "#5DCAA5"
+            toggle: true
+            icon: mdi:briefcase
+        past_events: dim
+        header:
+          idle_return: 60
+        weather:
+          entity: weather.home
+          show_low: true
+        moon:
+          enabled: true
+        overlays:
+          - position: bottom-right
+            icon: mdi:format-list-checks
+            toggle: pill
+            name: Shopping
+            card:
+              type: todo-list
+              entity: todo.shopping
+              hide_completed: true
+  - title: Bedroom
+    path: recipe-bedroom
+    panel: true
+    cards:
+      - type: custom:wallcal-card
+        entities:
+          - entity: calendar.family
+            color: "#8E87E0"
+        days: 5
+        theme: midnight
+        past_days: grey
+        past_events: hide
+        header:
+          title: range
+          navigation: false
+        style:
+          date_size: 40
+          event_size: 18
+          time_size: 15
+  - title: Family
+    path: recipe-family
+    panel: true
+    cards:
+      - type: custom:wallcal-card
+        entities:
+          - entity: calendar.family
+            color: "#7F77DD"
+          - entity: calendar.work
+            color: "#5DCAA5"
+          - entity: calendar.namedays
+            color: "#F4A27A"
+            display: label
+            strip_prefix: "Svátek:"
+            suffix: CZ
+          - entity: calendar.namedays_sk
+            color: "#8FB8E8"
+            display: label
+            suffix: SK
+        weekday_format: long
+        weather:
+          entity: weather.home
+        moon:
+          enabled: true
+          show_name: true
+  - title: Phone
+    path: recipe-phone
+    panel: true
+    cards:
+      - type: custom:wallcal-card
+        view: agenda
+        entities:
+          - entity: calendar.family
+            color: "#7F77DD"
+          - entity: calendar.work
+            color: "#5DCAA5"
+            toggle: true
+            icon: mdi:briefcase
+          - entity: calendar.namedays
+            color: "#F4A27A"
+            display: label
+            strip_prefix: "Svátek:"
+        past_events: dim
+        moon:
+          enabled: true
+  - title: Phone home
+    path: phone-home
+    type: sections
+    max_columns: 1
+    sections:
+      - cards:
+          - type: custom:wallcal-card
+            view: upcoming
+            entities:
+              - entity: calendar.family
+                color: "#7F77DD"
+              - entity: calendar.work
+                color: "#5DCAA5"
+                toggle: true
+              - entity: calendar.namedays
+                color: "#F4A27A"
+                display: label
+                strip_prefix: "Svátek:"
+            upcoming:
+              navigation_path: /wallcal-recipes/recipe-phone

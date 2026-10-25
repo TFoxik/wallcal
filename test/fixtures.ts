@@ -9,6 +9,10 @@ export function timed(summary: string, startIso: string, endIso: string): HaCale
   return { summary, start: { dateTime: startIso }, end: { dateTime: endIso } };
 }
 
+export function allDay(summary: string, date: string, end: string): HaCalendarEvent {
+  return { summary, start: { date }, end: { date: end } };
+}
+
 export function makeHass(
   handler: (path: string) => Promise<HaCalendarEvent[]>,
   lastChanged = '2026-10-13T08:00:00Z',
@@ -44,4 +48,14 @@ export function deepFreeze<T>(value: T): T {
     Object.freeze(value);
   }
   return value;
+}
+
+// Answers each calendar from its own list; a calendar mapped to an Error rejects.
+export function calendars(byEntity: Record<string, HaCalendarEvent[] | Error>) {
+  return makeHass(async (path) => {
+    const entity = Object.keys(byEntity).find((e) => path.includes(`calendars/${e}?`));
+    const answer = entity ? byEntity[entity] : [];
+    if (answer instanceof Error) throw answer;
+    return answer;
+  });
 }

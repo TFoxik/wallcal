@@ -21,6 +21,7 @@ side, with the weather and the moon, readable from across the room.
 - **Cycle tracking (optional):** expected period, fertile window and ovulation.
 - **Floating cards:** keep a shopping list, or any other card, over the bottom of the week.
 - **Your look:** three built-in themes, plus colours, fonts and sizes.
+- **On your phone, too:** an agenda view for a Calendar tab, and a "next up" card for the Home view.
 - **Made for old tablets:** runs on Android WebView 87+ and iOS 14.5+, with no animations.
 
 ## Install
@@ -38,7 +39,7 @@ side, with the weather and the moon, readable from across the room.
 
 1. Download `wallcal-card.js` from the
    [latest release](https://github.com/TFoxik/wallcal/releases/latest) into `/config/www/`.
-2. Under Settings → Dashboards → ⋮ → **Resources**, add `/local/wallcal-card.js?v=0.3.3` as a
+2. Under Settings → Dashboards → ⋮ → **Resources**, add `/local/wallcal-card.js?v=0.4.0` as a
    JavaScript module.
 3. Reload the browser. After each update, raise the `?v=` number so tablets drop the cached copy.
 

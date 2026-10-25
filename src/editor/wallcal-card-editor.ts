@@ -5,9 +5,10 @@ import { WallCalCalendarList } from './calendar-list';
 import { loadHaEditors, type HaEditorAvailability } from './ha-loader';
 import { CODE_EDITOR_NOTE, WallCalOverlayList } from './overlay-list';
 import { applyFormChange, clearAt, deepEqual, setAt, type Raw } from './raw-config';
-import { computeHelper, formData, labelsFor, HEADER, MOON, PERIOD, STYLE, THEME, WEATHER, WEEK, type FormSchema, type SectionDef } from './sections';
+import { computeHelper, formData, labelsFor, HEADER, MOON, PERIOD, STYLE, THEME, UPCOMING, VIEW, WEATHER, WEEK, type FormSchema, type SectionDef } from './sections';
 
-const SECTIONS = [WEEK, HEADER, WEATHER, MOON, PERIOD, THEME, STYLE];
+const SECTIONS = [VIEW, UPCOMING, WEEK, HEADER, WEATHER, MOON, PERIOD, THEME, STYLE];
+const WEEK_ONLY = [HEADER, WEATHER];
 
 /** What the forms show for one raw config; rebuilt only when the config changes, not on every hass update. */
 interface View {
@@ -60,6 +61,9 @@ export class WallCalCardEditor extends LitElement {
     if (!this._available) return html`<p class="note">Loading the editor…</p>`;
     if (!this._available['ha-form']) return html`<p class="note">${CODE_EDITOR_NOTE}</p>`;
     const { error, days } = this._view;
+    const view = this._view.forms.get(VIEW)!.data.view;
+    // The top bar, weather and floating cards belong to the week grid; the phone views ignore them.
+    const week = view === 'week';
     return html`
       ${error ? html`<ha-alert alert-type="error">${error}</ha-alert>` : nothing}
       ${this._panel('Calendars', 'mdi:calendar-multiple', true, html`<wallcal-calendar-list
@@ -67,20 +71,22 @@ export class WallCalCardEditor extends LitElement {
           .entities=${this._raw.entities}
           @entities-changed=${this._calendars}
         ></wallcal-calendar-list>`)}
-      ${[WEEK, HEADER, WEATHER, MOON, PERIOD].map((s) => this._panel(s.title, s.icon, false, this._form(s)))}
-      ${this._panel('Floating cards', 'mdi:card-multiple-outline', false, html`<wallcal-overlay-list
+      ${this._panel('View', 'mdi:cellphone', false, html`${this._form(VIEW)}${view === 'upcoming' ? this._form(UPCOMING) : nothing}`)}
+      ${[WEEK, HEADER, WEATHER, MOON, PERIOD].map((s) => this._panel(s.title, s.icon, false, this._form(s), week || !WEEK_ONLY.includes(s)))}
+      ${week ? this._panel('Floating cards', 'mdi:card-multiple-outline', false, html`<wallcal-overlay-list
           .hass=${this.hass}
           .lovelace=${this.lovelace}
           .overlays=${this._raw.overlays}
           .days=${days}
           .cardEditors=${this._available['hui-card-element-editor'] && this._available['hui-card-picker']}
           @overlays-changed=${this._overlays}
-        ></wallcal-overlay-list>`)}
+        ></wallcal-overlay-list>`) : nothing}
       ${this._panel('Theme & style', 'mdi:palette', false, html`${this._form(THEME)}${this._form(STYLE)}`)}
     `;
   }
 
-  private _panel(title: string, icon: string, expanded: boolean, body: TemplateResult) {
+  private _panel(title: string, icon: string, expanded: boolean, body: TemplateResult, shown = true) {
+    if (!shown) return nothing;
     return html`<ha-expansion-panel outlined .header=${title} .expanded=${expanded}>
       <ha-icon slot="leading-icon" icon=${icon}></ha-icon>
       ${body}
