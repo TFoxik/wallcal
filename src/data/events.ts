@@ -107,26 +107,29 @@ function compareDayEvents(a: DayEvent, b: DayEvent): number {
   return byStart !== 0 ? byStart : a.event.title.localeCompare(b.event.title);
 }
 
+// onResult hears each calendar as it answers: a remote one can take seconds while a local one is instant.
 export async function fetchEvents(
   hass: HomeAssistant,
   entities: EntityConfig[],
   start: Date,
   end: Date,
+  onResult?: (result: FetchResult) => void,
 ): Promise<FetchResult[]> {
   const query = `start=${encodeURIComponent(start.toISOString())}&end=${encodeURIComponent(end.toISOString())}`;
-  const settled = await Promise.allSettled(
-    entities.map((e) => hass.callApi<HaCalendarEvent[]>('GET', `calendars/${e.entity}?${query}`)),
+  return Promise.all(
+    entities.map(async (source) => {
+      let result: FetchResult;
+      try {
+        const raw = await hass.callApi<HaCalendarEvent[]>('GET', `calendars/${source.entity}?${query}`);
+        const events = raw.map((r) => normalizeEvent(r, source)).filter((e): e is WallCalEvent => e !== null);
+        result = { entity: source.entity, events };
+      } catch (error) {
+        result = { entity: source.entity, error: `${calendarName(hass, source)}: ${errorMessage(error)}` };
+      }
+      onResult?.(result);
+      return result;
+    }),
   );
-  return settled.map((outcome, i) => {
-    const source = entities[i];
-    if (outcome.status === 'rejected') {
-      return { entity: source.entity, error: `${calendarName(hass, source)}: ${errorMessage(outcome.reason)}` };
-    }
-    const events = outcome.value
-      .map((raw) => normalizeEvent(raw, source))
-      .filter((e): e is WallCalEvent => e !== null);
-    return { entity: source.entity, events };
-  });
 }
 
 function calendarName(hass: HomeAssistant, source: EntityConfig): string {
@@ -134,13 +137,13 @@ function calendarName(hass: HomeAssistant, source: EntityConfig): string {
   return source.name ?? (typeof friendly === 'string' && friendly.trim() ? friendly : source.entity);
 }
 
-// Returns prev itself when a refetch changed nothing, so the card skips the render.
+// Within the same range, a calendar that failed or hasn't answered yet keeps its last events. Returns
+// prev itself when nothing changed, so the card skips the render.
 export function mergeResults(prev: EventCache | null, rangeKey: string, results: FetchResult[]): EventCache {
   const kept = prev && prev.rangeKey === rangeKey ? prev.byEntity : {};
-  const byEntity: Record<string, WallCalEvent[]> = {};
+  const byEntity: Record<string, WallCalEvent[]> = { ...kept };
   for (const result of results) {
     if (result.events) byEntity[result.entity] = result.events;
-    else if (kept[result.entity]) byEntity[result.entity] = kept[result.entity];
   }
   const unchanged = prev !== null && kept === prev.byEntity && JSON.stringify(byEntity) === JSON.stringify(kept);
   return unchanged ? prev : { rangeKey, byEntity };

@@ -112,6 +112,11 @@ describe('mergeResults', () => {
     expect(next.byEntity).toEqual({ 'calendar.a': a, 'calendar.b': [] });
   });
 
+  it('keeps the events of a calendar that has not answered yet', () => {
+    const prev = { rangeKey: 'r1', byEntity: { 'calendar.a': a, 'calendar.b': b } };
+    expect(mergeResults(prev, 'r1', [{ entity: 'calendar.a', events: [] }]).byEntity).toEqual({ 'calendar.a': [], 'calendar.b': b });
+  });
+
   it('keeps the previous cache when a refetch brings the same events', () => {
     const prev = { rangeKey: 'r1', byEntity: { 'calendar.a': a, 'calendar.b': b } };
     const same = [

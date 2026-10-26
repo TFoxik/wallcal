@@ -77,3 +77,8 @@ Events refresh every 5 minutes.
 ```yaml
 refresh_interval: 120
 ```
+
+Each calendar's events show as soon as that calendar answers, so a slow online calendar doesn't hold back the
+others. The card also keeps the events it last showed in the browser's local storage. A page load, or a pop-up
+opened for the first time, shows them at once and replaces them when the calendars answer. Anyone who can open
+the browser's developer tools on that device can read them there.

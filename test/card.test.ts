@@ -147,6 +147,66 @@ describe('wallcal-card', () => {
     expect(chipTitles(el)).toEqual(['Next week']);
   });
 
+  it('shows each calendar as soon as it answers', async () => {
+    const slow = deferred<HaCalendarEvent[]>();
+    const { hass } = makeHass((path) =>
+      path.startsWith('calendars/calendar.names')
+        ? slow.promise
+        : Promise.resolve([timed('Dentist', '2026-10-13T08:30:00+02:00', '2026-10-13T09:00:00+02:00')]),
+    );
+    const el = await mount({ entities: ['calendar.family', 'calendar.names'] }, hass);
+    expect(chipTitles(el)).toEqual(['Dentist']);
+    slow.resolve([timed('Name day', '2026-10-13T10:00:00+02:00', '2026-10-13T11:00:00+02:00')]);
+    await flush(el);
+    expect(chipTitles(el)).toEqual(['Dentist', 'Name day']);
+  });
+
+  describe('stored events', () => {
+    const silent = () => makeHass(() => new Promise<HaCalendarEvent[]>(() => undefined)).hass;
+
+    it('shows the events an earlier load stored at once, while the calendars answer', async () => {
+      const { hass } = makeHass(async () => [timed('Dentist', '2026-10-13T08:30:00+02:00', '2026-10-13T09:00:00+02:00')]);
+      (await mount(config, hass)).remove();
+      const el = await mount(config, silent());
+      expect(chipTitles(el)).toEqual(['Dentist']);
+    });
+
+    it('replaces them with what the calendars answer', async () => {
+      const { hass } = makeHass(async () => [timed('Dentist', '2026-10-13T08:30:00+02:00', '2026-10-13T09:00:00+02:00')]);
+      (await mount(config, hass)).remove();
+      const el = await mount(config, makeHass(async () => []).hass);
+      expect(chipTitles(el)).toEqual([]);
+    });
+
+    it('ignores events stored for other calendars', async () => {
+      const { hass } = makeHass(async () => [timed('Dentist', '2026-10-13T08:30:00+02:00', '2026-10-13T09:00:00+02:00')]);
+      (await mount(config, hass)).remove();
+      const el = await mount({ entities: [{ entity: 'calendar.family', color: '#000000' }] }, silent());
+      expect(chipTitles(el)).toEqual([]);
+    });
+
+    it('does not write again when a refresh brings the same events', async () => {
+      const { hass } = makeHass(async () => [timed('Dentist', '2026-10-13T08:30:00+02:00', '2026-10-13T09:00:00+02:00')]);
+      const el = await mount(config, hass);
+      const setItem = vi.spyOn(localStorage, 'setItem');
+      el.hass = makeHass(async () => [timed('Dentist', '2026-10-13T08:30:00+02:00', '2026-10-13T09:00:00+02:00')], '2026-10-13T09:00:00Z').hass;
+      await flush(el);
+      expect(setItem).not.toHaveBeenCalledWith('wallcal:events', expect.anything());
+      setItem.mockRestore();
+    });
+
+    it('stores only the range that holds today', async () => {
+      const { hass } = makeHass(async (path) =>
+        path.includes(startParam(new Date(2026, 9, 12))) ? [timed('This week', '2026-10-13T08:30:00+02:00', '2026-10-13T09:00:00+02:00')] : [],
+      );
+      const el = await mount(config, hass);
+      click(el, 'button[aria-label="Next week"]');
+      await flush(el);
+      el.remove();
+      expect(chipTitles(await mount(config, silent()))).toEqual(['This week']);
+    });
+  });
+
   it('drops a response for the previous config that lands after setConfig', async () => {
     const first = deferred<HaCalendarEvent[]>();
     let calls = 0;
@@ -517,6 +577,8 @@ describe('wallcal-card', () => {
       prev(el);
       await flush(el);
       expect(chipTitles(el)).toEqual(['v1 2026-11-02']);
+      // The stored copy of this week would fill it too.
+      localStorage.clear();
       click(el, '.nav--today');
       await flush(el);
       expect(chipTitles(el)).toEqual([]);

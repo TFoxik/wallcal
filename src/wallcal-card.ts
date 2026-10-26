@@ -19,6 +19,7 @@ import {
   nextEventEnd,
   type EventCache,
 } from './data/events';
+import { loadStoredEvents, storeEvents } from './data/stored-events';
 import { HIDDEN_KEY, loadHidden, reloadHidden, toggleHidden } from './data/hidden';
 import { upcomingEvents } from './data/upcoming';
 import { isOverlayShown, loadOverlayState, pillCount, toggleOverlay, type OverlayState } from './data/overlays';
@@ -79,6 +80,8 @@ export class WallCalCard extends LitElement {
   private _hass?: HomeAssistant;
   private _seen = new Map<string, string>();
   private _weeks = new WeekCache();
+  /** The cache last written to storage, so an unchanged refresh doesn't write again. */
+  private _storedCache: EventCache | null = null;
   private _fetchSeq = 0;
   private _requestedRange = '';
   private _tickTimer?: ReturnType<typeof setTimeout>;
@@ -525,20 +528,28 @@ export class WallCalCard extends LitElement {
     const { start, days } = rangeFor(config, this._anchor, this._today);
     const rangeKey = rangeKeyOf(start, days);
     this._requestedRange = rangeKey;
+    const source = eventSource(config);
     // Runs from willUpdate on a week change, so the cached week lands in that same render.
     if (this._cache?.rangeKey !== rangeKey) {
-      this._cache = this._weeks.get(rangeKey);
+      this._cache = this._weeks.get(rangeKey) ?? loadStoredEvents(source, start, days, this._today);
       // A failure in the old range says nothing about this one until it answers.
       if (!this._cache) this._allFailed = false;
     }
     for (const e of config.entities) this._seen.set(e.entity, hass.states[e.entity]?.last_changed ?? '');
 
-    const results = await fetchEvents(hass, config.entities, start, addDays(start, days));
+    // Each calendar shows as it answers; the ones still out keep their cached events.
+    const results = await fetchEvents(hass, config.entities, start, addDays(start, days), (result) => {
+      if (seq === this._fetchSeq) this._cache = mergeResults(this._cache, rangeKey, [result]);
+    });
     // A newer request (e.g. after a quick prev/next tap) supersedes this one.
     if (seq !== this._fetchSeq) return;
 
     this._cache = mergeResults(this._cache, rangeKey, results);
     this._weeks.put(rangeKey, this._cache);
+    if (this._cache !== this._storedCache && results.some((r) => r.events)) {
+      storeEvents(source, start, days, this._today, this._cache);
+      this._storedCache = this._cache;
+    }
     const errors = results.flatMap((r) => (r.error ? [r.error] : []));
     this._warning = errors.length ? errors.join('\n') : null;
     this._allFailed = errors.length === results.length && cachedEvents(this._cache).length === 0;
