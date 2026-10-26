@@ -77,7 +77,7 @@ changes, What's new, Bug fixes, Security, Upgrade notes; leave out empty ones), 
 annotated tag from it and push:
 
 ```bash
-git tag -a v0.7.0 --cleanup=verbatim -F release-notes.md && git push origin v0.7.0
+git tag -a v0.7.1 --cleanup=verbatim -F release-notes.md && git push origin v0.7.1
 ```
 
 `--cleanup=verbatim` matters: without it git drops every line starting with `#`, so the notes lose
