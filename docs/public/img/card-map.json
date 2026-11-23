@@ -9,7 +9,7 @@
       "n": 1,
       "label": "Title",
       "href": "/parts/top-bar#title-and-subtitle",
-      "x": 18.4,
+      "x": 21.5,
       "y": 4
     },
     {
@@ -37,42 +37,42 @@
       "n": 5,
       "label": "Weather",
       "href": "/parts/day-header#weather",
-      "x": 50,
+      "x": 7.6,
       "y": 22.4
     },
     {
       "n": 6,
       "label": "Name days & holidays",
       "href": "/parts/day-header#name-days-and-holidays",
-      "x": 34.6,
+      "x": 6.4,
       "y": 26.9
     },
     {
       "n": 7,
       "label": "Moon",
       "href": "/parts/day-header#moon",
-      "x": 83,
+      "x": 26.6,
       "y": 25.7
     },
     {
       "n": 8,
       "label": "All-day events",
       "href": "/parts/events#all-day-events",
-      "x": 78.2,
+      "x": 21.8,
       "y": 32.6
     },
     {
       "n": 9,
       "label": "Events & colours",
       "href": "/parts/events#calendars-and-colours",
-      "x": 92.4,
+      "x": 35.9,
       "y": 34.8
     },
     {
       "n": 10,
       "label": "\"+N more\"",
       "href": "/parts/events#more-events-than-fit",
-      "x": 90.8,
+      "x": 6.1,
       "y": 96.5
     },
     {
