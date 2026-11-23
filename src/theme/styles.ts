@@ -29,7 +29,10 @@ export const cardStyles = css`
     font-family: var(--wallcal-font-family);
     border-radius: var(--wallcal-radius);
   }
+  /* The buttons' touch targets reach into the gap below, so the bar paints above the grid. */
   .bar {
+    position: relative;
+    z-index: 1;
     display: grid;
     grid-template-columns: 1fr auto 1fr;
     align-items: center;
@@ -69,14 +72,15 @@ export const cardStyles = css`
   .nav {
     all: unset;
     cursor: pointer;
+    position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 44px;
-    height: 44px;
+    min-width: 36px;
+    height: 36px;
     padding: 0 12px;
     box-sizing: border-box;
-    border-radius: 22px;
+    border-radius: 18px;
     background: var(--wallcal-surface);
     color: var(--wallcal-text);
     font-size: 15px;
@@ -137,6 +141,23 @@ export const cardStyles = css`
   .toggle--hidden::before {
     background: none;
     box-shadow: inset 0 0 0 1.5px var(--wallcal-muted);
+  }
+  /* In the bar the chips match the 36px buttons; an invisible ::after keeps both a 44px touch target. */
+  .bar .toggle {
+    width: 36px;
+    height: 36px;
+  }
+  .bar .toggle::before {
+    inset: 2px;
+  }
+  .nav::after,
+  .bar .toggle::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+  }
+  .bar .toggle::after {
+    inset: -4px -2px;
   }
   .grid {
     --ring-size: calc(var(--wallcal-date-size) * 1.75);
@@ -499,12 +520,6 @@ export const cardStyles = css`
     font-size: 0.85em;
     color: var(--wallcal-muted);
   }
-  /* compact: a 32px bar whose buttons keep a 44px touch target through an invisible ::after. The
-     target reaches past the 4px gap into the grid, so the bar paints above it. */
-  .compact .bar {
-    position: relative;
-    z-index: 1;
-  }
   .compact .bar__title {
     font-size: calc(var(--wallcal-title-size) * 0.75);
   }
@@ -512,7 +527,6 @@ export const cardStyles = css`
     font-size: calc(var(--wallcal-title-size) * 0.48);
   }
   .compact .nav {
-    position: relative;
     min-width: 32px;
     height: 32px;
     padding: 0 10px;
@@ -534,13 +548,9 @@ export const cardStyles = css`
     inset: 2px;
   }
   .compact .nav::after {
-    content: '';
-    position: absolute;
     inset: -6px -4px;
   }
   .compact .toggle::after {
-    content: '';
-    position: absolute;
     inset: -6px -2px;
   }
   .compact .grid {

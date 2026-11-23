@@ -61,17 +61,22 @@ describe('compact', () => {
     }
   });
 
-  it('shrinks the bar buttons to 32px but keeps a 44px touch target', () => {
+  it('keeps a 44px touch target on the 36px bar buttons, and on the 32px compact ones', () => {
     const px = (rule: string, prop: string) => Number(new RegExp(`(?:^|[ ;{])${prop}: (-?\\d+)px`).exec(rule)?.[1]);
-    for (const button of ['.compact .nav', '.compact .toggle']) {
+    const hitArea = block('.nav::after, .bar .toggle::after');
+    expect(hitArea).toContain("content: '';");
+    expect(hitArea).toContain('position: absolute;');
+    expect(block('.nav')).toContain('position: relative;');
+    for (const [button, after, size] of [
+      ['.nav', '.nav::after, .bar .toggle::after', 36],
+      ['.bar .toggle', '.bar .toggle::after', 36],
+      ['.compact .nav', '.compact .nav::after', 32],
+      ['.compact .toggle', '.compact .toggle::after', 32],
+    ] as const) {
       const height = px(block(button), 'height');
-      const after = block(`${button}::after`);
-      expect(height).toBe(32);
-      expect(after).toContain("content: '';");
-      expect(after).toContain('position: absolute;');
-      expect(height - 2 * px(after, 'inset')).toBeGreaterThanOrEqual(44);
+      expect(height, button).toBe(size);
+      expect(height - 2 * px(block(after), 'inset'), button).toBeGreaterThanOrEqual(44);
     }
-    expect(block('.compact .nav')).toContain('position: relative;');
   });
 });
 

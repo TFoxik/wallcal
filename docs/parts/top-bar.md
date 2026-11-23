@@ -62,10 +62,10 @@ header:
 
 ## Compact
 
-On a short screen, such as a 1280×800 tablet, the compact layout gives the events more room. The top bar shrinks to 32px
-with a smaller title, arrows and chips; each button still answers to a 44px touch. The day headers get tighter too: a
-smaller ring around the date, and less space around the weekday, the weather and the name days. Together that is about
-35px more for events.
+On a short screen, such as a 1280×800 tablet, the compact layout gives the events more room. The top bar shrinks from 36px
+to 32px with a smaller title, arrows and chips; each button still answers to a 44px touch. The day headers get tighter
+too: a smaller ring around the date, and less space around the weekday, the weather and the name days. Together that is
+about 30px more for events.
 
 **In the visual editor:** Week → Compact top bar and day headers
 
