@@ -10,63 +10,63 @@
       "label": "Title",
       "href": "/parts/top-bar#title-and-subtitle",
       "x": 21.5,
-      "y": 4
+      "y": 3.5
     },
     {
       "n": 2,
       "label": "Calendar chips",
       "href": "/parts/top-bar#calendar-chips",
-      "x": 72.4,
-      "y": 4
+      "x": 74,
+      "y": 3.5
     },
     {
       "n": 3,
       "label": "Week arrows & Today",
       "href": "/parts/top-bar#week-arrows-and-today",
       "x": 90.8,
-      "y": 4
+      "y": 3.5
     },
     {
       "n": 4,
       "label": "Day header",
       "href": "/parts/day-header",
       "x": 10.7,
-      "y": 16
+      "y": 15
     },
     {
       "n": 5,
       "label": "Weather",
       "href": "/parts/day-header#weather",
       "x": 7.6,
-      "y": 22.4
+      "y": 21.4
     },
     {
       "n": 6,
       "label": "Name days & holidays",
       "href": "/parts/day-header#name-days-and-holidays",
       "x": 6.4,
-      "y": 26.9
+      "y": 25.8
     },
     {
       "n": 7,
       "label": "Moon",
       "href": "/parts/day-header#moon",
       "x": 26.6,
-      "y": 25.7
+      "y": 24.6
     },
     {
       "n": 8,
       "label": "All-day events",
       "href": "/parts/events#all-day-events",
       "x": 21.8,
-      "y": 32.6
+      "y": 31.5
     },
     {
       "n": 9,
       "label": "Events & colours",
       "href": "/parts/events#calendars-and-colours",
       "x": 35.9,
-      "y": 34.8
+      "y": 33.8
     },
     {
       "n": 10,
