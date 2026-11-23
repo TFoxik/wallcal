@@ -23,6 +23,8 @@ const page = await browser.newPage({
   deviceScaleFactor: 2,
   colorScheme: 'dark',
   locale: 'en-GB',
+  // HA's service worker reloads a fresh profile's page about 5 s after it loads, past open()'s wait.
+  serviceWorkers: 'block',
 });
 
 // HA sometimes reloads the whole page right after it loads (sign-in, a changed dashboard), so wait until it stays put.
