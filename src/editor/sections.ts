@@ -229,10 +229,11 @@ export const PERIOD: SectionDef = {
   title: 'Cycle',
   icon: 'mdi:water-outline',
   prefix: ['period'],
+  labels: { toggle: 'Show/hide chip in the top bar', icon: 'Chip icon' },
   rules: {
     defaults: {
       enabled: false, last_period: undefined, cycle_length: CYCLE_LENGTH.fallback, period_length: PERIOD_LENGTH.fallback,
-      show_fertile: true, show_ovulation: true,
+      show_fertile: true, show_ovulation: true, toggle: false, icon: 'mdi:water',
     },
   },
   // Before anything is picked, the YAML can't tell which source the user chose.
@@ -262,6 +263,7 @@ export const PERIOD: SectionDef = {
           { ...lastPeriod, required: true },
           grid(length('cycle_length', CYCLE_LENGTH), length('period_length', PERIOD_LENGTH)),
           grid(bool('show_fertile'), bool('show_ovulation')),
+          grid(bool('toggle'), f.toggle === true && { name: 'icon', selector: { icon: {} } }),
         ]
       : [bool('enabled'), SOURCE, lastPeriod];
   },

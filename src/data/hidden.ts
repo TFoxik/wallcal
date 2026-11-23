@@ -2,6 +2,8 @@ import { readJson, writeJson } from './storage';
 
 // One list per device, shared by every card; a card only applies it to calendars it has a chip for.
 export const HIDDEN_KEY = 'wallcal:hidden-calendars';
+// Stored in the same list; it can't clash with a calendar id, which always starts with calendar.
+export const PERIOD_TOGGLE = 'period';
 
 function readStored(): Set<string> | undefined {
   const stored = readJson(HIDDEN_KEY);

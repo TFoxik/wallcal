@@ -27,7 +27,8 @@ header:
 ## Calendar chips
 
 A round chip for a calendar in the top bar. Tap it to hide or show that calendar. Each device remembers its own choice, so
-the kitchen tablet can hide work while your desk browser still shows it.
+the kitchen tablet can hide work while your desk browser still shows it. Cycle tracking can have a chip too: see
+[Hiding it with one tap](./day-header#cycle-chip).
 
 **In the visual editor:** Calendars → Show/hide chip in the top bar, Chip icon, Name
 

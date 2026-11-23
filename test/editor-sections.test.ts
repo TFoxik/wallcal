@@ -51,7 +51,7 @@ describe('section defaults match the card', () => {
       idle_return: n.header.idle_return,
     });
     expect(MOON.rules.defaults).toEqual(n.moon);
-    expect(PERIOD.rules.defaults).toMatchObject({ enabled: false, cycle_length: 28, period_length: 5, show_fertile: true, show_ovulation: true });
+    expect(PERIOD.rules.defaults).toMatchObject({ enabled: false, cycle_length: 28, period_length: 5, show_fertile: true, show_ovulation: true, toggle: false, icon: 'mdi:water' });
   });
 
   it('covers every style token exactly once', () => {
@@ -121,8 +121,9 @@ describe('cycle values from helpers', () => {
 
   it('shows entity pickers for helpers', () => {
     expect(fieldNames(PERIOD.schema(formData(PERIOD, helpers), ctx))).toEqual([
-      'enabled', 'source', 'last_period', 'cycle_length', 'period_length', 'show_fertile', 'show_ovulation',
+      'enabled', 'source', 'last_period', 'cycle_length', 'period_length', 'show_fertile', 'show_ovulation', 'toggle',
     ]);
+    expect(fieldNames(PERIOD.schema(formData(PERIOD, { ...helpers, period: { ...helpers.period, toggle: true } }), ctx))).toContain('icon');
     expect(field(helpers, 'last_period')).toEqual({
       name: 'last_period',
       required: true,

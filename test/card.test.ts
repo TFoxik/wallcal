@@ -400,6 +400,40 @@ describe('wallcal-card', () => {
     expect(root(el).querySelectorAll('.marker--period')).toHaveLength(5);
   });
 
+  describe('cycle chip', () => {
+    const cycle = { ...config, period: { enabled: true, last_period: '2026-10-12', toggle: true } };
+    const cycleMarks = (el: WallCalCard) => root(el).querySelectorAll('.ring, .marker--period, .day--fertile').length;
+
+    it('hides and shows every cycle marker from a chip in the top bar', async () => {
+      const el = await mount(cycle, makeHass(async () => []).hass);
+      expect(root(el).querySelector('.toggle')?.getAttribute('aria-label')).toBe('Hide Cycle');
+      expect(cycleMarks(el)).toBeGreaterThan(0);
+
+      click(el, '.toggle');
+      await flush(el);
+      expect(cycleMarks(el)).toBe(0);
+      expect(root(el).querySelector('.grid--cycle')).toBeNull();
+      expect(root(el).querySelector('.toggle')?.getAttribute('aria-pressed')).toBe('false');
+
+      click(el, '.toggle');
+      await flush(el);
+      expect(cycleMarks(el)).toBeGreaterThan(0);
+    });
+
+    it('remembers the choice on this device', async () => {
+      click(await mount(cycle, makeHass(async () => []).hass), '.toggle');
+      const second = await mount(cycle, makeHass(async () => []).hass);
+      expect(cycleMarks(second)).toBe(0);
+    });
+
+    it('has no chip, and ignores a stored choice, without period.toggle', async () => {
+      localStorage.setItem('wallcal:hidden-calendars', JSON.stringify(['period']));
+      const el = await mount({ ...cycle, period: { ...cycle.period, toggle: false } }, makeHass(async () => []).hass);
+      expect(root(el).querySelector('.toggle')).toBeNull();
+      expect(cycleMarks(el)).toBeGreaterThan(0);
+    });
+  });
+
   describe('cycle from helpers', () => {
     const helpers = {
       ...config,

@@ -77,6 +77,8 @@ describe('normalizeConfig', () => {
         period_length: 5,
         show_fertile: true,
         show_ovulation: true,
+        toggle: false,
+        icon: 'mdi:water',
       },
       view: 'week',
       upcoming: { count: 3, navigation_path: null },
@@ -117,6 +119,14 @@ describe('normalizeConfig', () => {
   it('validates weekday_format', () => {
     expect(normalizeConfig({ ...minimal, weekday_format: 'long' }).weekday_format).toBe('long');
     expect(() => normalizeConfig({ ...minimal, weekday_format: 'narrow' })).toThrow(/weekday_format/);
+  });
+
+  it('reads the cycle chip toggle and icon', () => {
+    const period = (extra: object) =>
+      normalizeConfig({ ...minimal, period: { enabled: true, last_period: '2026-10-02', ...extra } }).period;
+    expect(period({ toggle: true, icon: 'mdi:flower' })).toMatchObject({ toggle: true, icon: 'mdi:flower' });
+    expect(() => period({ toggle: 'yes' })).toThrow(/period\.toggle/);
+    expect(() => period({ icon: 'water' })).toThrow(/period\.icon must look like mdi:flag/);
   });
 
   it('validates compact', () => {

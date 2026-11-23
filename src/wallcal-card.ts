@@ -20,7 +20,7 @@ import {
   type EventCache,
 } from './data/events';
 import { loadStoredEvents, storeEvents } from './data/stored-events';
-import { HIDDEN_KEY, loadHidden, reloadHidden, toggleHidden } from './data/hidden';
+import { HIDDEN_KEY, PERIOD_TOGGLE, loadHidden, reloadHidden, toggleHidden } from './data/hidden';
 import { upcomingEvents } from './data/upcoming';
 import { isOverlayShown, loadOverlayState, pillCount, toggleOverlay, type OverlayState } from './data/overlays';
 import { forecastType, sameForecast, subscribeForecast, type DayForecast } from './data/weather';
@@ -236,7 +236,7 @@ export class WallCalCard extends LitElement {
     const hidden = new Set(config.entities.filter((e) => e.toggle && this._hidden.has(e.entity)).map((e) => e.entity));
     const events = cachedEvents(this._cache).filter((e) => !hidden.has(e.entity));
     const { period } = config;
-    const cycleInput = cycleInputFrom(period, hass.states);
+    const cycleInput = this._periodHidden(config) ? null : cycleInputFrom(period, hass.states);
     const tokens = { ...resolveTokens(config.theme, config.style), '--wallcal-days': String(days.length) };
     const labelCalendars = config.entities.filter((e) => e.display === 'label' && !hidden.has(e.entity)).map((e) => e.entity);
     const status = this._allFailed ? 'failed' : this._cache ? 'ready' : 'loading';
@@ -415,7 +415,23 @@ export class WallCalCard extends LitElement {
   }
 
   private _allToggles(config: WallCalConfig, hidden: Set<string>): HeaderToggle[] {
-    return [...this._toggles(config, hidden), ...this._overlayToggles(config)];
+    return [...this._toggles(config, hidden), ...this._periodToggle(config), ...this._overlayToggles(config)];
+  }
+
+  private _periodHidden(config: WallCalConfig): boolean {
+    return config.period.toggle && this._hidden.has(PERIOD_TOGGLE);
+  }
+
+  private _periodToggle(config: WallCalConfig): HeaderToggle[] {
+    const { period } = config;
+    if (!period.enabled || !period.toggle) return [];
+    return [{
+      label: 'Cycle',
+      color: 'var(--wallcal-period-color)',
+      icon: period.icon,
+      hidden: this._periodHidden(config),
+      onToggle: () => this._toggleCalendar(PERIOD_TOGGLE),
+    }];
   }
 
   private _renderOverlays(config: WallCalConfig) {

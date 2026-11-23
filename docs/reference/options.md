@@ -47,6 +47,8 @@ period:                           # each of the next three: a value, or an input
   period_length: 5                # 1 – 10; same for a helper. A missing or unknown helper hides the cycle
   show_fertile: true
   show_ovulation: true
+  toggle: false                   # true adds a chip in the top bar that hides/shows the whole cycle on this device
+  icon: mdi:water                 # the chip's icon
 view: week                        # week | agenda (a phone tab: 7 days from today) | upcoming (a next-up card)
 upcoming:                         # only for view: upcoming
   count: 3                        # events shown, 1 – 5

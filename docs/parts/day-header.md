@@ -113,6 +113,22 @@ period:
 
 Update the last period date when a new period starts.
 
+### Hiding it with one tap {#cycle-chip}
+
+A chip in the top bar, like a calendar's, hides and shows the ring, drops, fertile tint and egg on every day. Each device
+remembers its own choice, so the kitchen tablet can hide the cycle while your phone still shows it. The cycle shows
+until someone taps the chip. Hiding is not a lock: anyone at the tablet can tap it back.
+
+**In the visual editor:** Cycle → Show/hide chip in the top bar, Chip icon
+
+**In YAML:** `period.toggle`, `period.icon`. Add these lines to your card:
+
+```yaml
+period:
+  toggle: true
+  icon: mdi:water    # default
+```
+
 ### From helpers {#cycle-helpers}
 
 To keep one start date for several dashboards, or to log a new period from a phone, store the values in Home Assistant

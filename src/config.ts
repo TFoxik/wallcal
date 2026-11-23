@@ -45,6 +45,8 @@ export interface PeriodConfig {
   period_length: number | string;
   show_fertile: boolean;
   show_ovulation: boolean;
+  toggle: boolean;
+  icon: string;
 }
 
 export interface WeatherConfig {
@@ -214,6 +216,8 @@ export function normalizeConfig(input: unknown): WallCalConfig {
       period_length: periodLength(period.period_length, PERIOD_LENGTH, 'period.period_length'),
       show_fertile: bool(period.show_fertile, true, 'period.show_fertile'),
       show_ovulation: bool(period.show_ovulation, true, 'period.show_ovulation'),
+      toggle: bool(period.toggle, false, 'period.toggle'),
+      icon: period.icon === undefined ? 'mdi:water' : icon(period.icon, 'period.icon'),
     },
     overlays: parseOverlays(raw.overlays, days),
     view: oneOf(raw.view, VIEWS, 'week', 'view'),
