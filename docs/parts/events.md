@@ -58,7 +58,7 @@ past_events: hide      # show | dim | hide
 When a day has more events than fit, **+N more** appears under it. Tap it to scroll to them. Today's list also scrolls to
 the next upcoming event on its own.
 
-**In the visual editor:** Week → Scroll today to the next event
+**In the visual editor:** Week → Scroll to the next event
 
 **In YAML:** `auto_scroll`. Add these lines to your card:
 

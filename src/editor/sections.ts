@@ -329,7 +329,7 @@ const LABELS: Record<string, string> = {
   past_days: 'Earlier days',
   past_events: "Today's finished events",
   show_end_time: 'Show end times',
-  auto_scroll: 'Scroll today to the next event',
+  auto_scroll: 'Scroll to the next event',
   compact: 'Compact top bar and day headers',
   refresh_interval: 'Refresh every',
   show: 'Show the top bar',
