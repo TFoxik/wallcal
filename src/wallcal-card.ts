@@ -301,7 +301,7 @@ export class WallCalCard extends LitElement {
         onNext: () => this._show(addDays(this._anchor, 7)),
       })}
       <div
-        class="grid grid--past-${config.past_days} grid--events-${config.past_events} ${cycleInput ? 'grid--cycle' : ''}"
+        class="grid grid--past-${config.past_days} grid--events-${config.past_events} grid--weekday-${config.weekday_format} ${cycleInput ? 'grid--cycle' : ''}"
         @pointerdown=${(event: Event) => this._touchList(event)}
         @wheel=${{ handleEvent: (event: Event) => this._touchList(event), passive: true }}
         @scroll=${{ handleEvent: () => this._scheduleMeasure(), capture: true, passive: true }}

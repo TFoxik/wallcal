@@ -3,6 +3,8 @@
 - Give the card its own **Panel** view and open that view's URL on the tablet.
 - On a short screen such as a 1280×800 tablet, `compact: true` gives the events about 35px more
   ([Compact](../parts/top-bar#compact)).
+- With weather shown, the weekday and forecast sit beside the date only while they fit; otherwise every column puts
+  them under it. Short weekday names (`weekday_format: short`, the default) leave room for a bigger `weekday_size`.
 - Keep the screen on with your tablet's kiosk or "stay awake" setting.
 - WallCal does nothing between refreshes, so it is gentle on old devices and batteries.
 - After updating WallCal, reload the page on the tablet. If it still shows the old version, clear

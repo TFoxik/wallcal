@@ -29,6 +29,14 @@ describe('overlay theming', () => {
   });
 });
 
+describe('weekday and forecast beside the date', () => {
+  it('reserves less room for short weekday names than for long ones', () => {
+    const css = cardStyles.cssText.replace(/\s+/g, ' ');
+    expect(css).toContain('.day--weather .day__meta { flex: 1 0 calc(var(--wallcal-weekday-size) * 5); }');
+    expect(css).toContain('.grid--weekday-short .day--weather .day__meta { flex-basis: calc(var(--wallcal-weekday-size) * 3.4 + 26px); }');
+  });
+});
+
 describe('weekend shade', () => {
   it('lays the weekend tint over surface and leaves today alone', () => {
     const css = cardStyles.cssText.replace(/\s+/g, ' ');

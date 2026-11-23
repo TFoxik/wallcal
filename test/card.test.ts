@@ -68,6 +68,12 @@ describe('wallcal-card', () => {
     expect(root(el).querySelector('.bar__subtitle')?.textContent?.replace(/\s+/g, ' ')).toBe('Oct 12 – 18');
   });
 
+  it('marks the weekday format on the grid', async () => {
+    const { hass } = makeHass(async () => []);
+    expect(root(await mount(config, hass)).querySelector('.grid--weekday-short')).not.toBeNull();
+    expect(root(await mount({ ...config, weekday_format: 'long' }, hass)).querySelector('.grid--weekday-long')).not.toBeNull();
+  });
+
   it('marks the card compact only when compact is set', async () => {
     const { hass } = makeHass(async () => []);
     const plain = await mount(config, hass);

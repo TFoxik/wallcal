@@ -330,7 +330,7 @@ export const cardStyles = css`
     gap: 10px;
     min-width: 0;
   }
-  /* The weekday and forecast need about five weekday-font widths beside the ring. The fixed basis
+  /* Long weekday names need about five weekday-font widths beside the ring. The fixed basis
      makes every column wrap at the same card width, so narrow cards put them under the ring without
      uneven heights. */
   .day--weather .day__top {
@@ -339,6 +339,11 @@ export const cardStyles = css`
   }
   .day--weather .day__meta {
     flex: 1 0 calc(var(--wallcal-weekday-size) * 5);
+  }
+  /* With short names the forecast is the wider line: a 22px icon, a 4px gap and up to 3.4 weekday
+     widths for two-digit temperatures like "25°/14°". */
+  .grid--weekday-short .day--weather .day__meta {
+    flex-basis: calc(var(--wallcal-weekday-size) * 3.4 + 26px);
   }
   /* Days before the first configured period have no ring; give the bare date the ring's footprint
      so their header matches, beside or above the weekday. */
