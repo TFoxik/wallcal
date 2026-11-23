@@ -285,6 +285,9 @@ export const cardStyles = css`
     border-radius: var(--wallcal-day-radius);
     background: var(--wallcal-surface);
   }
+  .day--weekend:not(.day--today) {
+    background-image: linear-gradient(var(--wallcal-weekend-background), var(--wallcal-weekend-background));
+  }
   .grid--past-dim .day--past {
     opacity: 0.5;
   }

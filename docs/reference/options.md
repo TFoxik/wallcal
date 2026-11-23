@@ -87,6 +87,7 @@ Set under `style:`. Later wins: Home Assistant theme → `theme:` preset → `st
 | `muted` | HA secondary text colour | weekday, times |
 | `accent` | HA primary colour | today highlight, buttons |
 | `today_background` | `accent` at 12% opacity | today column tint |
+| `weekend_background` | `rgba(127, 127, 127, 0.08)` | Saturday and Sunday tint, laid over `surface`; `transparent` turns it off |
 | `divider` | HA divider colour | separators |
 | `radius` | HA card radius, else 16px | card corners |
 | `day_radius` | `radius` | day column corners |

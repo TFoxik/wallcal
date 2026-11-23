@@ -45,6 +45,7 @@ export interface DayColumnProps {
 export function renderDayColumn(p: DayColumnProps): TemplateResult {
   const { cycle } = p;
   const fertile = !!cycle && p.showFertile && cycle.isFertile;
+  const weekday = p.date.getDay();
   const dateNumber = html`<span class="day__date">${p.date.getDate()}</span>`;
   const now = p.now;
   const ended = (item: DayEvent) => now !== null && isEnded(item, now);
@@ -60,6 +61,7 @@ export function renderDayColumn(p: DayColumnProps): TemplateResult {
   return html`<section class=${classMap({
     day: true,
     'day--today': p.isToday,
+    'day--weekend': weekday === 0 || weekday === 6,
     'day--fertile': fertile,
     'day--past': p.isPast,
     'day--weather': p.weatherRow,

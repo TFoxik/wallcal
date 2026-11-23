@@ -166,6 +166,14 @@ describe('renderDayColumn', () => {
     expect(host.querySelector('.day--past')).not.toBeNull();
   });
 
+  it('marks Saturday and Sunday as the weekend', () => {
+    const weekend = (date: Date) => {
+      render(renderDayColumn({ ...base, date }), host);
+      return host.querySelector('.day--weekend') !== null;
+    };
+    expect([12, 16, 17, 18].map((d) => weekend(new Date(2026, 9, d)))).toEqual([false, false, true, true]);
+  });
+
   it('marks today', () => {
     render(renderDayColumn({ ...base, isToday: true }), host);
     expect(host.querySelector('.day--today')).not.toBeNull();

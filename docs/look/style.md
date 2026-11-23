@@ -30,6 +30,7 @@ style:
 | `muted` | HA secondary text colour | weekday, times |
 | `accent` | HA primary colour | today highlight, buttons |
 | `today_background` | `accent` at 12% opacity | today column tint |
+| `weekend_background` | `rgba(127, 127, 127, 0.08)` | Saturday and Sunday tint, laid over `surface`; `transparent` turns it off |
 | `divider` | HA divider colour | separators |
 | `overlay_background` | day-column colour with a light wash | floating card panel |
 | `period_color` | `#E24B4A` | drop, period ring |
@@ -37,6 +38,14 @@ style:
 | `ovulation_color` | `#1D9E75` | ovulation icon |
 | `ring_color` | `#D4537E` | cycle ring outside the period |
 | `moon_color` | `muted` | lit part of the moon |
+
+Saturday and Sunday columns get a slightly different shade from `weekend_background`, whatever day the week starts
+on. Today keeps the today highlight instead. To switch the shade off:
+
+```yaml
+style:
+  weekend_background: transparent
+```
 
 ## Shape and spacing
 

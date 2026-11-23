@@ -45,7 +45,7 @@ export interface SectionDef {
 }
 
 export const COLOR_TOKENS = [
-  'background', 'surface', 'text', 'muted', 'accent', 'today_background', 'divider', 'overlay_background',
+  'background', 'surface', 'text', 'muted', 'accent', 'today_background', 'weekend_background', 'divider', 'overlay_background',
   'period_color', 'fertile_color', 'ovulation_color', 'ring_color', 'moon_color',
 ] as const;
 export const SIZE_TOKENS = [

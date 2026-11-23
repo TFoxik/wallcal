@@ -29,6 +29,15 @@ describe('overlay theming', () => {
   });
 });
 
+describe('weekend shade', () => {
+  it('lays the weekend tint over surface and leaves today alone', () => {
+    const css = cardStyles.cssText.replace(/\s+/g, ' ');
+    expect(css).toContain(
+      '.day--weekend:not(.day--today) { background-image: linear-gradient(var(--wallcal-weekend-background), var(--wallcal-weekend-background)); }',
+    );
+  });
+});
+
 describe('compact', () => {
   const css = cardStyles.cssText.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\s+/g, ' ');
   const block = (selector: string) => {
