@@ -288,7 +288,7 @@ export class WallCalCard extends LitElement {
       </ha-card>`;
     }
 
-    return html`<ha-card style=${styleMap(tokens)} @pointerdown=${() => this._touch()}>
+    return html`<ha-card class=${config.compact ? 'compact' : ''} style=${styleMap(tokens)} @pointerdown=${() => this._touch()}>
       ${renderTopBar({
         header: config.header,
         title: headerText(config.header.title, days, language),

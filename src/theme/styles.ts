@@ -491,6 +491,80 @@ export const cardStyles = css`
     font-size: 0.85em;
     color: var(--wallcal-muted);
   }
+  /* compact: a 32px bar whose buttons keep a 44px touch target through an invisible ::after. The
+     target reaches past the 4px gap into the grid, so the bar paints above it. */
+  .compact .bar {
+    position: relative;
+    z-index: 1;
+  }
+  .compact .bar__title {
+    font-size: calc(var(--wallcal-title-size) * 0.75);
+  }
+  .compact .bar__subtitle {
+    font-size: calc(var(--wallcal-title-size) * 0.48);
+  }
+  .compact .nav {
+    position: relative;
+    min-width: 32px;
+    height: 32px;
+    padding: 0 10px;
+    border-radius: 16px;
+    font-size: 14px;
+  }
+  .compact .nav svg,
+  .compact .bar__warning svg {
+    width: 18px;
+    height: 18px;
+  }
+  .compact .toggle {
+    width: 32px;
+    height: 32px;
+    font-size: 13px;
+    --mdc-icon-size: 16px;
+  }
+  .compact .toggle::before {
+    inset: 2px;
+  }
+  .compact .nav::after {
+    content: '';
+    position: absolute;
+    inset: -6px -4px;
+  }
+  .compact .toggle::after {
+    content: '';
+    position: absolute;
+    inset: -6px -2px;
+  }
+  .compact .grid {
+    --ring-size: calc(var(--wallcal-date-size) * 1.25);
+  }
+  .compact .ring .day__date {
+    font-size: calc(var(--wallcal-date-size) * 0.6);
+  }
+  .compact .day__header {
+    gap: 2px;
+    padding: 2px 4px;
+  }
+  .compact .day__meta {
+    gap: 2px;
+  }
+  .compact .day__weekday {
+    line-height: 18px;
+  }
+  .compact .day__forecast {
+    --forecast-line: 20px;
+  }
+  .compact .day__info {
+    --line: 16px;
+  }
+  .compact .day__markers {
+    min-height: 16px;
+  }
+  .compact .marker,
+  .compact .moon svg {
+    width: 16px;
+    height: 16px;
+  }
   .day__allday,
   .day__events {
     display: flex;

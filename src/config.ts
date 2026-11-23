@@ -118,6 +118,8 @@ export interface WallCalConfig {
   past_days: PastDays;
   past_events: PastEvents;
   auto_scroll: boolean;
+  /** Week view: a 32px top bar and tighter day headers, for short screens. */
+  compact: boolean;
   refresh_interval: number;
   header: HeaderConfig;
   weather: WeatherConfig | null;
@@ -189,6 +191,7 @@ export function normalizeConfig(input: unknown): WallCalConfig {
     past_days: oneOf(raw.past_days, PAST_DAYS, 'normal', 'past_days'),
     past_events: oneOf(raw.past_events, PAST_EVENTS, 'show', 'past_events'),
     auto_scroll: bool(raw.auto_scroll, true, 'auto_scroll'),
+    compact: bool(raw.compact, false, 'compact'),
     refresh_interval: int(raw.refresh_interval, 300, 60, 86_400, 'refresh_interval'),
     header: {
       show: bool(header.show, true, 'header.show'),

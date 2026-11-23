@@ -65,6 +65,7 @@ describe('normalizeConfig', () => {
       past_days: 'normal',
       past_events: 'show',
       auto_scroll: true,
+      compact: false,
       refresh_interval: 300,
       header: { show: true, title: 'month', subtitle: 'none', align: 'left', navigation: true, idle_return: 60 },
       weather: null,
@@ -116,6 +117,11 @@ describe('normalizeConfig', () => {
   it('validates weekday_format', () => {
     expect(normalizeConfig({ ...minimal, weekday_format: 'long' }).weekday_format).toBe('long');
     expect(() => normalizeConfig({ ...minimal, weekday_format: 'narrow' })).toThrow(/weekday_format/);
+  });
+
+  it('validates compact', () => {
+    expect(normalizeConfig({ ...minimal, compact: true }).compact).toBe(true);
+    expect(() => normalizeConfig({ ...minimal, compact: 'yes' })).toThrow(/compact/);
   });
 
   it('validates past_events and auto_scroll', () => {

@@ -39,6 +39,7 @@ describe('section defaults match the card', () => {
       past_days: n.past_days,
       past_events: n.past_events,
       auto_scroll: n.auto_scroll,
+      compact: n.compact,
       refresh_interval: n.refresh_interval,
     });
     expect(HEADER.rules.defaults).toMatchObject({

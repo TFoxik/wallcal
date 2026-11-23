@@ -29,6 +29,35 @@ describe('overlay theming', () => {
   });
 });
 
+describe('compact', () => {
+  const css = cardStyles.cssText.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\s+/g, ' ');
+  const block = (selector: string) => {
+    const start = css.indexOf(`${selector} {`);
+    return start < 0 ? '' : css.slice(start, css.indexOf('}', start));
+  };
+
+  it('keeps every compact rule behind the .compact class', () => {
+    const compactRules = css.match(/[^{}]*\.compact[^{}]*\{/g) ?? [];
+    expect(compactRules.length).toBeGreaterThan(0);
+    for (const rule of compactRules) {
+      for (const selector of rule.replace('{', '').split(',')) expect(selector.trim()).toMatch(/^\.compact /);
+    }
+  });
+
+  it('shrinks the bar buttons to 32px but keeps a 44px touch target', () => {
+    const px = (rule: string, prop: string) => Number(new RegExp(`(?:^|[ ;{])${prop}: (-?\\d+)px`).exec(rule)?.[1]);
+    for (const button of ['.compact .nav', '.compact .toggle']) {
+      const height = px(block(button), 'height');
+      const after = block(`${button}::after`);
+      expect(height).toBe(32);
+      expect(after).toContain("content: '';");
+      expect(after).toContain('position: absolute;');
+      expect(height - 2 * px(after, 'inset')).toBeGreaterThanOrEqual(44);
+    }
+    expect(block('.compact .nav')).toContain('position: relative;');
+  });
+});
+
 describe('panel layout height', () => {
   it('subtracts the kiosk-mode header height when set, else the HA header height', () => {
     const css = cardStyles.cssText.replace(/\s+/g, ' ');

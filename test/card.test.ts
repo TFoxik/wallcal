@@ -68,6 +68,14 @@ describe('wallcal-card', () => {
     expect(root(el).querySelector('.bar__subtitle')?.textContent?.replace(/\s+/g, ' ')).toBe('Oct 12 – 18');
   });
 
+  it('marks the card compact only when compact is set', async () => {
+    const { hass } = makeHass(async () => []);
+    const plain = await mount(config, hass);
+    expect(root(plain).querySelector('ha-card')?.classList.contains('compact')).toBe(false);
+    const compact = await mount({ ...config, compact: true }, hass);
+    expect(root(compact).querySelector('ha-card')?.classList.contains('compact')).toBe(true);
+  });
+
   it('marks the days before today and the past_days mode on the grid', async () => {
     const { hass } = makeHass(async () => []);
     const el = await mount({ ...config, past_days: 'dim' }, hass);

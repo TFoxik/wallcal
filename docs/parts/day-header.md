@@ -24,6 +24,9 @@ first_day: sunday      # with 7 days; default monday
 The today highlight uses the theme's accent colour; change it with `accent` or `today_background` in
 [Colours, fonts & sizes](../look/style).
 
+For a shorter header on a small screen, see [Compact](./top-bar#compact) on the top bar page: it tightens the day
+headers too.
+
 ## Weather
 
 A condition icon and the high temperature for each day, with the low after a slash. Use any weather entity that has a daily (or twice-daily) forecast. If it has none, the card says so instead of showing empty days.

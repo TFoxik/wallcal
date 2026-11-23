@@ -24,6 +24,7 @@ show_end_time: false              # timed events show "8:30 – 9:15"
 past_days: normal                 # normal | dim | grey: days before today
 past_events: show                 # show | dim | hide: today's events that have ended
 auto_scroll: true                 # today's list scrolls to the next upcoming event
+compact: false                    # true: 32px top bar and tighter day headers, for short screens
 refresh_interval: 300             # seconds, 60 – 86400
 header:
   show: true

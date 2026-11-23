@@ -66,6 +66,12 @@ views:
     cards:
       - <<: *wall_card
         theme: midnight
+  - title: Compact
+    path: compact
+    panel: true
+    cards:
+      - <<: *wall_card
+        compact: true
   - title: Paper 5 days
     path: paper
     panel: true

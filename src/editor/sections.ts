@@ -112,7 +112,7 @@ export const WEEK: SectionDef = {
   rules: {
     defaults: {
       days: 7, first_day: 'monday', time_format: 'auto', weekday_format: 'short', show_end_time: false,
-      past_days: 'normal', past_events: 'show', auto_scroll: true, refresh_interval: 300,
+      past_days: 'normal', past_events: 'show', auto_scroll: true, compact: false, refresh_interval: 300,
     },
     fromForm: (f) => ({ ...f, days: Number(f.days), time_format: f.time_format === 'auto' ? 'auto' : Number(f.time_format) }),
   },
@@ -126,6 +126,7 @@ export const WEEK: SectionDef = {
     grid({ name: 'time_format', selector: select(TIME_FORMATS) }, { name: 'weekday_format', selector: select(WEEKDAY_FORMATS) }),
     grid({ name: 'past_days', selector: select(PAST_DAYS) }, { name: 'past_events', selector: select(PAST_EVENTS) }),
     grid(bool('show_end_time'), bool('auto_scroll')),
+    bool('compact'),
     number('refresh_interval', 60, 86_400, 's'),
   ],
 };
@@ -327,6 +328,7 @@ const LABELS: Record<string, string> = {
   past_events: "Today's finished events",
   show_end_time: 'Show end times',
   auto_scroll: 'Scroll today to the next event',
+  compact: 'Compact top bar and day headers',
   refresh_interval: 'Refresh every',
   show: 'Show the top bar',
   title: 'Title',
@@ -355,6 +357,7 @@ const HELPERS: Record<string, string> = {
   height: 'Empty fits the dashboard; set it in a pop-up, for example 75vh',
   title: 'month, range, none, or your own text',
   idle_return: '0 never jumps back',
+  compact: 'A 32px top bar and shorter day headers, for short screens like a 1280×800 tablet',
   font_url: 'Must start with https:// or /',
   source: 'Helpers keep one start date in Home Assistant for every dashboard',
   last_period: 'Stored in the dashboard configuration: anyone who can open this dashboard can read it.',
